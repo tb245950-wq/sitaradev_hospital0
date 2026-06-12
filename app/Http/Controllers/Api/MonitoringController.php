@@ -16,9 +16,9 @@ class MonitoringController extends Controller
     public function index(Request $request)
     {
         $query = TherapyMonitoring::with([
-            'therapy:id_terapi,jenis_terapi,status',
+            'therapy:id_terapi,nama_terapi,status',
             'patient:id_pasien,nama_lengkap,nrm',
-            'user:id,name,role'
+            'terapis:id,name,role'
         ]);
 
         // Filter by terapi
@@ -33,16 +33,10 @@ class MonitoringController extends Controller
 
         // Filter by tanggal
         if ($request->has('tanggal') && $request->tanggal != '') {
-            $query->whereDate('tanggal_monitoring', $request->tanggal);
+            $query->whereDate('tanggal_sesi', $request->tanggal);
         }
 
-        // Filter by rentang tanggal
-        if ($request->has('tanggal_awal') && $request->has('tanggal_akhir')) {
-            $query->whereBetween('tanggal_monitoring', [$request->tanggal_awal, $request->tanggal_akhir]);
-        }
-
-        $monitorings = $query->orderBy('tanggal_monitoring', 'desc')
-                            ->orderBy('sesi_ke', 'desc')
+        $monitorings = $query->orderBy('tanggal_sesi', 'desc')
                             ->paginate(15);
 
         return response()->json([
@@ -53,7 +47,6 @@ class MonitoringController extends Controller
 
     /**
      * FR-09: Buat Monitoring Baru
-     * Hanya dokter atau terapis yang bisa membuat
      */
     public function store(Request $request)
     {
@@ -66,35 +59,38 @@ class MonitoringController extends Controller
 
         $validated = $request->validate([
             'id_terapi' => 'required|exists:therapies,id_terapi',
-            'tanggal_monitoring' => 'sometimes|date',
-            'progress' => 'required|string',
-            'catatan_terapis' => 'required|string',
-            'skor_perkembangan' => 'required|integer|min:0|max:100',
-            'kendala' => 'nullable|string',
+            'tanggal_sesi' => 'sometimes|date',
+            'waktu_mulai' => 'sometimes|date_format:H:i',
+            'waktu_selesai' => 'sometimes|date_format:H:i|after:waktu_mulai',
+            'kehadiran' => 'required|in:Hadir,Tidak Hadir,Izin,Sakit',
+            'catatan_perkembangan' => 'required|string',
+            'kondisi_pasien' => 'required|string',
             'rekomendasi' => 'nullable|string',
+            'progress_score' => 'required|integer|min:0|max:100',
         ]);
 
         // Ambil data terapi untuk dapat id_pasien
         $therapy = Therapy::where('id_terapi', $validated['id_terapi'])->first();
 
-        // Auto-generate sesi_ke
+        // Auto-generate sesi ke (hitung dari jumlah monitoring yang sudah ada)
         $sesiKe = TherapyMonitoring::where('id_terapi', $validated['id_terapi'])
-            ->max('sesi_ke') + 1;
+            ->count() + 1;
 
         $monitoring = TherapyMonitoring::create([
             'id_terapi' => $validated['id_terapi'],
             'id_pasien' => $therapy->id_pasien,
-            'id_pengguna' => Auth::id(),
-            'tanggal_monitoring' => $validated['tanggal_monitoring'] ?? now(),
-            'sesi_ke' => $sesiKe,
-            'progress' => $validated['progress'],
-            'catatan_terapis' => $validated['catatan_terapis'],
-            'skor_perkembangan' => $validated['skor_perkembangan'],
-            'kendala' => $validated['kendala'] ?? null,
+            'id_terapis' => Auth::id(),
+            'tanggal_sesi' => $validated['tanggal_sesi'] ?? now(),
+            'waktu_mulai' => $validated['waktu_mulai'] ?? null,
+            'waktu_selesai' => $validated['waktu_selesai'] ?? null,
+            'kehadiran' => $validated['kehadiran'],
+            'catatan_perkembangan' => $validated['catatan_perkembangan'],
+            'kondisi_pasien' => $validated['kondisi_pasien'],
             'rekomendasi' => $validated['rekomendasi'] ?? null,
+            'progress_score' => $validated['progress_score'],
         ]);
 
-        $monitoring->load(['therapy:id_terapi,jenis_terapi', 'patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
+        $monitoring->load(['therapy:id_terapi,nama_terapi', 'patient:id_pasien,nama_lengkap,nrm', 'terapis:id,name,role']);
 
         return response()->json([
             'success' => true,
@@ -109,7 +105,7 @@ class MonitoringController extends Controller
     public function show($id)
     {
         $monitoring = TherapyMonitoring::where('id_monitoring', $id)
-            ->with(['therapy', 'patient', 'user:id,name,role'])
+            ->with(['therapy', 'patient', 'terapis:id,name,role'])
             ->first();
 
         if (!$monitoring) {
@@ -147,15 +143,15 @@ class MonitoringController extends Controller
         }
 
         $validated = $request->validate([
-            'progress' => 'sometimes|string',
-            'catatan_terapis' => 'sometimes|string',
-            'skor_perkembangan' => 'sometimes|integer|min:0|max:100',
-            'kendala' => 'nullable|string',
+            'kehadiran' => 'sometimes|in:Hadir,Tidak Hadir,Izin,Sakit',
+            'catatan_perkembangan' => 'sometimes|string',
+            'kondisi_pasien' => 'sometimes|string',
             'rekomendasi' => 'nullable|string',
+            'progress_score' => 'sometimes|integer|min:0|max:100',
         ]);
 
         $monitoring->update($validated);
-        $monitoring->load(['therapy:id_terapi,jenis_terapi', 'patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
+        $monitoring->load(['therapy:id_terapi,nama_terapi', 'patient:id_pasien,nama_lengkap,nrm', 'terapis:id,name,role']);
 
         return response()->json([
             'success' => true,
@@ -166,13 +162,12 @@ class MonitoringController extends Controller
 
     /**
      * Statistik Perkembangan Pasien
-     * Endpoint khusus untuk melihat grafik perkembangan
      */
     public function progressStats($id_pasien)
     {
         $monitorings = TherapyMonitoring::where('id_pasien', $id_pasien)
-            ->with('therapy:id_terapi,jenis_terapi')
-            ->orderBy('tanggal_monitoring', 'asc')
+            ->with('therapy:id_terapi,nama_terapi')
+            ->orderBy('tanggal_sesi', 'asc')
             ->get();
 
         if ($monitorings->isEmpty()) {
@@ -185,18 +180,18 @@ class MonitoringController extends Controller
         // Hitung statistik
         $stats = [
             'total_sesi' => $monitorings->count(),
-            'rata_rata_skor' => round($monitorings->avg('skor_perkembangan'), 2),
-            'skor_tertinggi' => $monitorings->max('skor_perkembangan'),
-            'skor_terendah' => $monitorings->min('skor_perkembangan'),
+            'rata_rata_skor' => round($monitorings->avg('progress_score'), 2),
+            'skor_tertinggi' => $monitorings->max('progress_score'),
+            'skor_terendah' => $monitorings->min('progress_score'),
             'perkembangan' => [],
         ];
 
         foreach ($monitorings as $m) {
             $stats['perkembangan'][] = [
-                'tanggal' => $m->tanggal_monitoring->format('Y-m-d'),
-                'sesi_ke' => $m->sesi_ke,
-                'skor' => $m->skor_perkembangan,
-                'jenis_terapi' => $m->therapy->jenis_terapi ?? null,
+                'tanggal' => $m->tanggal_sesi->format('Y-m-d'),
+                'skor' => $m->progress_score,
+                'kehadiran' => $m->kehadiran,
+                'jenis_terapi' => $m->therapy->nama_terapi ?? null,
             ];
         }
 
