@@ -74,48 +74,50 @@ class ReportController extends Controller
         ], 200);
     }
 
-    /**
-     * FR-11: Laporan Bulanan
-     */
     public function monthly(Request $request)
     {
-        if (!in_array(Auth::user()->role, ['admin', 'dokter'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Akses ditolak.'
-            ], 403);
-        }
-
         $tahun = $request->input('tahun', now()->year);
         $bulan = $request->input('bulan', now()->month);
 
         $tanggalAwal = Carbon::createFromDate($tahun, $bulan, 1)->startOfMonth();
         $tanggalAkhir = Carbon::createFromDate($tahun, $bulan, 1)->endOfMonth();
 
-        $totalPasienBaru = Patient::whereBetween('created_at', [$tanggalAwal, $tanggalAkhir])->count();
-        $totalAssessment = MedicalAssessment::whereBetween('tanggal_assessment', [$tanggalAwal, $tanggalAkhir])->count();
-        $totalMonitoring = TherapyMonitoring::whereBetween('tanggal_sesi', [$tanggalAwal, $tanggalAkhir])->count();
-        $totalTerapiBaru = Therapy::whereBetween('tanggal_mulai', [$tanggalAwal, $tanggalAkhir])->count();
+        $stats = [
+            'total_pasien_baru' => Patient::whereBetween('created_at', [$tanggalAwal, $tanggalAkhir])->count(),
+            'total_assessment' => MedicalAssessment::whereBetween('tanggal_assessment', [$tanggalAwal, $tanggalAkhir])->count(),
+            'total_monitoring' => TherapyMonitoring::whereBetween('tanggal_sesi', [$tanggalAwal, $tanggalAkhir])->count(),
+            'total_terapi_baru' => Therapy::whereBetween('tanggal_mulai', [$tanggalAwal, $tanggalAkhir])->count(),
+            'rata_rata_skor' => round(TherapyMonitoring::whereBetween('tanggal_sesi', [$tanggalAwal, $tanggalAkhir])->avg('progress_score') ?? 0, 2),
+        ];
 
-        $rataRataSkor = TherapyMonitoring::whereBetween('tanggal_sesi', [$tanggalAwal, $tanggalAkhir])
-            ->avg('progress_score');
+        // OPTIMIZED: Ambil tren harian dalam SATU query besar menggunakan Group By
+        $trenHarianData = TherapyMonitoring::whereBetween('tanggal_sesi', [$tanggalAwal, $tanggalAkhir])
+            ->select(
+                DB::raw('DATE(tanggal_sesi) as tanggal'),
+                DB::raw('COUNT(*) as total_monitoring'),
+                DB::raw('AVG(progress_score) as rata_skor')
+            )
+            ->groupBy('tanggal')
+            ->get()
+            ->keyBy('tanggal');
 
+        $pasienBaruData = Patient::whereBetween('created_at', [$tanggalAwal, $tanggalAkhir])
+            ->select(DB::raw('DATE(created_at) as tanggal'), DB::raw('COUNT(*) as total'))
+            ->groupBy('tanggal')
+            ->get()
+            ->keyBy('tanggal');
+
+        // Mapping ke array tren harian untuk frontend
         $trenHarian = [];
         $currentDate = $tanggalAwal->copy();
         while ($currentDate->lte($tanggalAkhir)) {
             $dateStr = $currentDate->format('Y-m-d');
-            
             $trenHarian[] = [
                 'tanggal' => $dateStr,
-                'pasien_baru' => Patient::whereDate('created_at', $dateStr)->count(),
-                'assessment' => MedicalAssessment::whereDate('tanggal_assessment', $dateStr)->count(),
-                'monitoring' => TherapyMonitoring::whereDate('tanggal_sesi', $dateStr)->count(),
-                'rata_skor' => round(
-                    TherapyMonitoring::whereDate('tanggal_sesi', $dateStr)->avg('progress_score') ?? 0, 
-                    2
-                ),
+                'pasien_baru' => $pasienBaruData[$dateStr]->total ?? 0,
+                'monitoring' => $trenHarianData[$dateStr]->total_monitoring ?? 0,
+                'rata_skor' => round($trenHarianData[$dateStr]->rata_skor ?? 0, 2),
             ];
-            
             $currentDate->addDay();
         }
 
@@ -126,33 +128,16 @@ class ReportController extends Controller
             ->limit(5)
             ->get();
 
-        $topTerapi = Therapy::where('status', 'aktif')
-            ->select('nama_terapi', DB::raw('count(*) as total_pasien'))
-            ->groupBy('nama_terapi')
-            ->orderByDesc('total_pasien')
-            ->limit(5)
-            ->get();
-
         return response()->json([
             'success' => true,
             'data' => [
                 'periode' => [
-                    'tahun' => (int) $tahun,
-                    'bulan' => (int) $bulan,
                     'nama_bulan' => $tanggalAwal->locale('id')->monthName,
-                    'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
-                    'tanggal_akhir' => $tanggalAkhir->format('Y-m-d'),
+                    'tahun' => $tahun,
                 ],
-                'ringkasan' => [
-                    'total_pasien_baru' => $totalPasienBaru,
-                    'total_assessment' => $totalAssessment,
-                    'total_monitoring' => $totalMonitoring,
-                    'total_terapi_baru' => $totalTerapiBaru,
-                    'rata_rata_skor' => round($rataRataSkor ?? 0, 2),
-                ],
+                'ringkasan' => $stats,
                 'tren_harian' => $trenHarian,
                 'top_diagnosis' => $topDiagnosis,
-                'top_terapi' => $topTerapi,
             ]
         ], 200);
     }

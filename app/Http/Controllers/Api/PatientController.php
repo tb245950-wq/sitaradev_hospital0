@@ -39,54 +39,25 @@ class PatientController extends Controller
 
     /**
      * FR-03: Registrasi Pasien Baru
-     * Hanya Admin dan Dokter yang bisa mendaftarkan pasien (RBAC)
      */
-    public function store(Request $request)
+    public function store(\App\Http\Requests\StorePatientRequest $request)
     {
-        // Cek Role (NFR-06)
-        if (!in_array(Auth::user()->role, ['admin', 'dokter'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Akses ditolak. Hanya Admin atau Dokter yang dapat mendaftarkan pasien.'
-            ], 403);
-        }
-
-        $validated = $request->validate([
-            'nrm' => 'required|string|max:50|unique:patients,nrm',
-            'nik' => 'required|string|max:20|unique:patients,nik',
-            'nama_lengkap' => 'required|string|max:255',
-            'nama_panggilan' => 'nullable|string|max:255',
-            'tanggal_lahir' => 'required|date',
-            'jenis_kelamin' => 'required|in:L,P',
-            'alamat' => 'required|string',
-            'no_telepon_wali' => 'required|string|max:20',
-            'nama_wali' => 'required|string|max:255',
-            'hubungan_wali' => 'required|string|max:50',
-            'riwayat_medis' => 'nullable|string',
-        ]);
-
-        $patient = Patient::create($validated);
+        $patient = Patient::create($request->validated());
 
         return response()->json([
             'success' => true,
             'message' => 'Pasien berhasil didaftarkan.',
-            'data' => $patient
+            'data' => new \App\Http\Resources\PatientResource($patient)
         ], 201);
     }
 
     /**
      * FR-14: Detail Pasien & Riwayat Rekam Medis
-     * Menampilkan data pasien beserta riwayat assessment dan terapi
      */
     public function show(Patient $patient)
     {
-        // Load relasi untuk riwayat medis (Eager Loading)
         $patient->load(['assessments', 'therapies', 'queues']);
-
-        return response()->json([
-            'success' => true,
-            'data' => $patient
-        ], 200);
+        return new \App\Http\Resources\PatientResource($patient);
     }
 
     /**

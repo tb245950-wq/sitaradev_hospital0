@@ -64,35 +64,10 @@ class AssessmentController extends Controller
 
     /**
      * FR-07: Buat Assessment Medis Baru
-     * Hanya dokter yang bisa membuat assessment
      */
-    public function store(Request $request)
+    public function store(\App\Http\Requests\StoreAssessmentRequest $request)
     {
-        // Validasi role - hanya dokter yang bisa membuat assessment
-        if (Auth::user()->role !== 'dokter') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Akses ditolak. Hanya dokter yang dapat membuat assessment medis.'
-            ], 403);
-        }
-
-        $validated = $request->validate([
-            'id_pasien' => 'required|exists:patients,id_pasien',
-            'id_antrian' => 'sometimes|exists:queues,id_antrian',
-            'tanggal_assessment' => 'sometimes|date',
-            'keluhan_utama' => 'required|string',
-            'riwayat_penyakit' => 'nullable|string',
-            'hasil_pemeriksaan' => 'required|array',
-            'hasil_pemeriksaan.tensi' => 'required|string',
-            'hasil_pemeriksaan.nadi' => 'required|string',
-            'hasil_pemeriksaan.suhu' => 'required|string',
-            'hasil_pemeriksaan.berat_badan' => 'sometimes|numeric',
-            'hasil_pemeriksaan.tinggi_badan' => 'sometimes|numeric',
-            'diagnosis' => 'required|string',
-            'rencana_terapi' => 'nullable|string',
-            'obat_diresepkan' => 'nullable|array',
-            'catatan_tambahan' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         // Cek apakah sudah ada assessment untuk antrian ini
         if (isset($validated['id_antrian'])) {
@@ -107,27 +82,18 @@ class AssessmentController extends Controller
             }
         }
 
-        $assessment = MedicalAssessment::create([
-    'id_pasien' => $validated['id_pasien'],
-    'id_pengguna' => Auth::id(),
-    'id_antrian' => $validated['id_antrian'] ?? null,
-    'tanggal_assessment' => $validated['tanggal_assessment'] ?? now(),
-    'keluhan_utama' => $validated['keluhan_utama'],
-    'riwayat_penyakit' => $validated['riwayat_penyakit'] ?? null,
-    'hasil_pemeriksaan' => $validated['hasil_pemeriksaan'],
-    'diagnosis' => $validated['diagnosis'],
-    'rencana_terapi' => $validated['rencana_terapi'] ?? null,
-    'obat_diresepkan' => $validated['obat_diresepkan'] ?? null,
-    'catatan_tambahan' => $validated['catatan_tambahan'] ?? null,
-    'catatan_medis' => $validated['catatan_medis'] ?? '', 
-]);
+        $assessment = MedicalAssessment::create(array_merge($validated, [
+            'id_pengguna' => Auth::id(),
+            'tanggal_assessment' => $validated['tanggal_assessment'] ?? now(),
+            'catatan_medis' => $validated['catatan_medis'] ?? '',
+        ]));
 
-        $assessment->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role', 'queue:id_antrian,nomor_antrian']);
+        $assessment->load(['patient', 'user', 'queue']);
 
         return response()->json([
             'success' => true,
             'message' => 'Assessment medis berhasil dibuat.',
-            'data' => $assessment
+            'data' => new \App\Http\Resources\AssessmentResource($assessment)
         ], 201);
     }
 
