@@ -110,7 +110,15 @@ class QueueController extends Controller
  */
 public function show($id)
 {
-    $queue = Queue::findOrFail($id);
+    $queue = Queue::where('id_antrian', $id)->first();
+    
+    if (!$queue) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Antrian tidak ditemukan.'
+        ], 404);
+    }
+    
     $queue->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role', 'assessments']);
 
     return response()->json([
@@ -124,7 +132,14 @@ public function show($id)
  */
 public function update(Request $request, $id)
 {
-    $queue = Queue::findOrFail($id);
+    $queue = Queue::where('id_antrian', $id)->first();
+    
+    if (!$queue) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Antrian tidak ditemukan.'
+        ], 404);
+    }
 
     $validated = $request->validate([
         'status' => 'sometimes|in:menunggu,dipanggil,selesai,tidak_hadir',
@@ -165,7 +180,14 @@ public function update(Request $request, $id)
  */
 public function destroy($id)
 {
-    $queue = Queue::findOrFail($id);
+    $queue = Queue::where('id_antrian', $id)->first();
+    
+    if (!$queue) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Antrian tidak ditemukan.'
+        ], 404);
+    }
 
     if (in_array($queue->status, ['dipanggil', 'selesai'])) {
         return response()->json([
