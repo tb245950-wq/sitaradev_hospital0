@@ -14,9 +14,14 @@ class Queue extends Model
     protected $table = 'queues';
     protected $primaryKey = 'id_antrian';
 
-    public $incrementing = true;
-
+    /**
+     * Kolom yang boleh diisi (MASS ASSIGNMENT)
+     * Foreign keys TIDAK perlu di-fillable jika kita set via relasi
+     * TAPI untuk simplicity, kita masukkan saja
+     */
     protected $fillable = [
+        'id_pasien',      // ← WAJIB ADA
+        'id_pengguna',    // ← WAJIB ADA
         'nomor_antrian',
         'jenis_layanan',
         'status',
@@ -27,25 +32,25 @@ class Queue extends Model
         'catatan',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'waktu_daftar' => 'datetime',
-            'waktu_panggil' => 'datetime',
-            'waktu_selesai' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'waktu_daftar' => 'datetime',
+        'waktu_panggil' => 'datetime',
+        'waktu_selesai' => 'datetime',
+    ];
 
+    // Relasi ke Patient
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class, 'id_pasien', 'id_pasien');
     }
 
+    // Relasi ke User
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'id_pengguna');
+        return $this->belongsTo(User::class, 'id_pengguna', 'id');
     }
 
+    // Relasi ke MedicalAssessment
     public function assessments(): HasMany
     {
         return $this->hasMany(MedicalAssessment::class, 'id_antrian', 'id_antrian');
