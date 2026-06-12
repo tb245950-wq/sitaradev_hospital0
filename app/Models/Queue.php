@@ -15,13 +15,17 @@ class Queue extends Model
     protected $primaryKey = 'id_antrian';
 
     /**
-     * Kolom yang boleh diisi (MASS ASSIGNMENT)
-     * Foreign keys TIDAK perlu di-fillable jika kita set via relasi
-     * TAPI untuk simplicity, kita masukkan saja
+     * Dapatkan nama key route untuk model binding
+     * Ini memberitahu Laravel untuk menggunakan 'id_antrian' bukan 'id'
      */
+    public function getRouteKeyName()
+    {
+        return 'id_antrian';
+    }
+
     protected $fillable = [
-        'id_pasien',      // ← WAJIB ADA
-        'id_pengguna',    // ← WAJIB ADA
+        'id_pasien',
+        'id_pengguna',
         'nomor_antrian',
         'jenis_layanan',
         'status',
@@ -38,19 +42,17 @@ class Queue extends Model
         'waktu_selesai' => 'datetime',
     ];
 
-    // Relasi ke Patient
+    // Relasi
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class, 'id_pasien', 'id_pasien');
     }
 
-    // Relasi ke User
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'id_pengguna', 'id');
     }
 
-    // Relasi ke MedicalAssessment
     public function assessments(): HasMany
     {
         return $this->hasMany(MedicalAssessment::class, 'id_antrian', 'id_antrian');
