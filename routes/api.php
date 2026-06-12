@@ -39,16 +39,24 @@ Route::middleware('auth:sanctum')->group(function () {
     // Therapy
     Route::get('/therapies', [TherapyController::class, 'index']);
     Route::post('/therapies', [TherapyController::class, 'store'])->middleware('role:dokter');
-    Route::get('/therapies/{id}', [TherapyController::class, 'show']);
-    Route::put('/therapies/{id}', [TherapyController::class, 'update'])->middleware('role:dokter');
-    Route::delete('/therapies/{id}', [TherapyController::class, 'destroy'])->middleware('role:admin');
+    Route::get('/therapies/{therapy}', [TherapyController::class, 'show']);
+    Route::put('/therapies/{therapy}', [TherapyController::class, 'update'])->middleware('role:dokter');
+    Route::delete('/therapies/{therapy}', [TherapyController::class, 'destroy'])->middleware('role:admin');
 
     // Monitoring
     Route::get('/monitorings', [MonitoringController::class, 'index']);
     Route::post('/monitorings', [MonitoringController::class, 'store'])->middleware('role:dokter,terapis');
-    Route::get('/monitorings/{id}', [MonitoringController::class, 'show']);
-    Route::put('/monitorings/{id}', [MonitoringController::class, 'update'])->middleware('role:dokter,terapis');
+    Route::get('/monitorings/{monitoring}', [MonitoringController::class, 'show']);
+    Route::put('/monitorings/{monitoring}', [MonitoringController::class, 'update'])->middleware('role:dokter,terapis');
     Route::get('/patients/{id_pasien}/progress-stats', [MonitoringController::class, 'progressStats']);
+
+    // Queue
+    Route::get('/queues', [QueueController::class, 'index']);
+    Route::post('/queues', [QueueController::class, 'store']);
+    Route::get('/queues/{queue}', [QueueController::class, 'show']);
+    Route::put('/queues/{queue}', [QueueController::class, 'update']);
+    Route::delete('/queues/{queue}', [QueueController::class, 'destroy']);
+    Route::post('/queues/call-next', [QueueController::class, 'callNext']);
 
     // Reports
     Route::middleware('role:admin,dokter')->group(function () {

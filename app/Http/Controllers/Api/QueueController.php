@@ -56,16 +56,10 @@ class QueueController extends Controller
 
     /**
      * FR-06: Daftarkan Pasien ke Antrian
-     * Auto-generate nomor antrian berdasarkan jenis layanan
      */
-    public function store(Request $request)
+    public function store(\App\Http\Requests\StoreQueueRequest $request)
     {
-        $validated = $request->validate([
-            'id_pasien' => 'required|exists:patients,id_pasien',
-            'jenis_layanan' => 'required|in:assessment,terapi',
-            'prioritas' => 'sometimes|integer|min:0|max:10',
-            'catatan' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         // Cek duplikasi
         $existingQueue = Queue::where('id_pasien', $validated['id_pasien'])
@@ -84,9 +78,8 @@ class QueueController extends Controller
         // Generate nomor antrian
         $nomorAntrian = $this->generateNomorAntrian($validated['jenis_layanan']);
 
-        // Buat antrian - SET SECARA EKSPLISIT
         $queue = Queue::create([
-            'id_pasien' => (int) $validated['id_pasien'],
+            'id_pasien' => $validated['id_pasien'],
             'id_pengguna' => Auth::id(),
             'nomor_antrian' => $nomorAntrian,
             'jenis_layanan' => $validated['jenis_layanan'],
@@ -96,51 +89,33 @@ class QueueController extends Controller
             'catatan' => $validated['catatan'] ?? null,
         ]);
 
-        $queue->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
+        $queue->load(['patient', 'user']);
 
         return response()->json([
             'success' => true,
             'message' => 'Pasien berhasil didaftarkan ke antrian.',
-            'data' => $queue
+            'data' => new \App\Http\Resources\QueueResource($queue)
         ], 201);
     }
 
     /**
  * Detail Antrian
  */
-public function show($id)
+public function show(Queue $queue)
 {
-    $queue = Queue::where('id_antrian', $id)->first();
-    
-    if (!$queue) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Antrian tidak ditemukan.'
-        ], 404);
-    }
-    
-    $queue->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role', 'assessments']);
+    $queue->load(['patient', 'user', 'assessments']);
 
     return response()->json([
         'success' => true,
-        'data' => $queue
+        'data' => new \App\Http\Resources\QueueResource($queue)
     ], 200);
 }
 
 /**
  * Update Status Antrian
  */
-public function update(Request $request, $id)
+public function update(Request $request, Queue $queue)
 {
-    $queue = Queue::where('id_antrian', $id)->first();
-    
-    if (!$queue) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Antrian tidak ditemukan.'
-        ], 404);
-    }
-
     $validated = $request->validate([
         'status' => 'sometimes|in:menunggu,dipanggil,selesai,tidak_hadir',
         'prioritas' => 'sometimes|integer|min:0|max:10',
@@ -166,29 +141,20 @@ public function update(Request $request, $id)
     }
 
     $queue->save();
-    $queue->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
+    $queue->load(['patient', 'user']);
 
     return response()->json([
         'success' => true,
         'message' => 'Status antrian berhasil diperbarui.',
-        'data' => $queue
+        'data' => new \App\Http\Resources\QueueResource($queue)
     ], 200);
 }
 
 /**
  * Hapus Antrian
  */
-public function destroy($id)
+public function destroy(Queue $queue)
 {
-    $queue = Queue::where('id_antrian', $id)->first();
-    
-    if (!$queue) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Antrian tidak ditemukan.'
-        ], 404);
-    }
-
     if (in_array($queue->status, ['dipanggil', 'selesai'])) {
         return response()->json([
             'success' => false,

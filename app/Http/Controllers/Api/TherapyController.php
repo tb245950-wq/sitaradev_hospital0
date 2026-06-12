@@ -50,86 +50,42 @@ class TherapyController extends Controller
     /**
      * FR-08: Buat Program Terapi Baru
      */
-    public function store(Request $request)
+    public function store(\App\Http\Requests\StoreTherapyRequest $request)
     {
-        if (!in_array(Auth::user()->role, ['dokter', 'terapis'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Akses ditolak. Hanya dokter atau terapis yang dapat membuat program terapi.'
-            ], 403);
-        }
+        $validated = $request->validated();
 
-        $validated = $request->validate([
-            'id_pasien' => 'required|exists:patients,id_pasien',
-            'id_assessment' => 'sometimes|exists:medical_assessments,id_assessment',
-            'nama_terapi' => 'required|string|max:255',
-            'deskripsi' => 'required|string',
-            'dosis' => 'sometimes|string|max:255',
-            'durasi_hari' => 'required|integer|min:1',
-            'frekuensi_per_minggu' => 'required|integer|min:1|max:7',
-            'tanggal_mulai' => 'required|date',
-            'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
-        ]);
-
-        $therapy = Therapy::create([
-            'id_pasien' => $validated['id_pasien'],
-            'id_assessment' => $validated['id_assessment'] ?? null,
+        $therapy = Therapy::create(array_merge($validated, [
             'id_terapis' => Auth::id(),
-            'nama_terapi' => $validated['nama_terapi'],
-            'deskripsi' => $validated['deskripsi'],
-            'dosis' => $validated['dosis'] ?? null,
-            'durasi_hari' => $validated['durasi_hari'],
-            'frekuensi_per_minggu' => $validated['frekuensi_per_minggu'],
             'status' => 'terjadwal',
-            'tanggal_mulai' => $validated['tanggal_mulai'],
-            'tanggal_selesai' => $validated['tanggal_selesai'] ?? null,
-        ]);
+        ]));
 
-        $therapy->load(['patient:id_pasien,nama_lengkap,nrm', 'terapis:id,name,role', 'assessment:id_assessment,diagnosis']);
+        $therapy->load(['patient', 'terapis', 'assessment']);
 
         return response()->json([
             'success' => true,
             'message' => 'Program terapi berhasil dibuat.',
-            'data' => $therapy
+            'data' => new \App\Http\Resources\TherapyResource($therapy)
         ], 201);
     }
 
     /**
      * Detail Program Terapi
      */
-    public function show($id)
+    public function show(Therapy $therapy)
     {
-        $therapy = Therapy::where('id_terapi', $id)
-            ->with(['patient', 'terapis:id,name,role', 'assessment', 'monitorings'])
-            ->first();
-
-        if (!$therapy) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Program terapi tidak ditemukan.'
-            ], 404);
-        }
+        $therapy->load(['patient', 'terapis', 'assessment', 'monitorings']);
 
         return response()->json([
             'success' => true,
-            'data' => $therapy
+            'data' => new \App\Http\Resources\TherapyResource($therapy)
         ], 200);
     }
 
     /**
      * Update Program Terapi
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Therapy $therapy)
     {
-        $therapy = Therapy::where('id_terapi', $id)->first();
-
-        if (!$therapy) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Program terapi tidak ditemukan.'
-            ], 404);
-        }
-
         if (!in_array(Auth::user()->role, ['dokter', 'terapis', 'admin'])) {
             return response()->json([
                 'success' => false,
@@ -148,34 +104,25 @@ class TherapyController extends Controller
         ]);
 
         $therapy->update($validated);
-        $therapy->load(['patient:id_pasien,nama_lengkap,nrm', 'terapis:id,name,role']);
+        $therapy->load(['patient', 'terapis']);
 
         return response()->json([
             'success' => true,
             'message' => 'Program terapi berhasil diperbarui.',
-            'data' => $therapy
+            'data' => new \App\Http\Resources\TherapyResource($therapy)
         ], 200);
     }
 
     /**
      * Hapus Program Terapi
      */
-    public function destroy($id)
+    public function destroy(Therapy $therapy)
     {
         if (Auth::user()->role !== 'admin') {
             return response()->json([
                 'success' => false,
                 'message' => 'Hanya admin yang dapat menghapus program terapi.'
             ], 403);
-        }
-
-        $therapy = Therapy::where('id_terapi', $id)->first();
-
-        if (!$therapy) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Program terapi tidak ditemukan.'
-            ], 404);
         }
 
         $therapy->delete();

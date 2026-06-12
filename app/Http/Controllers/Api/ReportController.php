@@ -12,9 +12,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Services\ReportService;
+use App\Http\Resources\AssessmentResource;
+use App\Http\Resources\TherapyResource;
+use App\Http\Resources\QueueResource;
 
 class ReportController extends Controller
 {
+    protected $reportService;
+
+    public function __construct(ReportService $reportService)
+    {
+        $this->reportService = $reportService;
+    }
+
     /**
      * FR-10: Laporan Harian
      */
@@ -74,71 +85,19 @@ class ReportController extends Controller
         ], 200);
     }
 
+    /**
+     * FR-11: Laporan Bulanan
+     */
     public function monthly(Request $request)
     {
         $tahun = $request->input('tahun', now()->year);
         $bulan = $request->input('bulan', now()->month);
 
-        $tanggalAwal = Carbon::createFromDate($tahun, $bulan, 1)->startOfMonth();
-        $tanggalAkhir = Carbon::createFromDate($tahun, $bulan, 1)->endOfMonth();
-
-        $stats = [
-            'total_pasien_baru' => Patient::whereBetween('created_at', [$tanggalAwal, $tanggalAkhir])->count(),
-            'total_assessment' => MedicalAssessment::whereBetween('tanggal_assessment', [$tanggalAwal, $tanggalAkhir])->count(),
-            'total_monitoring' => TherapyMonitoring::whereBetween('tanggal_sesi', [$tanggalAwal, $tanggalAkhir])->count(),
-            'total_terapi_baru' => Therapy::whereBetween('tanggal_mulai', [$tanggalAwal, $tanggalAkhir])->count(),
-            'rata_rata_skor' => round(TherapyMonitoring::whereBetween('tanggal_sesi', [$tanggalAwal, $tanggalAkhir])->avg('progress_score') ?? 0, 2),
-        ];
-
-        // OPTIMIZED: Ambil tren harian dalam SATU query besar menggunakan Group By
-        $trenHarianData = TherapyMonitoring::whereBetween('tanggal_sesi', [$tanggalAwal, $tanggalAkhir])
-            ->select(
-                DB::raw('DATE(tanggal_sesi) as tanggal'),
-                DB::raw('COUNT(*) as total_monitoring'),
-                DB::raw('AVG(progress_score) as rata_skor')
-            )
-            ->groupBy('tanggal')
-            ->get()
-            ->keyBy('tanggal');
-
-        $pasienBaruData = Patient::whereBetween('created_at', [$tanggalAwal, $tanggalAkhir])
-            ->select(DB::raw('DATE(created_at) as tanggal'), DB::raw('COUNT(*) as total'))
-            ->groupBy('tanggal')
-            ->get()
-            ->keyBy('tanggal');
-
-        // Mapping ke array tren harian untuk frontend
-        $trenHarian = [];
-        $currentDate = $tanggalAwal->copy();
-        while ($currentDate->lte($tanggalAkhir)) {
-            $dateStr = $currentDate->format('Y-m-d');
-            $trenHarian[] = [
-                'tanggal' => $dateStr,
-                'pasien_baru' => $pasienBaruData[$dateStr]->total ?? 0,
-                'monitoring' => $trenHarianData[$dateStr]->total_monitoring ?? 0,
-                'rata_skor' => round($trenHarianData[$dateStr]->rata_skor ?? 0, 2),
-            ];
-            $currentDate->addDay();
-        }
-
-        $topDiagnosis = MedicalAssessment::whereBetween('tanggal_assessment', [$tanggalAwal, $tanggalAkhir])
-            ->select('diagnosis', DB::raw('count(*) as total'))
-            ->groupBy('diagnosis')
-            ->orderByDesc('total')
-            ->limit(5)
-            ->get();
+        $data = $this->reportService->getMonthlyStats($tahun, $bulan);
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'periode' => [
-                    'nama_bulan' => $tanggalAwal->locale('id')->monthName,
-                    'tahun' => $tahun,
-                ],
-                'ringkasan' => $stats,
-                'tren_harian' => $trenHarian,
-                'top_diagnosis' => $topDiagnosis,
-            ]
+            'data' => $data
         ], 200);
     }
 
@@ -211,9 +170,9 @@ class ReportController extends Controller
                     'rata_rata_skor' => round($rataRataSkor ?? 0, 2),
                     'kehadiran' => $kehadiranStats,
                 ],
-                'riwayat_assessment' => $patient->assessments,
-                'riwayat_terapi' => $patient->therapies,
-                'riwayat_antrian' => $patient->queues,
+                'riwayat_assessment' => AssessmentResource::collection($patient->assessments),
+                'riwayat_terapi' => TherapyResource::collection($patient->therapies),
+                'riwayat_antrian' => QueueResource::collection($patient->queues),
                 'tren_progress' => $progressTrend,
             ]
         ], 200);
