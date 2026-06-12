@@ -22,15 +22,15 @@ class Therapy extends Model
     protected $fillable = [
         'id_pasien',
         'id_assessment',
-        'id_pengguna',
-        'jenis_terapi',
+        'id_terapis',  // ← Sesuai database
+        'nama_terapi',  // ← Sesuai database
         'deskripsi',
-        'frekuensi',
-        'durasi_menit',
+        'dosis',
+        'durasi_hari',  // ← Sesuai database
+        'frekuensi_per_minggu',  // ← Sesuai database
         'status',
         'tanggal_mulai',
         'tanggal_selesai',
-        'catatan',
     ];
 
     protected $casts = [
@@ -50,10 +50,10 @@ class Therapy extends Model
         return $this->belongsTo(MedicalAssessment::class, 'id_assessment', 'id_assessment');
     }
 
-    // Relasi ke User (Terapis/Dokter)
-    public function user(): BelongsTo
+    // Relasi ke User (Terapis)
+    public function terapis(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'id_pengguna', 'id');
+        return $this->belongsTo(User::class, 'id_terapis', 'id');
     }
 
     // Relasi ke Monitoring
