@@ -69,7 +69,54 @@ Selama fase pengujian, ditemukan beberapa isu yang telah diperbaiki:
 
 ---
 
-## 6. How to Run Tests
+## 6. Database Schema Audit (SRS Verification)
+Audit struktur database dilakukan untuk memastikan kesesuaian dengan dokumen SRS. Berikut adalah detail kolom untuk setiap tabel utama:
+
+### 6.1 Tabel `patients` (Data Pasien)
+| Kolom | Tipe Data | Deskripsi | Status |
+| :--- | :--- | :--- | :--- |
+| `id_pasien` | BigInt (PK) | Primary Key Custom | **OK** |
+| `nrm` | String (Unique) | Nomor Rekam Medis | **OK** |
+| `nik` | String (Unique) | Nomor Induk Kependudukan | **OK** |
+| `nama_lengkap`| String | Nama sesuai identitas | **OK** |
+| `jenis_kelamin`| Enum (L, P) | Laki-laki / Perempuan | **OK** |
+| `riwayat_medis`| Text | Catatan medis masa lalu | **OK** |
+
+### 6.2 Tabel `medical_assessments` (Assessment Medis)
+| Kolom | Tipe Data | Deskripsi | Status |
+| :--- | :--- | :--- | :--- |
+| `id_assessment`| BigInt (PK) | Primary Key Custom | **OK** |
+| `id_pasien` | Foreign Key | Relasi ke Tabel Patients | **OK** |
+| `keluhan_utama`| Text | Keluhan saat datang | **OK** |
+| `hasil_pemeriksaan`| JSON | Tensi, Nadi, Suhu, BB, TB | **OK** |
+| `diagnosis` | Text | Hasil diagnosa dokter | **OK** |
+| `status` | Enum | draft / final | **OK** |
+
+### 6.3 Tabel `therapy_monitorings` (Monitoring Terapi)
+| Kolom | Tipe Data | Deskripsi | Status |
+| :--- | :--- | :--- | :--- |
+| `id_monitoring`| BigInt (PK) | Primary Key Custom | **OK** |
+| `id_terapi` | Foreign Key | Relasi ke Tabel Therapies | **OK** |
+| `kehadiran` | Enum | hadir, tidak_hadir, izin | **OK** |
+| `progress_score`| Integer | Skor kemajuan (0-100) | **OK** |
+| `catatan_perkembangan`| Text | Detail observasi terapis | **OK** |
+
+### 6.4 Tabel `queues` (Antrian)
+| Kolom | Tipe Data | Deskripsi | Status |
+| :--- | :--- | :--- | :--- |
+| `id_antrian` | BigInt (PK) | Primary Key Custom | **OK** |
+| `nomor_antrian`| Integer | Nomor urut harian | **OK** |
+| `jenis_layanan`| Enum | assessment / terapi | **OK** |
+| `status` | Enum | menunggu, dipanggil, selesai | **OK** |
+
+**Kesimpulan Integritas:**
+- Seluruh relasi menggunakan *Foreign Keys* yang valid.
+- Penggunaan tipe data `JSON` pada `hasil_pemeriksaan` memberikan fleksibilitas sesuai NFR (Non-Functional Requirements).
+- Penamaan kolom konsisten menggunakan *snake_case* sesuai standar Laravel & SRS.
+
+---
+
+## 7. How to Run Tests
 ```bash
 php artisan test
 ```
