@@ -14,10 +14,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
 
-    // Patient routes (tetap apiResource)
+    // Patient routes
     Route::apiResource('patients', PatientController::class);
 
-    // Queue routes - MANUAL tanpa model binding
+    // Queue routes - DISABLE MODEL BINDING
     Route::get('/queues', [QueueController::class, 'index']);
     Route::post('/queues', [QueueController::class, 'store']);
     Route::get('/queues/{id}', [QueueController::class, 'show'])->withoutMiddleware(\Illuminate\Routing\Middleware\SubstituteBindings::class);
