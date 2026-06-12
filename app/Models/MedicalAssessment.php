@@ -14,41 +14,55 @@ class MedicalAssessment extends Model
     protected $table = 'medical_assessments';
     protected $primaryKey = 'id_assessment';
 
-    public $incrementing = true;
-
-    protected $fillable = [
-        'keluhan_utama',
-        'diagnosis',
-        'catatan_medis',
-        'hasil_pemeriksaan',
-        'rencana_terapi',
-        'status',
-        'tanggal_assessment',
-    ];
-
-    protected function casts(): array
+    public function getRouteKeyName()
     {
-        return [
-            'hasil_pemeriksaan' => 'json',
-            'tanggal_assessment' => 'date',
-        ];
+        return 'id_assessment';
     }
 
+    /**
+     * Kolom yang boleh diisi (MASS ASSIGNMENT)
+     * WAJIB termasuk foreign keys!
+     */
+    protected $fillable = [
+        'id_pasien',           // ← WAJIB
+        'id_pengguna',         // ← WAJIB (dokter)
+        'id_antrian',          // ← WAJIB
+        'tanggal_assessment',
+        'keluhan_utama',
+        'riwayat_penyakit',
+        'hasil_pemeriksaan',
+        'diagnosis',
+        'rencana_terapi',
+        'obat_diresepkan',
+        'catatan_tambahan',
+        'status',
+    ];
+
+    protected $casts = [
+        'tanggal_assessment' => 'date',
+        'hasil_pemeriksaan' => 'array',   // JSON
+        'obat_diresepkan' => 'array',      // JSON
+    ];
+
+    // Relasi ke Patient
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class, 'id_pasien', 'id_pasien');
     }
 
+    // Relasi ke User (Dokter)
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'id_pengguna');
+        return $this->belongsTo(User::class, 'id_pengguna', 'id');
     }
 
+    // Relasi ke Queue
     public function queue(): BelongsTo
     {
         return $this->belongsTo(Queue::class, 'id_antrian', 'id_antrian');
     }
 
+    // Relasi ke Therapy
     public function therapies(): HasMany
     {
         return $this->hasMany(Therapy::class, 'id_assessment', 'id_assessment');
