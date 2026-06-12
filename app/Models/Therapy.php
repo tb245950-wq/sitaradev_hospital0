@@ -14,42 +14,49 @@ class Therapy extends Model
     protected $table = 'therapies';
     protected $primaryKey = 'id_terapi';
 
-    public $incrementing = true;
+    public function getRouteKeyName()
+    {
+        return 'id_terapi';
+    }
 
     protected $fillable = [
-        'nama_terapi',
+        'id_pasien',
+        'id_assessment',
+        'id_pengguna',
+        'jenis_terapi',
         'deskripsi',
-        'dosis',
-        'durasi_hari',
-        'frekuensi_per_minggu',
+        'frekuensi',
+        'durasi_menit',
         'status',
         'tanggal_mulai',
         'tanggal_selesai',
+        'catatan',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'tanggal_mulai' => 'date',
-            'tanggal_selesai' => 'date',
-        ];
-    }
+    protected $casts = [
+        'tanggal_mulai' => 'date',
+        'tanggal_selesai' => 'date',
+    ];
 
-    public function assessment(): BelongsTo
-    {
-        return $this->belongsTo(MedicalAssessment::class, 'id_assessment', 'id_assessment');
-    }
-
+    // Relasi ke Patient
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class, 'id_pasien', 'id_pasien');
     }
 
-    public function therapist(): BelongsTo
+    // Relasi ke MedicalAssessment
+    public function assessment(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'id_terapis');
+        return $this->belongsTo(MedicalAssessment::class, 'id_assessment', 'id_assessment');
     }
 
+    // Relasi ke User (Terapis/Dokter)
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'id_pengguna', 'id');
+    }
+
+    // Relasi ke Monitoring
     public function monitorings(): HasMany
     {
         return $this->hasMany(TherapyMonitoring::class, 'id_terapi', 'id_terapi');
