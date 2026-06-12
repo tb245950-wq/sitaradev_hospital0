@@ -24,9 +24,9 @@ class MedicalAssessment extends Model
      * WAJIB termasuk foreign keys!
      */
     protected $fillable = [
-        'id_pasien',           // ← WAJIB
-        'id_pengguna',         // ← WAJIB (dokter)
-        'id_antrian',          // ← WAJIB
+        'id_pasien',
+        'id_pengguna',
+        'id_antrian',
         'tanggal_assessment',
         'keluhan_utama',
         'riwayat_penyakit',
@@ -35,6 +35,7 @@ class MedicalAssessment extends Model
         'rencana_terapi',
         'obat_diresepkan',
         'catatan_tambahan',
+        'catatan_medis', 
         'status',
     ];
 
