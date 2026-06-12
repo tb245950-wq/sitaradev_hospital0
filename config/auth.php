@@ -44,7 +44,7 @@ return [
     ],
 
     'api' => [
-        'driver' => 'sanctum', // ← WAJIB 'sanctum', bukan 'token'
+        'driver' => 'sanctum',
         'provider' => 'users',
     ],
 ],
