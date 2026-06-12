@@ -46,119 +46,105 @@ class MonitoringController extends Controller
     }
 
     /**
-     * FR-09: Buat Monitoring Baru
-     */
-    public function store(Request $request)
-    {
-        if (!in_array(Auth::user()->role, ['dokter', 'terapis'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Akses ditolak. Hanya dokter atau terapis yang dapat membuat monitoring.'
-            ], 403);
-        }
-
-        $validated = $request->validate([
-            'id_terapi' => 'required|exists:therapies,id_terapi',
-            'tanggal_sesi' => 'sometimes|date',
-            'waktu_mulai' => 'sometimes|date_format:H:i',
-            'waktu_selesai' => 'sometimes|date_format:H:i|after:waktu_mulai',
-            'kehadiran' => 'required|in:Hadir,Tidak Hadir,Izin,Sakit',
-            'catatan_perkembangan' => 'required|string',
-            'kondisi_pasien' => 'required|string',
-            'rekomendasi' => 'nullable|string',
-            'progress_score' => 'required|integer|min:0|max:100',
-        ]);
-
-        // Ambil data terapi untuk dapat id_pasien
-        $therapy = Therapy::where('id_terapi', $validated['id_terapi'])->first();
-
-        // Auto-generate sesi ke (hitung dari jumlah monitoring yang sudah ada)
-        $sesiKe = TherapyMonitoring::where('id_terapi', $validated['id_terapi'])
-            ->count() + 1;
-
-        $monitoring = TherapyMonitoring::create([
-            'id_terapi' => $validated['id_terapi'],
-            'id_pasien' => $therapy->id_pasien,
-            'id_terapis' => Auth::id(),
-            'tanggal_sesi' => $validated['tanggal_sesi'] ?? now(),
-            'waktu_mulai' => $validated['waktu_mulai'] ?? null,
-            'waktu_selesai' => $validated['waktu_selesai'] ?? null,
-            'kehadiran' => $validated['kehadiran'],
-            'catatan_perkembangan' => $validated['catatan_perkembangan'],
-            'kondisi_pasien' => $validated['kondisi_pasien'],
-            'rekomendasi' => $validated['rekomendasi'] ?? null,
-            'progress_score' => $validated['progress_score'],
-        ]);
-
-        $monitoring->load(['therapy:id_terapi,nama_terapi', 'patient:id_pasien,nama_lengkap,nrm', 'terapis:id,name,role']);
-
+ * FR-09: Buat Monitoring Baru
+ */
+public function store(Request $request)
+{
+    if (!in_array(Auth::user()->role, ['dokter', 'terapis'])) {
         return response()->json([
-            'success' => true,
-            'message' => 'Monitoring terapi berhasil dibuat.',
-            'data' => $monitoring
-        ], 201);
+            'success' => false,
+            'message' => 'Akses ditolak. Hanya dokter atau terapis yang dapat membuat monitoring.'
+        ], 403);
     }
 
-    /**
-     * Detail Monitoring
-     */
-    public function show($id)
-    {
-        $monitoring = TherapyMonitoring::where('id_monitoring', $id)
-            ->with(['therapy', 'patient', 'terapis:id,name,role'])
-            ->first();
+    $validated = $request->validate([
+        'id_terapi' => 'required|exists:therapies,id_terapi',
+        'tanggal_sesi' => 'sometimes|date',
+        'waktu_mulai' => 'required|date_format:H:i',
+        'waktu_selesai' => 'required|date_format:H:i|after:waktu_mulai',
+        'kehadiran' => 'required|in:hadir,tidak hadir,izin,sakit',
+        'catatan_perkembangan' => 'required|string',
+        'kondisi_pasien' => 'required|string',
+        'rekomendasi' => 'nullable|string',
+        'progress_score' => 'required|integer|min:0|max:100',
+    ]);
 
-        if (!$monitoring) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Monitoring tidak ditemukan.'
-            ], 404);
-        }
+    // Ambil data terapi untuk dapat id_pasien
+    $therapy = Therapy::where('id_terapi', $validated['id_terapi'])->first();
 
+    // Auto-lowercase kehadiran
+    $validated['kehadiran'] = strtolower($validated['kehadiran']);
+
+    // Auto-generate sesi ke
+    $sesiKe = TherapyMonitoring::where('id_terapi', $validated['id_terapi'])
+        ->count() + 1;
+
+    $monitoring = TherapyMonitoring::create([
+        'id_terapi' => $validated['id_terapi'],
+        'id_pasien' => $therapy->id_pasien,
+        'id_terapis' => Auth::id(),
+        'tanggal_sesi' => $validated['tanggal_sesi'] ?? now(),
+        'waktu_mulai' => $validated['waktu_mulai'],
+        'waktu_selesai' => $validated['waktu_selesai'],
+        'kehadiran' => $validated['kehadiran'],
+        'catatan_perkembangan' => $validated['catatan_perkembangan'],
+        'kondisi_pasien' => $validated['kondisi_pasien'],
+        'rekomendasi' => $validated['rekomendasi'] ?? null,
+        'progress_score' => $validated['progress_score'],
+    ]);
+
+    $monitoring->load(['therapy:id_terapi,nama_terapi', 'patient:id_pasien,nama_lengkap,nrm', 'terapis:id,name,role']);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Monitoring terapi berhasil dibuat.',
+        'data' => $monitoring
+    ], 201);
+}
+
+/**
+ * Update Monitoring
+ */
+public function update(Request $request, $id)
+{
+    $monitoring = TherapyMonitoring::where('id_monitoring', $id)->first();
+
+    if (!$monitoring) {
         return response()->json([
-            'success' => true,
-            'data' => $monitoring
-        ], 200);
+            'success' => false,
+            'message' => 'Monitoring tidak ditemukan.'
+        ], 404);
     }
 
-    /**
-     * Update Monitoring
-     */
-    public function update(Request $request, $id)
-    {
-        $monitoring = TherapyMonitoring::where('id_monitoring', $id)->first();
-
-        if (!$monitoring) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Monitoring tidak ditemukan.'
-            ], 404);
-        }
-
-        if (!in_array(Auth::user()->role, ['dokter', 'terapis', 'admin'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Akses ditolak.'
-            ], 403);
-        }
-
-        $validated = $request->validate([
-            'kehadiran' => 'sometimes|in:Hadir,Tidak Hadir,Izin,Sakit',
-            'catatan_perkembangan' => 'sometimes|string',
-            'kondisi_pasien' => 'sometimes|string',
-            'rekomendasi' => 'nullable|string',
-            'progress_score' => 'sometimes|integer|min:0|max:100',
-        ]);
-
-        $monitoring->update($validated);
-        $monitoring->load(['therapy:id_terapi,nama_terapi', 'patient:id_pasien,nama_lengkap,nrm', 'terapis:id,name,role']);
-
+    if (!in_array(Auth::user()->role, ['dokter', 'terapis', 'admin'])) {
         return response()->json([
-            'success' => true,
-            'message' => 'Monitoring berhasil diperbarui.',
-            'data' => $monitoring
-        ], 200);
+            'success' => false,
+            'message' => 'Akses ditolak.'
+        ], 403);
     }
+
+    $validated = $request->validate([
+        'kehadiran' => 'sometimes|in:hadir,tidak hadir,izin,sakit',
+        'catatan_perkembangan' => 'sometimes|string',
+        'kondisi_pasien' => 'sometimes|string',
+        'rekomendasi' => 'nullable|string',
+        'progress_score' => 'sometimes|integer|min:0|max:100',
+    ]);
+
+    // Auto-lowercase kehadiran jika ada
+    if (isset($validated['kehadiran'])) {
+        $validated['kehadiran'] = strtolower($validated['kehadiran']);
+    }
+
+    $monitoring->update($validated);
+    $monitoring->load(['therapy:id_terapi,nama_terapi', 'patient:id_pasien,nama_lengkap,nrm', 'terapis:id,name,role']);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Monitoring berhasil diperbarui.',
+        'data' => $monitoring
+    ], 200);
+}
 
     /**
      * Statistik Perkembangan Pasien

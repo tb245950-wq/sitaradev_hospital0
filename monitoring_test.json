@@ -1,0 +1,10 @@
+{
+  "id_terapi": 1,
+  "waktu_mulai": "08:00",
+  "waktu_selesai": "08:45",
+  "kehadiran": "hadir",
+  "catatan_perkembangan": "Pasien menunjukkan kemajuan baik, mulai bisa mengucapkan kata sederhana",
+  "kondisi_pasien": "Stabil dan kooperatif",
+  "rekomendasi": "Lanjutkan dengan latihan kata 2 suku kata",
+  "progress_score": 65
+}
