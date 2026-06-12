@@ -21,19 +21,22 @@ class TherapyMonitoring extends Model
     protected $fillable = [
         'id_terapi',
         'id_pasien',
-        'id_pengguna',
-        'tanggal_monitoring',
-        'sesi_ke',
-        'progress',
-        'catatan_terapis',
-        'skor_perkembangan',
-        'kendala',
+        'id_terapis',  // ← Sesuai database
+        'tanggal_sesi',  // ← Sesuai database
+        'waktu_mulai',
+        'waktu_selesai',
+        'kehadiran',
+        'catatan_perkembangan',  // ← Sesuai database
+        'kondisi_pasien',
         'rekomendasi',
+        'progress_score',  // ← Sesuai database
     ];
 
     protected $casts = [
-        'tanggal_monitoring' => 'date',
-        'skor_perkembangan' => 'integer',
+        'tanggal_sesi' => 'date',
+        'waktu_mulai' => 'datetime:H:i',
+        'waktu_selesai' => 'datetime:H:i',
+        'progress_score' => 'integer',
     ];
 
     // Relasi ke Therapy
@@ -49,8 +52,8 @@ class TherapyMonitoring extends Model
     }
 
     // Relasi ke User (Terapis)
-    public function user(): BelongsTo
+    public function terapis(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'id_pengguna', 'id');
+        return $this->belongsTo(User::class, 'id_terapis', 'id');
     }
 }
