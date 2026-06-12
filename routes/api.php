@@ -15,10 +15,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
 
-    // Patient CRUD routes
+    // Patient CRUD routes (tetap pakai apiResource karena sudah benar)
     Route::apiResource('patients', PatientController::class);
 
-    // Queue routes
-    Route::apiResource('queues', QueueController::class);
+    // Queue routes - MANUAL ROUTES (bukan apiResource)
+    Route::get('/queues', [QueueController::class, 'index']);
+    Route::post('/queues', [QueueController::class, 'store']);
+    Route::get('/queues/{id_antrian}', [QueueController::class, 'show']);
+    Route::put('/queues/{id_antrian}', [QueueController::class, 'update']);
+    Route::delete('/queues/{id_antrian}', [QueueController::class, 'destroy']);
     Route::post('/queues/call-next', [QueueController::class, 'callNext']);
 });
