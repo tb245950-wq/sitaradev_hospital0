@@ -106,88 +106,81 @@ class QueueController extends Controller
     }
 
     /**
-     * Detail Antrian
-     * ⚠️ DIPERBAIKI: Menggunakan manual query untuk bypass Route Model Binding
-     */
-    public function show($id_antrian)
-    {
-        $queue = Queue::where('id_antrian', $id_antrian)
-            ->with(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role', 'assessments'])
-            ->firstOrFail();
+ * Detail Antrian
+ */
+public function show($id)
+{
+    $queue = Queue::findOrFail($id);
+    $queue->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role', 'assessments']);
 
-        return response()->json([
-            'success' => true,
-            'data' => $queue
-        ], 200);
+    return response()->json([
+        'success' => true,
+        'data' => $queue
+    ], 200);
+}
+
+/**
+ * Update Status Antrian
+ */
+public function update(Request $request, $id)
+{
+    $queue = Queue::findOrFail($id);
+
+    $validated = $request->validate([
+        'status' => 'sometimes|in:menunggu,dipanggil,selesai,tidak_hadir',
+        'prioritas' => 'sometimes|integer|min:0|max:10',
+        'catatan' => 'nullable|string',
+    ]);
+
+    if (isset($validated['status'])) {
+        $queue->status = $validated['status'];
+
+        if ($validated['status'] === 'dipanggil') {
+            $queue->waktu_panggil = now();
+        } elseif ($validated['status'] === 'selesai') {
+            $queue->waktu_selesai = now();
+        }
     }
 
-    /**
-     * FR-06: Update Status Antrian
-     * Panggil pasien, tandai selesai, atau tidak hadir
-     * ⚠️ DIPERBAIKI: Menggunakan manual query untuk bypass Route Model Binding
-     */
-    public function update(Request $request, $id_antrian)
-    {
-        $queue = Queue::where('id_antrian', $id_antrian)->firstOrFail();
-
-        $validated = $request->validate([
-            'status' => 'sometimes|in:menunggu,dipanggil,selesai,tidak_hadir',
-            'prioritas' => 'sometimes|integer|min:0|max:10',
-            'catatan' => 'nullable|string',
-        ]);
-
-        // Update status dan timestamp yang relevan
-        if (isset($validated['status'])) {
-            $queue->status = $validated['status'];
-
-            if ($validated['status'] === 'dipanggil') {
-                $queue->waktu_panggil = now();
-            } elseif ($validated['status'] === 'selesai') {
-                $queue->waktu_selesai = now();
-            }
-        }
-
-        if (isset($validated['prioritas'])) {
-            $queue->prioritas = $validated['prioritas'];
-        }
-
-        if (isset($validated['catatan'])) {
-            $queue->catatan = $validated['catatan'];
-        }
-
-        $queue->save();
-        $queue->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Status antrian berhasil diperbarui.',
-            'data' => $queue
-        ], 200);
+    if (isset($validated['prioritas'])) {
+        $queue->prioritas = $validated['prioritas'];
     }
 
-    /**
-     * Hapus Antrian
-     * ⚠️ DIPERBAIKI: Menggunakan manual query untuk bypass Route Model Binding
-     */
-    public function destroy($id_antrian)
-    {
-        $queue = Queue::where('id_antrian', $id_antrian)->firstOrFail();
-
-        // Tidak boleh hapus antrian yang sedang dipanggil atau selesai
-        if (in_array($queue->status, ['dipanggil', 'selesai'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tidak dapat menghapus antrian yang sedang dipanggil atau sudah selesai.'
-            ], 400);
-        }
-
-        $queue->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Antrian berhasil dihapus.'
-        ], 200);
+    if (isset($validated['catatan'])) {
+        $queue->catatan = $validated['catatan'];
     }
+
+    $queue->save();
+    $queue->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Status antrian berhasil diperbarui.',
+        'data' => $queue
+    ], 200);
+}
+
+/**
+ * Hapus Antrian
+ */
+public function destroy($id)
+{
+    $queue = Queue::findOrFail($id);
+
+    if (in_array($queue->status, ['dipanggil', 'selesai'])) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Tidak dapat menghapus antrian yang sedang dipanggil atau sudah selesai.'
+        ], 400);
+    }
+
+    $queue->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Antrian berhasil dihapus.'
+    ], 200);
+}
 
     /**
      * Generate Nomor Antrian Otomatis
