@@ -16,7 +16,7 @@ class TherapyController extends Controller
     {
         $query = Therapy::with([
             'patient:id_pasien,nama_lengkap,nrm',
-            'user:id,name,role',
+            'terapis:id,name,role',
             'assessment:id_assessment,diagnosis'
         ]);
 
@@ -30,16 +30,11 @@ class TherapyController extends Controller
             $query->where('status', $request->status);
         }
 
-        // Filter by jenis terapi
-        if ($request->has('jenis_terapi') && $request->jenis_terapi != '') {
-            $query->where('jenis_terapi', $request->jenis_terapi);
-        }
-
-        // Search
+        // Filter by nama terapi
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('jenis_terapi', 'like', "%{$search}%")
+                $q->where('nama_terapi', 'like', "%{$search}%")
                   ->orWhere('deskripsi', 'like', "%{$search}%");
             });
         }
@@ -54,7 +49,6 @@ class TherapyController extends Controller
 
     /**
      * FR-08: Buat Program Terapi Baru
-     * Hanya dokter atau terapis yang bisa membuat
      */
     public function store(Request $request)
     {
@@ -68,30 +62,30 @@ class TherapyController extends Controller
         $validated = $request->validate([
             'id_pasien' => 'required|exists:patients,id_pasien',
             'id_assessment' => 'sometimes|exists:medical_assessments,id_assessment',
-            'jenis_terapi' => 'required|string|max:100',
+            'nama_terapi' => 'required|string|max:255',
             'deskripsi' => 'required|string',
-            'frekuensi' => 'required|string|max:50',
-            'durasi_menit' => 'required|integer|min:1',
+            'dosis' => 'sometimes|string|max:255',
+            'durasi_hari' => 'required|integer|min:1',
+            'frekuensi_per_minggu' => 'required|integer|min:1|max:7',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
-            'catatan' => 'nullable|string',
         ]);
 
         $therapy = Therapy::create([
             'id_pasien' => $validated['id_pasien'],
             'id_assessment' => $validated['id_assessment'] ?? null,
-            'id_pengguna' => Auth::id(),
-            'jenis_terapi' => $validated['jenis_terapi'],
+            'id_terapis' => Auth::id(),
+            'nama_terapi' => $validated['nama_terapi'],
             'deskripsi' => $validated['deskripsi'],
-            'frekuensi' => $validated['frekuensi'],
-            'durasi_menit' => $validated['durasi_menit'],
-            'status' => 'aktif',
+            'dosis' => $validated['dosis'] ?? null,
+            'durasi_hari' => $validated['durasi_hari'],
+            'frekuensi_per_minggu' => $validated['frekuensi_per_minggu'],
+            'status' => 'terjadwal',
             'tanggal_mulai' => $validated['tanggal_mulai'],
             'tanggal_selesai' => $validated['tanggal_selesai'] ?? null,
-            'catatan' => $validated['catatan'] ?? null,
         ]);
 
-        $therapy->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role', 'assessment:id_assessment,diagnosis']);
+        $therapy->load(['patient:id_pasien,nama_lengkap,nrm', 'terapis:id,name,role', 'assessment:id_assessment,diagnosis']);
 
         return response()->json([
             'success' => true,
@@ -106,7 +100,7 @@ class TherapyController extends Controller
     public function show($id)
     {
         $therapy = Therapy::where('id_terapi', $id)
-            ->with(['patient', 'user:id,name,role', 'assessment', 'monitorings'])
+            ->with(['patient', 'terapis:id,name,role', 'assessment', 'monitorings'])
             ->first();
 
         if (!$therapy) {
@@ -144,17 +138,17 @@ class TherapyController extends Controller
         }
 
         $validated = $request->validate([
-            'jenis_terapi' => 'sometimes|string|max:100',
+            'nama_terapi' => 'sometimes|string|max:255',
             'deskripsi' => 'sometimes|string',
-            'frekuensi' => 'sometimes|string|max:50',
-            'durasi_menit' => 'sometimes|integer|min:1',
-            'status' => 'sometimes|in:aktif,selesai,dihentikan',
+            'dosis' => 'sometimes|string|max:255',
+            'durasi_hari' => 'sometimes|integer|min:1',
+            'frekuensi_per_minggu' => 'sometimes|integer|min:1|max:7',
+            'status' => 'sometimes|in:terjadwal,aktif,selesai,dihentikan',
             'tanggal_selesai' => 'nullable|date',
-            'catatan' => 'nullable|string',
         ]);
 
         $therapy->update($validated);
-        $therapy->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
+        $therapy->load(['patient:id_pasien,nama_lengkap,nrm', 'terapis:id,name,role']);
 
         return response()->json([
             'success' => true,
