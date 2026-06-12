@@ -59,58 +59,61 @@ class QueueController extends Controller
      * Auto-generate nomor antrian berdasarkan jenis layanan
      */
     public function store(Request $request)
-{
-    $validated = $request->validate([
-        'id_pasien' => 'required|exists:patients,id_pasien',
-        'jenis_layanan' => 'required|in:assessment,terapi',
-        'prioritas' => 'sometimes|integer|min:0|max:10',
-        'catatan' => 'nullable|string',
-    ]);
+    {
+        $validated = $request->validate([
+            'id_pasien' => 'required|exists:patients,id_pasien',
+            'jenis_layanan' => 'required|in:assessment,terapi',
+            'prioritas' => 'sometimes|integer|min:0|max:10',
+            'catatan' => 'nullable|string',
+        ]);
 
-    // Cek duplikasi
-    $existingQueue = Queue::where('id_pasien', $validated['id_pasien'])
-        ->whereDate('waktu_daftar', today())
-        ->whereIn('status', ['menunggu', 'dipanggil'])
-        ->first();
+        // Cek duplikasi
+        $existingQueue = Queue::where('id_pasien', $validated['id_pasien'])
+            ->whereDate('waktu_daftar', today())
+            ->whereIn('status', ['menunggu', 'dipanggil'])
+            ->first();
 
-    if ($existingQueue) {
+        if ($existingQueue) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pasien sudah terdaftar dalam antrian hari ini.',
+                'data' => $existingQueue
+            ], 409);
+        }
+
+        // Generate nomor antrian
+        $nomorAntrian = $this->generateNomorAntrian($validated['jenis_layanan']);
+
+        // Buat antrian - SET SECARA EKSPLISIT
+        $queue = Queue::create([
+            'id_pasien' => (int) $validated['id_pasien'],
+            'id_pengguna' => Auth::id(),
+            'nomor_antrian' => $nomorAntrian,
+            'jenis_layanan' => $validated['jenis_layanan'],
+            'status' => 'menunggu',
+            'prioritas' => $validated['prioritas'] ?? 0,
+            'waktu_daftar' => now(),
+            'catatan' => $validated['catatan'] ?? null,
+        ]);
+
+        $queue->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
+
         return response()->json([
-            'success' => false,
-            'message' => 'Pasien sudah terdaftar dalam antrian hari ini.',
-            'data' => $existingQueue
-        ], 409);
+            'success' => true,
+            'message' => 'Pasien berhasil didaftarkan ke antrian.',
+            'data' => $queue
+        ], 201);
     }
-
-    // Generate nomor antrian
-    $nomorAntrian = $this->generateNomorAntrian($validated['jenis_layanan']);
-
-    // Buat antrian - SET SECARA EKSPLISIT
-    $queue = Queue::create([
-        'id_pasien' => (int) $validated['id_pasien'],  // Cast ke integer
-        'id_pengguna' => Auth::id(),                    // User yang login
-        'nomor_antrian' => $nomorAntrian,
-        'jenis_layanan' => $validated['jenis_layanan'],
-        'status' => 'menunggu',
-        'prioritas' => $validated['prioritas'] ?? 0,
-        'waktu_daftar' => now(),
-        'catatan' => $validated['catatan'] ?? null,
-    ]);
-
-    $queue->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Pasien berhasil didaftarkan ke antrian.',
-        'data' => $queue
-    ], 201);
-}
 
     /**
      * Detail Antrian
+     * ⚠️ DIPERBAIKI: Menggunakan manual query untuk bypass Route Model Binding
      */
-    public function show(Queue $queue)
+    public function show($id_antrian)
     {
-        $queue->load(['patient', 'user:id,name,role', 'assessments']);
+        $queue = Queue::where('id_antrian', $id_antrian)
+            ->with(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role', 'assessments'])
+            ->firstOrFail();
 
         return response()->json([
             'success' => true,
@@ -121,9 +124,12 @@ class QueueController extends Controller
     /**
      * FR-06: Update Status Antrian
      * Panggil pasien, tandai selesai, atau tidak hadir
+     * ⚠️ DIPERBAIKI: Menggunakan manual query untuk bypass Route Model Binding
      */
-    public function update(Request $request, Queue $queue)
+    public function update(Request $request, $id_antrian)
     {
+        $queue = Queue::where('id_antrian', $id_antrian)->firstOrFail();
+
         $validated = $request->validate([
             'status' => 'sometimes|in:menunggu,dipanggil,selesai,tidak_hadir',
             'prioritas' => 'sometimes|integer|min:0|max:10',
@@ -161,9 +167,12 @@ class QueueController extends Controller
 
     /**
      * Hapus Antrian
+     * ⚠️ DIPERBAIKI: Menggunakan manual query untuk bypass Route Model Binding
      */
-    public function destroy(Queue $queue)
+    public function destroy($id_antrian)
     {
+        $queue = Queue::where('id_antrian', $id_antrian)->firstOrFail();
+
         // Tidak boleh hapus antrian yang sedang dipanggil atau selesai
         if (in_array($queue->status, ['dipanggil', 'selesai'])) {
             return response()->json([
