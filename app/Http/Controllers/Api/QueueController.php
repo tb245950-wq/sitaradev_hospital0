@@ -59,52 +59,51 @@ class QueueController extends Controller
      * Auto-generate nomor antrian berdasarkan jenis layanan
      */
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'id_pasien' => 'required|exists:patients,id_pasien',
-            'jenis_layanan' => 'required|in:assessment,terapi',
-            'prioritas' => 'sometimes|integer|min:0|max:10',
-            'catatan' => 'nullable|string',
-        ]);
+{
+    $validated = $request->validate([
+        'id_pasien' => 'required|exists:patients,id_pasien',
+        'jenis_layanan' => 'required|in:assessment,terapi',
+        'prioritas' => 'sometimes|integer|min:0|max:10',
+        'catatan' => 'nullable|string',
+    ]);
 
-        // Cek apakah pasien sudah ada di antrian hari ini dengan status aktif
-        $existingQueue = Queue::where('id_pasien', $validated['id_pasien'])
-            ->whereDate('waktu_daftar', today())
-            ->whereIn('status', ['menunggu', 'dipanggil'])
-            ->first();
+    // Cek duplikasi
+    $existingQueue = Queue::where('id_pasien', $validated['id_pasien'])
+        ->whereDate('waktu_daftar', today())
+        ->whereIn('status', ['menunggu', 'dipanggil'])
+        ->first();
 
-        if ($existingQueue) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Pasien sudah terdaftar dalam antrian hari ini.',
-                'data' => $existingQueue
-            ], 409);
-        }
-
-        // Generate nomor antrian otomatis
-        $nomorAntrian = $this->generateNomorAntrian($validated['jenis_layanan']);
-
-        // Buat antrian baru
-        $queue = Queue::create([
-            'id_pasien' => $validated['id_pasien'],
-            'id_pengguna' => Auth::id(),
-            'nomor_antrian' => $nomorAntrian,
-            'jenis_layanan' => $validated['jenis_layanan'],
-            'status' => 'menunggu',
-            'prioritas' => $validated['prioritas'] ?? 0,
-            'waktu_daftar' => now(),
-            'catatan' => $validated['catatan'] ?? null,
-        ]);
-
-        // Load relasi untuk response
-        $queue->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
-
+    if ($existingQueue) {
         return response()->json([
-            'success' => true,
-            'message' => 'Pasien berhasil didaftarkan ke antrian.',
-            'data' => $queue
-        ], 201);
+            'success' => false,
+            'message' => 'Pasien sudah terdaftar dalam antrian hari ini.',
+            'data' => $existingQueue
+        ], 409);
     }
+
+    // Generate nomor antrian
+    $nomorAntrian = $this->generateNomorAntrian($validated['jenis_layanan']);
+
+    // Buat antrian - SET SECARA EKSPLISIT
+    $queue = Queue::create([
+        'id_pasien' => (int) $validated['id_pasien'],  // Cast ke integer
+        'id_pengguna' => Auth::id(),                    // User yang login
+        'nomor_antrian' => $nomorAntrian,
+        'jenis_layanan' => $validated['jenis_layanan'],
+        'status' => 'menunggu',
+        'prioritas' => $validated['prioritas'] ?? 0,
+        'waktu_daftar' => now(),
+        'catatan' => $validated['catatan'] ?? null,
+    ]);
+
+    $queue->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Pasien berhasil didaftarkan ke antrian.',
+        'data' => $queue
+    ], 201);
+}
 
     /**
      * Detail Antrian
