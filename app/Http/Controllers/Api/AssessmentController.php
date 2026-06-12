@@ -111,7 +111,7 @@ class AssessmentController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $assessment
+            'data' => new \App\Http\Resources\AssessmentResource($assessment)
         ], 200);
     }
 
@@ -153,12 +153,12 @@ class AssessmentController extends Controller
         ]);
 
         $assessment->update($validated);
-        $assessment->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
+        $assessment->load(['patient', 'user']);
 
         return response()->json([
             'success' => true,
             'message' => 'Assessment medis berhasil diperbarui.',
-            'data' => $assessment
+            'data' => new \App\Http\Resources\AssessmentResource($assessment)
         ], 200);
     }
 
@@ -189,7 +189,7 @@ class AssessmentController extends Controller
     public function latestByPatient($id_pasien)
     {
         $assessment = MedicalAssessment::where('id_pasien', $id_pasien)
-            ->with(['patient', 'user:id,name,role'])
+            ->with(['patient', 'user'])
             ->orderBy('tanggal_assessment', 'desc')
             ->first();
 
@@ -202,7 +202,7 @@ class AssessmentController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $assessment
+            'data' => new \App\Http\Resources\AssessmentResource($assessment)
         ], 200);
     }
 }

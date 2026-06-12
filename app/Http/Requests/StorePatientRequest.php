@@ -17,7 +17,7 @@ class StorePatientRequest extends FormRequest
     {
         return [
             'nrm' => 'required|string|max:50|unique:patients,nrm',
-            'nik' => 'required|string|max:20|unique:patients,nik',
+            'nik' => 'required|numeric|digits_between:16,20|unique:patients,nik',
             'nama_lengkap' => 'required|string|max:255',
             'nama_panggilan' => 'nullable|string|max:255',
             'tanggal_lahir' => 'required|date',

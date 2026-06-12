@@ -30,11 +30,25 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Assessment
     Route::post('/assessments', [AssessmentController::class, 'store'])->middleware('role:dokter');
-    Route::delete('/assessments/{id}', [AssessmentController::class, 'destroy'])->middleware('role:admin');
+    Route::delete('/assessments/{assessment}', [AssessmentController::class, 'destroy'])->middleware('role:admin');
     Route::get('/assessments', [AssessmentController::class, 'index']);
-    Route::get('/assessments/{id}', [AssessmentController::class, 'show'])->withoutMiddleware(\Illuminate\Routing\Middleware\SubstituteBindings::class);
-    Route::put('/assessments/{id}', [AssessmentController::class, 'update'])->withoutMiddleware(\Illuminate\Routing\Middleware\SubstituteBindings::class);
+    Route::get('/assessments/{assessment}', [AssessmentController::class, 'show']);
+    Route::put('/assessments/{assessment}', [AssessmentController::class, 'update']);
     Route::get('/patients/{id_pasien}/latest-assessment', [AssessmentController::class, 'latestByPatient']);
+
+    // Therapy
+    Route::get('/therapies', [TherapyController::class, 'index']);
+    Route::post('/therapies', [TherapyController::class, 'store'])->middleware('role:dokter');
+    Route::get('/therapies/{id}', [TherapyController::class, 'show']);
+    Route::put('/therapies/{id}', [TherapyController::class, 'update'])->middleware('role:dokter');
+    Route::delete('/therapies/{id}', [TherapyController::class, 'destroy'])->middleware('role:admin');
+
+    // Monitoring
+    Route::get('/monitorings', [MonitoringController::class, 'index']);
+    Route::post('/monitorings', [MonitoringController::class, 'store'])->middleware('role:dokter,terapis');
+    Route::get('/monitorings/{id}', [MonitoringController::class, 'show']);
+    Route::put('/monitorings/{id}', [MonitoringController::class, 'update'])->middleware('role:dokter,terapis');
+    Route::get('/patients/{id_pasien}/progress-stats', [MonitoringController::class, 'progressStats']);
 
     // Reports
     Route::middleware('role:admin,dokter')->group(function () {

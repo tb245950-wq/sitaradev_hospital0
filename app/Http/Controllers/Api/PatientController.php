@@ -92,7 +92,7 @@ class PatientController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Data pasien berhasil diperbarui.',
-            'data' => $patient
+            'data' => new \App\Http\Resources\PatientResource($patient)
         ], 200);
     }
 
