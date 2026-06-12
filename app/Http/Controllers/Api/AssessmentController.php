@@ -108,18 +108,19 @@ class AssessmentController extends Controller
         }
 
         $assessment = MedicalAssessment::create([
-            'id_pasien' => $validated['id_pasien'],
-            'id_pengguna' => Auth::id(),
-            'id_antrian' => $validated['id_antrian'] ?? null,
-            'tanggal_assessment' => $validated['tanggal_assessment'] ?? now(),
-            'keluhan_utama' => $validated['keluhan_utama'],
-            'riwayat_penyakit' => $validated['riwayat_penyakit'] ?? null,
-            'hasil_pemeriksaan' => $validated['hasil_pemeriksaan'],
-            'diagnosis' => $validated['diagnosis'],
-            'rencana_terapi' => $validated['rencana_terapi'] ?? null,
-            'obat_diresepkan' => $validated['obat_diresepkan'] ?? null,
-            'catatan_tambahan' => $validated['catatan_tambahan'] ?? null,
-        ]);
+    'id_pasien' => $validated['id_pasien'],
+    'id_pengguna' => Auth::id(),
+    'id_antrian' => $validated['id_antrian'] ?? null,
+    'tanggal_assessment' => $validated['tanggal_assessment'] ?? now(),
+    'keluhan_utama' => $validated['keluhan_utama'],
+    'riwayat_penyakit' => $validated['riwayat_penyakit'] ?? null,
+    'hasil_pemeriksaan' => $validated['hasil_pemeriksaan'],
+    'diagnosis' => $validated['diagnosis'],
+    'rencana_terapi' => $validated['rencana_terapi'] ?? null,
+    'obat_diresepkan' => $validated['obat_diresepkan'] ?? null,
+    'catatan_tambahan' => $validated['catatan_tambahan'] ?? null,
+    'catatan_medis' => $validated['catatan_medis'] ?? '', 
+]);
 
         $assessment->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role', 'queue:id_antrian,nomor_antrian']);
 
