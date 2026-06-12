@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\QueueController;
 use App\Http\Controllers\Api\AssessmentController;
 use App\Http\Controllers\Api\TherapyController;
 use App\Http\Controllers\Api\MonitoringController;
+use App\Http\Controllers\Api\ReportController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
@@ -50,4 +51,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/monitorings/{id}', [MonitoringController::class, 'show'])->withoutMiddleware(\Illuminate\Routing\Middleware\SubstituteBindings::class);
     Route::put('/monitorings/{id}', [MonitoringController::class, 'update'])->withoutMiddleware(\Illuminate\Routing\Middleware\SubstituteBindings::class);
     Route::get('/patients/{id_pasien}/progress-stats', [MonitoringController::class, 'progressStats']);
+
+    // Reports (FR-10, FR-11, FR-12)
+    Route::get('/reports/dashboard', [ReportController::class, 'dashboard']);
+    Route::get('/reports/daily', [ReportController::class, 'daily']);
+    Route::get('/reports/monthly', [ReportController::class, 'monthly']);
+    Route::get('/reports/patients/{id_pasien}', [ReportController::class, 'patientReport']);
 });
