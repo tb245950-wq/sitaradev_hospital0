@@ -40,15 +40,16 @@
           </div>
         </div>
 
+        <!-- Welcome Banner Section -->
         <div class="welcome-banner">
           <div class="welcome-content">
-            <div class="welcome-image-container">
-              <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="welcome-img" />
+            <div class="welcome-image-wrapper">
+              <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="welcome-logo-large" />
             </div>
-            <div class="welcome-text">
+            <div class="welcome-info">
               <h1>Selamat Datang, {{ authStore.user?.name }}!</h1>
               <p>Sistem Informasi Terpadu Assessment dan Rekam Anak (SITARA)</p>
-              <div class="welcome-badge">Pusat Layanan Terpadu</div>
+              <div class="welcome-tag">Pusat Layanan Medis Terpadu</div>
             </div>
           </div>
         </div>
@@ -155,71 +156,78 @@ onMounted(() => {
   color: #1e293b;
 }
 
+/* Welcome Banner Styling - High Contrast & Centered */
 .welcome-banner {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-  border-radius: 1.5rem;
-  padding: 4rem 2rem;
+  border-radius: 2rem;
+  padding: 5rem 2rem;
   color: white;
   display: flex;
-  align-items: center;
   justify-content: center;
-  text-align: center;
-  box-shadow: 0 10px 25px rgba(30, 64, 175, 0.2);
-  overflow: hidden;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(30, 64, 175, 0.25);
 }
 
 .welcome-content {
+  width: 100%;
+  max-width: 700px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
-  max-width: 800px;
+  text-align: center;
 }
 
-.welcome-image-container {
+.welcome-image-wrapper {
   background: white;
-  padding: 1.5rem;
-  border-radius: 2rem;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  border-radius: 2.5rem;
+  margin-bottom: 2.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 
-.welcome-img {
-  width: 180px;
+.welcome-logo-large {
+  width: 200px; /* Increased size */
   height: auto;
   display: block;
 }
 
-.welcome-text h1 {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
+.welcome-info h1 {
+  font-size: 2.75rem;
   font-weight: 800;
-  letter-spacing: -0.025em;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
 }
 
-.welcome-text p {
+.welcome-info p {
   font-size: 1.25rem;
-  opacity: 0.9;
-  font-weight: 500;
-  margin-bottom: 1.5rem;
+  opacity: 0.95;
+  margin-bottom: 2rem;
+  line-height: 1.6;
 }
 
-.welcome-badge {
+.welcome-tag {
   display: inline-block;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.5rem 1.25rem;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 0.6rem 1.5rem;
   border-radius: 9999px;
-  font-size: 0.875rem;
   font-weight: 600;
-  backdrop-filter: blur(4px);
+  font-size: 0.875rem;
   border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
 }
 
 @media (max-width: 768px) {
-  .welcome-text h1 {
+  .welcome-banner {
+    padding: 3rem 1.5rem;
+  }
+  .welcome-info h1 {
     font-size: 1.75rem;
   }
-  .welcome-img {
-    width: 120px;
+  .welcome-logo-large {
+    width: 140px;
   }
 }
 </style>
