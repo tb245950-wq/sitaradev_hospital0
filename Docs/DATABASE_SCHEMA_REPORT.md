@@ -1,73 +1,50 @@
 # SITARA Database Schema Audit Report
 **Project:** Sistem Informasi Terpadu Assessment dan Rekam Anak (SITARA)
-**Status:** Verified against SRS
-**Date:** Friday, June 12, 2026
+**Status:** FULLY SYNCED WITH SRS
+**Date:** Saturday, June 13, 2026
 
 ---
 
 ## 1. Overview
-Laporan ini merinci audit teknis terhadap struktur database SITARA untuk memastikan kepatuhan terhadap dokumen Spesifikasi Kebutuhan Perangkat Lunak (SRS).
+Laporan ini merinci audit teknis final terhadap struktur database SITARA. Seluruh skema telah divalidasi secara empiris melalui inspeksi `information_schema` dan uji coba fungsional.
 
 ---
 
-## 2. Granular Table Audit
+## 2. Structural Audit Results
 
 ### 2.1 Tabel `patients` (Data Pasien)
-| Kolom             | Tipe Data         | Deskripsi                                 | Status       |
-| :---              | :---              | :---                                      | :---         |
-| `id_pasien`       | BigInt (PK)       | Primary Key Custom (Auto-increment)       | **VERIFIED** |
-| `nrm`             | String (Unique)   | Nomor Rekam Medis (Format: NRM-XXXXX)     | **VERIFIED** |
-| `nik`             | String (Unique)   | Nomor Induk Kependudukan (16-20 digit)    | **VERIFIED** |
-| `nama_lengkap`    | String            | Nama lengkap pasien                       | **VERIFIED** |
-| `tanggal_lahir`   | Date              | Tanggal lahir pasien                      | **VERIFIED** |
-| `jenis_kelamin`   | Enum (L, P)       | Jenis kelamin (Laki-laki/Perempuan)       | **VERIFIED** |
-| `no_telp_wali`    | String            | Kontak wali pasien                        | **VERIFIED** |
+- **Status:** **VERIFIED**
+- **Integritas:** Menggunakan `bigIncrements` sebagai PK (`id_pasien`).
+- **Fitur:** Implementasi `SoftDeletes` (`deleted_at`) terkonfirmasi.
+- **Validasi:** Kolom `nik` dan `nrm` memiliki batasan unik yang sinkron dengan validasi API.
 
 ### 2.2 Tabel `medical_assessments` (Assessment Medis)
-| Kolom                 | Tipe Data         | Deskripsi                                 | Status       |
-| :---                  | :---              | :---                                      | :---         |
-| `id_assessment`       | BigInt (PK)       | Primary Key Custom                        | **VERIFIED** |
-| `id_pasien`           | Foreign Key       | Relasi ke Patients (Cascade Delete)       | **VERIFIED** |
-| `id_pengguna`         | Foreign Key       | Relasi ke Users (Dokter yang menangani)   | **VERIFIED** |
-| `keluhan_utama`       | Text              | Deskripsi keluhan pasien                  | **VERIFIED** |
-| `hasil_pemeriksaan`   | JSON              | Data Vital (Tensi, Nadi, Suhu, BB, TB)    | **VERIFIED** |
-| `diagnosis`           | Text              | Kesimpulan medis dokter                   | **VERIFIED** |
-| `rencana_terapi`      | Text              | Rencana tindak lanjut                     | **VERIFIED** |
-| `status`              | Enum              | Status data (draft / final)               | **VERIFIED** |
+- **Status:** **VERIFIED**
+- **Struktur:** Kolom `hasil_pemeriksaan` dan `obat_diresepkan` menggunakan tipe data `JSON` untuk skalabilitas.
+- **Relasi:** FK ke `patients`, `users`, dan `queues` (nullable) terpasang dengan batasan integritas.
 
-### 2.3 Tabel `therapies` (Program Terapi)
-| Kolom             | Tipe Data     | Deskripsi                     | Status       |
-| :---              | :---          | :---                          | :---         |
-| `id_terapi`       | BigInt (PK)   | Primary Key Custom            | **VERIFIED** |
-| `id_assessment`   | Foreign Key   | Relasi ke sumber Assessment   | **VERIFIED** |
-| `nama_terapi`     | String        | Nama jenis terapi             | **VERIFIED** |
-| `durasi_hari`     | Integer       | Total durasi program (hari)   | **VERIFIED** |
-| `frekuensi`       | Integer       | Berapa kali sesi per minggu   | **VERIFIED** |
-| `status`          | Enum          | terjadwal, berjalan, selesai  | **VERIFIED** |
+### 2.3 Tabel `queues` (Antrian)
+- **Status:** **VERIFIED**
+- **Logika:** Kolom `nomor_antrian` (integer) disinkronkan dengan `QueueResource` untuk output format SRS ("A001").
+- **Audit:** Kolom `waktu_daftar`, `waktu_panggil`, dan `waktu_selesai` terverifikasi untuk tracking performa layanan.
 
-### 2.4 Tabel `therapy_monitorings` (Monitoring Sesi)
-| Kolom             | Tipe Data     | Deskripsi                         | Status       |
-| :---              | :---          | :---                              | :---         |
-| `id_monitoring`   | BigInt (PK)   | Primary Key Custom                | **VERIFIED** |
-| `tanggal_sesi`    | Date          | Tanggal pelaksanaan terapi        | **VERIFIED** |
-| `kehadiran`       | Enum          | hadir, tidak_hadir, izin, sakit   | **VERIFIED** |
-| `progress_score`  | Integer       | Skor kemajuan (0-100)             | **VERIFIED** |
-| `catatan`         | Text          | Observasi detail dari terapis     | **VERIFIED** |
-
-### 2.5 Tabel `queues` (Antrian)
-| Kolom             | Tipe Data     | Deskripsi                                 | Status       |
-| :---              | :---          | :---                                      | :---         |
-| `id_antrian`      | BigInt (PK)   | Primary Key Custom                        | **VERIFIED** |
-| `nomor_antrian`   | Integer       | Nomor urut harian                         | **VERIFIED** |
-| `jenis_layanan`   | Enum          | assessment / terapi                       | **VERIFIED** |
-| `status`          | Enum          | menunggu, dipanggil, selesai, tidak_hadir | **VERIFIED** |
+### 2.4 Tabel `therapies` & `therapy_monitorings`
+- **Status:** **VERIFIED**
+- **Sinkronisasi:** Kolom `kehadiran` pada monitoring sinkron dengan Enum database (`hadir`, `tidak_hadir`, `izin`, `sakit`).
+- **Relasi:** Cascading delete terpasang dari `patients` untuk memastikan kebersihan data rekam medis.
 
 ---
 
-## 3. Kesimpulan Teknis
-- **Integritas Referensial**: Seluruh tabel menggunakan *Foreign Keys* dengan batasan `onDelete('cascade')` untuk menjaga kebersihan data.
-- **Fleksibilitas Data**: Penggunaan tipe data `JSON` pada hasil pemeriksaan memungkinkan penambahan parameter medis baru tanpa merubah skema.
-- **Keamanan**: Implementasi *Soft Deletes* pada tabel Patients memastikan data tidak hilang permanen jika terjadi kesalahan hapus.
+## 3. Relational Integrity Map
+Seluruh *Foreign Keys* telah diperiksa dan dipastikan mengarah ke referensi yang benar:
+- `queues.id_pasien` -> `patients.id_pasien`
+- `medical_assessments.id_antrian` -> `queues.id_antrian` (Set Null on Delete)
+- `therapy_monitorings.id_terapi` -> `therapies.id_terapi` (Cascade on Delete)
+
+---
+
+## 4. Kesimpulan Teknis
+Struktur database SITARA saat ini sangat kokoh, mengikuti best practice Laravel Eloquent, dan memenuhi seluruh kriteria data pada dokumen SRS. Database siap mendukung beban operasional klinik.
 
 ---
 *Generated by Gemini CLI QA System*
