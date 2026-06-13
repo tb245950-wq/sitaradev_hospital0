@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '../../../modules/auth/stores/authStore'
 
 const authStore = useAuthStore()
 

@@ -27,7 +27,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '../../../modules/auth/stores/authStore'
 
 defineEmits(['toggle-sidebar'])
 

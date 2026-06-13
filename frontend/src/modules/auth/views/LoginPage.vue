@@ -1,13 +1,16 @@
 <template>
-  <div class="register-page">
+  <div class="login-page">
+    <!-- Decorative Circles -->
     <div class="circle circle-1"></div>
     <div class="circle circle-2"></div>
 
+    <!-- Back Button -->
     <router-link to="/" class="back-btn">
       ← Kembali
     </router-link>
 
-    <div class="register-container">
+    <!-- Login Form Container -->
+    <div class="login-container">
       <div class="logo-section">
         <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
         <h1>SITARA</h1>
@@ -15,21 +18,11 @@
       </div>
 
       <div class="form-section">
-        <h2>Daftar Akun Baru</h2>
-        <p class="subtitle">Bergabunglah dengan SITARA hari ini</p>
+        <h2>Masuk ke Akun</h2>
+        <p class="subtitle">Silakan masukkan email dan password Anda</p>
 
-        <form @submit.prevent="handleRegister" class="register-form">
-          <div class="form-group">
-            <label for="name">Nama Lengkap</label>
-            <input
-              type="text"
-              id="name"
-              v-model="form.name"
-              placeholder="Masukkan nama lengkap"
-              required
-            />
-          </div>
-
+        <form @submit.prevent="handleLogin" class="login-form">
+          <!-- Email Input -->
           <div class="form-group">
             <label for="email">Email</label>
             <input
@@ -38,19 +31,12 @@
               v-model="form.email"
               placeholder="nama@email.com"
               required
+              :class="{ error: errors.email }"
             />
+            <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
           </div>
 
-          <div class="form-group">
-            <label for="role">Role</label>
-            <select id="role" v-model="form.role" required>
-              <option value="" disabled>Pilih Role</option>
-              <option value="admin">Admin</option>
-              <option value="dokter">Dokter</option>
-              <option value="terapis">Terapis</option>
-            </select>
-          </div>
-
+          <!-- Password Input -->
           <div class="form-group">
             <label for="password">Password</label>
             <input
@@ -59,32 +45,35 @@
               v-model="form.password"
               placeholder="••••••••"
               required
+              :class="{ error: errors.password }"
             />
+            <span v-if="errors.password" class="error-text">{{ errors.password }}</span>
           </div>
 
-          <div class="form-group">
-            <label for="password_confirmation">Konfirmasi Password</label>
-            <input
-              type="password"
-              id="password_confirmation"
-              v-model="form.password_confirmation"
-              placeholder="••••••••"
-              required
-            />
+          <!-- Remember Me & Forgot Password -->
+          <div class="form-options">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="form.remember" />
+              <span>Ingat saya</span>
+            </label>
+            <a href="#" class="forgot-link">Lupa password?</a>
           </div>
 
-          <button type="submit" class="btn-register" :disabled="authStore.loading">
-            <span v-if="authStore.loading">Memproses...</span>
-            <span v-else>Daftar</span>
+          <!-- Submit Button -->
+          <button type="submit" class="btn-login" :disabled="authStore.loading">
+            <span v-if="authStore.loading">Loading...</span>
+            <span v-else>Masuk</span>
           </button>
 
+          <!-- Error Message -->
           <div v-if="authStore.error" class="error-message">
             {{ authStore.error }}
           </div>
 
-          <p class="login-link">
-            Sudah punya akun? 
-            <router-link to="/login">Masuk di sini</router-link>
+          <!-- Register Link -->
+          <p class="register-link">
+            Belum punya akun? 
+            <router-link to="/register">Daftar sekarang</router-link>
           </p>
         </form>
       </div>
@@ -95,34 +84,47 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '../stores/authStore'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const form = ref({
-  name: '',
   email: '',
-  role: '',
   password: '',
-  password_confirmation: ''
+  remember: false
 })
 
-const handleRegister = async () => {
-  try {
-    const success = await authStore.register(form.value)
-    if (success) {
-      alert('Registrasi berhasil! Silakan login.')
-      router.push('/login')
-    }
-  } catch (error) {
-    console.error('Registration failed:', error)
+const errors = ref({
+  email: '',
+  password: ''
+})
+
+const handleLogin = async () => {
+  // Reset errors
+  errors.value = { email: '', password: '' }
+
+  // Validation
+  if (!form.value.email) {
+    errors.value.email = 'Email harus diisi'
+    return
+  }
+
+  if (!form.value.password) {
+    errors.value.password = 'Password harus diisi'
+    return
+  }
+
+  const result = await authStore.login(form.value.email, form.value.password)
+  
+  if (result.success) {
+    router.push('/dashboard')
   }
 }
 </script>
 
 <style scoped>
-.register-page {
+.login-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
   position: relative;
@@ -167,7 +169,7 @@ const handleRegister = async () => {
   transform: translateX(-4px);
 }
 
-.register-container {
+.login-container {
   display: flex;
   max-width: 1000px;
   margin: 0 auto;
@@ -177,7 +179,7 @@ const handleRegister = async () => {
   overflow: hidden;
   position: relative;
   z-index: 1;
-  min-height: 700px;
+  min-height: 600px;
 }
 
 .logo-section {
@@ -228,16 +230,16 @@ const handleRegister = async () => {
   margin-bottom: 2rem;
 }
 
-.register-form {
+.login-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.5rem;
 }
 
 .form-group label {
@@ -246,22 +248,56 @@ const handleRegister = async () => {
   font-size: 0.875rem;
 }
 
-.form-group input, .form-group select {
-  padding: 0.75rem 1rem;
+.form-group input {
+  padding: 0.875rem 1rem;
   border: 2px solid #e2e8f0;
   border-radius: 0.5rem;
   font-size: 1rem;
   transition: all 0.3s;
 }
 
-.form-group input:focus, .form-group select:focus {
+.form-group input:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.btn-register {
-  margin-top: 1rem;
+.form-group input.error {
+  border-color: #ef4444;
+}
+
+.error-text {
+  color: #ef4444;
+  font-size: 0.875rem;
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.forgot-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+.btn-login {
   padding: 1rem;
   background: #1e40af;
   color: white;
@@ -273,19 +309,19 @@ const handleRegister = async () => {
   transition: all 0.3s;
 }
 
-.btn-register:hover:not(:disabled) {
+.btn-login:hover:not(:disabled) {
   background: #1e3a8a;
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(30, 64, 175, 0.3);
 }
 
-.btn-register:disabled {
+.btn-login:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 .error-message {
-  padding: 0.75rem;
+  padding: 1rem;
   background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 0.5rem;
@@ -294,24 +330,24 @@ const handleRegister = async () => {
   font-size: 0.875rem;
 }
 
-.login-link {
+.register-link {
   text-align: center;
   color: #64748b;
   font-size: 0.875rem;
 }
 
-.login-link a {
+.register-link a {
   color: #3b82f6;
   text-decoration: none;
   font-weight: 600;
 }
 
-.login-link a:hover {
+.register-link a:hover {
   text-decoration: underline;
 }
 
 @media (max-width: 768px) {
-  .register-container {
+  .login-container {
     flex-direction: column;
   }
 

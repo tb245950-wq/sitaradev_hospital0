@@ -60,10 +60,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import api from '@/services/api'
-import Sidebar from '@/components/layout/Sidebar.vue'
-import Navbar from '@/components/layout/Navbar.vue'
+import { useAuthStore } from '../../auth/stores/authStore'
+import api from '../../../core/services/api'
+import Sidebar from '../../../shared/components/layout/Sidebar.vue'
+import Navbar from '../../../shared/components/layout/Navbar.vue'
 
 const authStore = useAuthStore()
 const isSidebarOpen = ref(false)
