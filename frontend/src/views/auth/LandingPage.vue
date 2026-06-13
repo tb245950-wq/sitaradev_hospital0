@@ -13,7 +13,7 @@
     <!-- Main Content -->
     <div class="main-content">
       <div class="logo-container">
-        <img src="/logo-sitara.png" alt="SITARA Logo" class="logo" />
+        <img src="@/assets/SITARA_RM_BG.png" alt="SITARA Logo" class="logo" />
         <h1 class="title">SITARA</h1>
         <p class="subtitle">Sistem Informasi Terpadu</p>
         <p class="subtitle-small">Assessment dan Rekam Anak</p>

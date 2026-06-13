@@ -1,7 +1,7 @@
 <template>
   <aside class="sidebar" :class="{ 'is-open': isOpen }">
     <div class="sidebar-header">
-      <img src="/logo-sitara.png" alt="SITARA" class="logo" />
+      <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
       <span class="brand-name">SITARA</span>
     </div>
 

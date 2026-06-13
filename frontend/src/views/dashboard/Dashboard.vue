@@ -45,7 +45,7 @@
             <h1>Selamat Datang, {{ authStore.user?.name }}!</h1>
             <p>Sistem Informasi Terpadu Assessment dan Rekam Anak (SITARA) siap melayani Anda hari ini.</p>
           </div>
-          <img src="/logo-sitara.png" alt="SITARA" class="welcome-img" />
+          <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="welcome-img" />
         </div>
       </main>
     </div>
