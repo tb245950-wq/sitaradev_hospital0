@@ -21,24 +21,31 @@
         <span class="label">Antrian</span>
       </router-link>
 
-      <div class="nav-divider">Tindakan</div>
+      <!-- Role-based Menu Items -->
+      <template v-if="authStore.userRole === 'dokter' || authStore.userRole === 'admin'">
+        <div class="nav-divider">Tindakan</div>
+        
+        <router-link to="/assessments" class="nav-item">
+          <span class="icon">🩺</span>
+          <span class="label">Assessment</span>
+        </router-link>
+      </template>
 
-      <router-link to="/assessments" class="nav-item">
-        <span class="icon">🩺</span>
-        <span class="label">Assessment</span>
-      </router-link>
+      <template v-if="authStore.userRole === 'dokter' || authStore.userRole === 'terapis' || authStore.userRole === 'admin'">
+        <router-link to="/therapies" class="nav-item">
+          <span class="icon">🧠</span>
+          <span class="label">Terapi</span>
+        </router-link>
+      </template>
 
-      <router-link to="/therapies" class="nav-item">
-        <span class="icon">🧠</span>
-        <span class="label">Terapi</span>
-      </router-link>
+      <template v-if="authStore.userRole === 'dokter' || authStore.userRole === 'admin'">
+        <div class="nav-divider">Laporan</div>
 
-      <div class="nav-divider">Laporan</div>
-
-      <router-link to="/reports" class="nav-item">
-        <span class="icon">📄</span>
-        <span class="label">Laporan Medis</span>
-      </router-link>
+        <router-link to="/reports" class="nav-item">
+          <span class="icon">📄</span>
+          <span class="label">Laporan Medis</span>
+        </router-link>
+      </template>
     </nav>
 
     <div class="sidebar-footer">
@@ -48,6 +55,10 @@
 </template>
 
 <script setup>
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+
 defineProps({
   isOpen: Boolean
 })
