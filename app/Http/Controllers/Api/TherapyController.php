@@ -41,10 +41,7 @@ class TherapyController extends Controller
 
         $therapies = $query->orderBy('tanggal_mulai', 'desc')->paginate(15);
 
-        return response()->json([
-            'success' => true,
-            'data' => $therapies
-        ], 200);
+        return \App\Http\Resources\TherapyResource::collection($therapies)->additional(['success' => true]);
     }
 
     /**

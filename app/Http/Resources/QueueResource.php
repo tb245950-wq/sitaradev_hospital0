@@ -11,7 +11,7 @@ class QueueResource extends JsonResource
     {
         return [
             'id' => $this->id_antrian,
-            'nomor' => $this->nomor_antrian,
+            'nomor' => ($this->jenis_layanan === 'assessment' ? 'A' : 'T') . str_pad($this->nomor_antrian, 3, '0', STR_PAD_LEFT),
             'jenis' => $this->jenis_layanan,
             'status' => $this->status,
             'prioritas' => $this->prioritas,

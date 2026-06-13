@@ -33,9 +33,7 @@ class AssessmentApiTest extends TestCase
             ->assertJsonStructure([
                 'success',
                 'data' => [
-                    'data' => [
-                        '*' => ['id_assessment', 'id_pasien', 'keluhan_utama', 'diagnosis']
-                    ]
+                    '*' => ['id', 'keluhan', 'diagnosis']
                 ]
             ]);
     }

@@ -7,6 +7,7 @@ use App\Models\TherapyMonitoring;
 use App\Models\Therapy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Resources\MonitoringResource;
 
 class MonitoringController extends Controller
 {
@@ -39,10 +40,7 @@ class MonitoringController extends Controller
         $monitorings = $query->orderBy('tanggal_sesi', 'desc')
                             ->paginate(15);
 
-        return response()->json([
-            'success' => true,
-            'data' => $monitorings
-        ], 200);
+        return MonitoringResource::collection($monitorings)->additional(['success' => true]);
     }
 
     /**
@@ -64,53 +62,60 @@ class MonitoringController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Monitoring terapi berhasil dibuat.',
-            'data' => new \App\Http\Resources\MonitoringResource($monitoring)
+            'data' => new MonitoringResource($monitoring)
         ], 201);
     }
 
-/**
- * Update Monitoring
- */
-public function update(Request $request, $id)
-{
-    $monitoring = TherapyMonitoring::where('id_monitoring', $id)->first();
+    /**
+     * Update Monitoring
+     */
+    public function update(Request $request, TherapyMonitoring $monitoring)
+    {
+        if (!in_array(Auth::user()->role, ['dokter', 'terapis', 'admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak.'
+            ], 403);
+        }
 
-    if (!$monitoring) {
+        $validated = $request->validate([
+            'kehadiran' => 'sometimes|string',
+            'catatan_perkembangan' => 'sometimes|string',
+            'kondisi_pasien' => 'sometimes|string',
+            'rekomendasi' => 'nullable|string',
+            'progress_score' => 'sometimes|integer|min:0|max:100',
+        ]);
+
+        // Handle space in kehadiran (e.g. "tidak hadir" -> "tidak_hadir")
+        if (isset($validated['kehadiran'])) {
+            $validated['kehadiran'] = str_replace(' ', '_', strtolower($validated['kehadiran']));
+            
+            if (!in_array($validated['kehadiran'], ['hadir', 'tidak_hadir', 'izin', 'sakit'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Status kehadiran tidak valid. Pilihan: hadir, tidak hadir, izin, sakit.'
+                ], 422);
+            }
+        }
+
+        $monitoring->update($validated);
+        $monitoring->load(['therapy', 'patient', 'terapis']);
+
         return response()->json([
-            'success' => false,
-            'message' => 'Monitoring tidak ditemukan.'
-        ], 404);
+            'success' => true,
+            'message' => 'Monitoring berhasil diperbarui.',
+            'data' => new MonitoringResource($monitoring)
+        ], 200);
     }
 
-    if (!in_array(Auth::user()->role, ['dokter', 'terapis', 'admin'])) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Akses ditolak.'
-        ], 403);
+    /**
+     * Detail Monitoring
+     */
+    public function show(TherapyMonitoring $monitoring)
+    {
+        $monitoring->load(['therapy', 'patient', 'terapis']);
+        return new MonitoringResource($monitoring);
     }
-
-    $validated = $request->validate([
-        'kehadiran' => 'sometimes|in:hadir,tidak hadir,izin,sakit',
-        'catatan_perkembangan' => 'sometimes|string',
-        'kondisi_pasien' => 'sometimes|string',
-        'rekomendasi' => 'nullable|string',
-        'progress_score' => 'sometimes|integer|min:0|max:100',
-    ]);
-
-    // Auto-lowercase kehadiran jika ada
-    if (isset($validated['kehadiran'])) {
-        $validated['kehadiran'] = strtolower($validated['kehadiran']);
-    }
-
-    $monitoring->update($validated);
-    $monitoring->load(['therapy:id_terapi,nama_terapi', 'patient:id_pasien,nama_lengkap,nrm', 'terapis:id,name,role']);
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Monitoring berhasil diperbarui.',
-        'data' => $monitoring
-    ], 200);
-}
 
     /**
      * Statistik Perkembangan Pasien

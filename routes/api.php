@@ -33,30 +33,36 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/assessments/{assessment}', [AssessmentController::class, 'destroy'])->middleware('role:admin');
     Route::get('/assessments', [AssessmentController::class, 'index']);
     Route::get('/assessments/{assessment}', [AssessmentController::class, 'show']);
-    Route::put('/assessments/{assessment}', [AssessmentController::class, 'update']);
+    Route::put('/assessments/{assessment}', [AssessmentController::class, 'update'])->middleware('role:admin,dokter');
     Route::get('/patients/{id_pasien}/latest-assessment', [AssessmentController::class, 'latestByPatient']);
 
     // Therapy
-    Route::get('/therapies', [TherapyController::class, 'index']);
+    Route::middleware('role:admin,dokter,terapis')->group(function () {
+        Route::get('/therapies', [TherapyController::class, 'index']);
+        Route::get('/therapies/{therapy}', [TherapyController::class, 'show']);
+    });
     Route::post('/therapies', [TherapyController::class, 'store'])->middleware('role:dokter');
-    Route::get('/therapies/{therapy}', [TherapyController::class, 'show']);
-    Route::put('/therapies/{therapy}', [TherapyController::class, 'update'])->middleware('role:dokter');
+    Route::put('/therapies/{therapy}', [TherapyController::class, 'update'])->middleware('role:admin,dokter,terapis');
     Route::delete('/therapies/{therapy}', [TherapyController::class, 'destroy'])->middleware('role:admin');
 
     // Monitoring
-    Route::get('/monitorings', [MonitoringController::class, 'index']);
+    Route::middleware('role:admin,dokter,terapis')->group(function () {
+        Route::get('/monitorings', [MonitoringController::class, 'index']);
+        Route::get('/monitorings/{monitoring}', [MonitoringController::class, 'show']);
+        Route::get('/patients/{id_pasien}/progress-stats', [MonitoringController::class, 'progressStats']);
+    });
     Route::post('/monitorings', [MonitoringController::class, 'store'])->middleware('role:dokter,terapis');
-    Route::get('/monitorings/{monitoring}', [MonitoringController::class, 'show']);
     Route::put('/monitorings/{monitoring}', [MonitoringController::class, 'update'])->middleware('role:dokter,terapis');
-    Route::get('/patients/{id_pasien}/progress-stats', [MonitoringController::class, 'progressStats']);
 
     // Queue
-    Route::get('/queues', [QueueController::class, 'index']);
-    Route::post('/queues', [QueueController::class, 'store']);
-    Route::get('/queues/{queue}', [QueueController::class, 'show']);
-    Route::put('/queues/{queue}', [QueueController::class, 'update']);
-    Route::delete('/queues/{queue}', [QueueController::class, 'destroy']);
-    Route::post('/queues/call-next', [QueueController::class, 'callNext']);
+    Route::middleware('role:admin,dokter,terapis')->group(function () {
+        Route::get('/queues', [QueueController::class, 'index']);
+        Route::post('/queues', [QueueController::class, 'store']);
+        Route::get('/queues/{queue}', [QueueController::class, 'show']);
+        Route::put('/queues/{queue}', [QueueController::class, 'update']);
+        Route::post('/queues/call-next', [QueueController::class, 'callNext']);
+    });
+    Route::delete('/queues/{queue}', [QueueController::class, 'destroy'])->middleware('role:admin');
 
     // Reports
     Route::middleware('role:admin,dokter')->group(function () {

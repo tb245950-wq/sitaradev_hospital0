@@ -32,16 +32,17 @@ class PatientApiTest extends TestCase
             ->assertJsonStructure([
                 'success',
                 'data' => [
-                    'data' => [
-                        '*' => ['id_pasien', 'nrm', 'nik', 'nama_lengkap']
-                    ],
+                    '*' => ['id', 'nrm', 'nik', 'nama']
+                ],
+                'links',
+                'meta' => [
                     'current_page',
                     'last_page',
                     'total'
                 ]
             ]);
         
-        $this->assertEquals(15, count($response->json('data.data')));
+        $this->assertEquals(15, count($response->json('data')));
     }
 
     public function test_can_search_patients()
@@ -52,12 +53,12 @@ class PatientApiTest extends TestCase
         $response = $this->actingAs($this->dokter)
             ->getJson('/api/patients?search=Unique');
         $response->assertStatus(200);
-        $this->assertEquals(1, count($response->json('data.data')));
+        $this->assertEquals(1, count($response->json('data')));
 
         $response = $this->actingAs($this->dokter)
             ->getJson('/api/patients?search=99999');
         $response->assertStatus(200);
-        $this->assertEquals(1, count($response->json('data.data')));
+        $this->assertEquals(1, count($response->json('data')));
     }
 
     public function test_can_create_patient()

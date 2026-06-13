@@ -56,10 +56,7 @@ class AssessmentController extends Controller
         $assessments = $query->orderBy('tanggal_assessment', 'desc')
                             ->paginate(15);
 
-        return response()->json([
-            'success' => true,
-            'data' => $assessments
-        ], 200);
+        return \App\Http\Resources\AssessmentResource::collection($assessments)->additional(['success' => true]);
     }
 
     /**

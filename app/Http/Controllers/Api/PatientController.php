@@ -31,10 +31,7 @@ class PatientController extends Controller
         // Pagination 15 data per halaman untuk performa
         $patients = $query->orderBy('created_at', 'desc')->paginate(15);
 
-        return response()->json([
-            'success' => true,
-            'data' => $patients
-        ], 200);
+        return \App\Http\Resources\PatientResource::collection($patients)->additional(['success' => true]);
     }
 
     /**

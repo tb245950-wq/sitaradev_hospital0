@@ -48,10 +48,7 @@ class QueueController extends Controller
                         ->orderBy('nomor_antrian', 'asc')
                         ->paginate(15);
 
-        return response()->json([
-            'success' => true,
-            'data' => $queues
-        ], 200);
+        return \App\Http\Resources\QueueResource::collection($queues)->additional(['success' => true]);
     }
 
     /**
