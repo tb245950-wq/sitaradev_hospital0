@@ -1,16 +1,13 @@
 <template>
-  <div class="login-page">
-    <!-- Decorative Circles -->
+  <div class="register-page">
     <div class="circle circle-1"></div>
     <div class="circle circle-2"></div>
 
-    <!-- Back Button -->
     <router-link to="/" class="back-btn">
       ← Kembali
     </router-link>
 
-    <!-- Login Form Container -->
-    <div class="login-container">
+    <div class="register-container">
       <div class="logo-section">
         <img src="/logo-sitara.png" alt="SITARA" class="logo" />
         <h1>SITARA</h1>
@@ -18,11 +15,21 @@
       </div>
 
       <div class="form-section">
-        <h2>Masuk ke Akun</h2>
-        <p class="subtitle">Silakan masukkan email dan password Anda</p>
+        <h2>Daftar Akun Baru</h2>
+        <p class="subtitle">Bergabunglah dengan SITARA hari ini</p>
 
-        <form @submit.prevent="handleLogin" class="login-form">
-          <!-- Email Input -->
+        <form @submit.prevent="handleRegister" class="register-form">
+          <div class="form-group">
+            <label for="name">Nama Lengkap</label>
+            <input
+              type="text"
+              id="name"
+              v-model="form.name"
+              placeholder="Masukkan nama lengkap"
+              required
+            />
+          </div>
+
           <div class="form-group">
             <label for="email">Email</label>
             <input
@@ -31,12 +38,19 @@
               v-model="form.email"
               placeholder="nama@email.com"
               required
-              :class="{ error: errors.email }"
             />
-            <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
           </div>
 
-          <!-- Password Input -->
+          <div class="form-group">
+            <label for="role">Role</label>
+            <select id="role" v-model="form.role" required>
+              <option value="" disabled>Pilih Role</option>
+              <option value="admin">Admin</option>
+              <option value="dokter">Dokter</option>
+              <option value="terapis">Terapis</option>
+            </select>
+          </div>
+
           <div class="form-group">
             <label for="password">Password</label>
             <input
@@ -45,35 +59,32 @@
               v-model="form.password"
               placeholder="••••••••"
               required
-              :class="{ error: errors.password }"
             />
-            <span v-if="errors.password" class="error-text">{{ errors.password }}</span>
           </div>
 
-          <!-- Remember Me & Forgot Password -->
-          <div class="form-options">
-            <label class="checkbox-label">
-              <input type="checkbox" v-model="form.remember" />
-              <span>Ingat saya</span>
-            </label>
-            <a href="#" class="forgot-link">Lupa password?</a>
+          <div class="form-group">
+            <label for="password_confirmation">Konfirmasi Password</label>
+            <input
+              type="password"
+              id="password_confirmation"
+              v-model="form.password_confirmation"
+              placeholder="••••••••"
+              required
+            />
           </div>
 
-          <!-- Submit Button -->
-          <button type="submit" class="btn-login" :disabled="authStore.loading">
-            <span v-if="authStore.loading">Loading...</span>
-            <span v-else>Masuk</span>
+          <button type="submit" class="btn-register" :disabled="authStore.loading">
+            <span v-if="authStore.loading">Memproses...</span>
+            <span v-else>Daftar</span>
           </button>
 
-          <!-- Error Message -->
           <div v-if="authStore.error" class="error-message">
             {{ authStore.error }}
           </div>
 
-          <!-- Register Link -->
-          <p class="register-link">
-            Belum punya akun? 
-            <router-link to="/register">Daftar sekarang</router-link>
+          <p class="login-link">
+            Sudah punya akun? 
+            <router-link to="/login">Masuk di sini</router-link>
           </p>
         </form>
       </div>
@@ -90,48 +101,28 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const form = ref({
+  name: '',
   email: '',
+  role: '',
   password: '',
-  remember: false
+  password_confirmation: ''
 })
 
-const errors = ref({
-  email: '',
-  password: ''
-})
-
-const handleLogin = async () => {
-  // Reset errors
-  errors.value = { email: '', password: '' }
-
-  // Validation
-  if (!form.value.email) {
-    errors.value.email = 'Email harus diisi'
-    return
-  }
-
-  if (!form.value.password) {
-    errors.value.password = 'Password harus diisi'
-    return
-  }
-
+const handleRegister = async () => {
   try {
-    const success = await authStore.login({
-      email: form.value.email,
-      password: form.value.password
-    })
-
+    const success = await authStore.register(form.value)
     if (success) {
-      router.push('/dashboard')
+      alert('Registrasi berhasil! Silakan login.')
+      router.push('/login')
     }
   } catch (error) {
-    console.error('Login error:', error)
+    console.error('Registration failed:', error)
   }
 }
 </script>
 
 <style scoped>
-.login-page {
+.register-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
   position: relative;
@@ -176,7 +167,7 @@ const handleLogin = async () => {
   transform: translateX(-4px);
 }
 
-.login-container {
+.register-container {
   display: flex;
   max-width: 1000px;
   margin: 0 auto;
@@ -186,7 +177,7 @@ const handleLogin = async () => {
   overflow: hidden;
   position: relative;
   z-index: 1;
-  min-height: 600px;
+  min-height: 700px;
 }
 
 .logo-section {
@@ -237,16 +228,16 @@ const handleLogin = async () => {
   margin-bottom: 2rem;
 }
 
-.login-form {
+.register-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .form-group label {
@@ -255,56 +246,22 @@ const handleLogin = async () => {
   font-size: 0.875rem;
 }
 
-.form-group input {
-  padding: 0.875rem 1rem;
+.form-group input, .form-group select {
+  padding: 0.75rem 1rem;
   border: 2px solid #e2e8f0;
   border-radius: 0.5rem;
   font-size: 1rem;
   transition: all 0.3s;
 }
 
-.form-group input:focus {
+.form-group input:focus, .form-group select:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.form-group input.error {
-  border-color: #ef4444;
-}
-
-.error-text {
-  color: #ef4444;
-  font-size: 0.875rem;
-}
-
-.form-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.forgot-link {
-  color: #3b82f6;
-  text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.forgot-link:hover {
-  text-decoration: underline;
-}
-
-.btn-login {
+.btn-register {
+  margin-top: 1rem;
   padding: 1rem;
   background: #1e40af;
   color: white;
@@ -316,19 +273,19 @@ const handleLogin = async () => {
   transition: all 0.3s;
 }
 
-.btn-login:hover:not(:disabled) {
+.btn-register:hover:not(:disabled) {
   background: #1e3a8a;
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(30, 64, 175, 0.3);
 }
 
-.btn-login:disabled {
+.btn-register:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 .error-message {
-  padding: 1rem;
+  padding: 0.75rem;
   background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 0.5rem;
@@ -337,24 +294,24 @@ const handleLogin = async () => {
   font-size: 0.875rem;
 }
 
-.register-link {
+.login-link {
   text-align: center;
   color: #64748b;
   font-size: 0.875rem;
 }
 
-.register-link a {
+.login-link a {
   color: #3b82f6;
   text-decoration: none;
   font-weight: 600;
 }
 
-.register-link a:hover {
+.login-link a:hover {
   text-decoration: underline;
 }
 
 @media (max-width: 768px) {
-  .login-container {
+  .register-container {
     flex-direction: column;
   }
 
