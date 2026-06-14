@@ -15,31 +15,70 @@ class AuthController extends Controller
      * FR-01: Login Pengguna
      */
     public function login(Request $request)
-    {
-        $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required',
-        ]);
+{
+    $validated = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            throw ValidationException::withMessages([
-                'email' => ['Kredensial yang Anda masukkan salah.'],
-            ]);
-        }
+    // Cari user berdasarkan email
+    $user = User::where('email', $validated['email'])->first();
 
-        $user = Auth::user();
-        /** @var \App\Models\User $user */
-        $token = $user->createToken('sitara-auth-token')->plainTextToken;
-
+    // Cek apakah user ada
+    if (!$user) {
         return response()->json([
-            'success' => true,
-            'message' => 'Login berhasil.',
-            'data'    => [
-                'user'  => $user,
-                'token' => $token,
-            ]
-        ], 200);
+            'success' => false,
+            'message' => 'Email atau password salah'
+        ], 401);
     }
+
+    // Cek password
+    if (!Hash::check($validated['password'], $user->password)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Email atau password salah'
+        ], 401);
+    }
+
+    // CEK STATUS AKUN - RBAC
+    if ($user->status === 'inactive') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Akun Anda tidak aktif. Hubungi administrator.'
+        ], 403);
+    }
+
+    if ($user->status === 'suspended') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Akun Anda ditangguhkan. Hubungi administrator.'
+        ], 403);
+    }
+
+    // Update last login timestamp
+    $user->update([
+        'last_login_at' => now()
+    ]);
+
+    // Create token untuk API authentication
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Login berhasil',
+        'data' => [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'status' => $user->status,
+                'nip' => $user->nip,
+            ],
+            'token' => $token
+        ]
+    ], 200);
+}
 
     /**
      * FR-13: Registrasi User
