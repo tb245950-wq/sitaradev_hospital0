@@ -15,12 +15,19 @@ class User extends Authenticatable
 
     protected $table = 'users';
     protected $primaryKey = 'id';
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'last_login_at' => 'datetime',
+    ];
 
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'role', // ✅ Tambahkan untuk RBAC
+    'name',
+    'email',
+    'password',
+    'role',
+    'nip',
+    'status',
+    'last_login_at', 
     ];
 
     protected $hidden = [
