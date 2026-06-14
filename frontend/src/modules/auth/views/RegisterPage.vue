@@ -45,7 +45,6 @@
             <label for="role">Role</label>
             <select id="role" v-model="form.role" required>
               <option value="" disabled>Pilih Role</option>
-              <option value="admin">Admin</option>
               <option value="dokter">Dokter</option>
               <option value="terapis">Terapis</option>
             </select>
