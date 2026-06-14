@@ -6,10 +6,25 @@ import { authRoutes } from '../../modules/auth/router/authRoutes'
 import { dashboardRoutes } from '../../modules/dashboard/router/dashboardRoutes'
 import { patientRoutes } from '../../modules/patients/router/patientRoutes'
 
+// Import User Management View
+import UserManagementView from '../../modules/users/views/UserManagementView.vue'
+
 const routes = [
   ...authRoutes,
   ...dashboardRoutes,
   ...patientRoutes,
+  
+  // User Management Route (Admin Only)
+  {
+    path: '/users',
+    name: 'UserManagement',
+    component: UserManagementView,
+    meta: { 
+      requiresAuth: true, 
+      roles: ['admin'] 
+    }
+  },
+  
   {
     path: '/unauthorized',
     name: 'unauthorized',
