@@ -66,15 +66,26 @@
           </button>
 
           <!-- Error Message -->
-          <div v-if="authStore.error" class="error-message">
-            {{ authStore.error }}
+          <div v-if="authStore.error" 
+               :class="['error-message', isInactiveError ? 'warning-message' : '']">
+            <div v-if="isInactiveError" class="warning-icon">⚠️</div>
+            <div class="error-content">
+              <p class="error-title" v-if="isInactiveError">Akun Tidak Aktif</p>
+              <p>{{ authStore.error }}</p>
+              <p v-if="isInactiveError" class="error-hint">
+                Silakan hubungi administrator klinik untuk mengaktifkan akun Anda.
+              </p>
+            </div>
           </div>
 
-          <!-- Register Link -->
-          <p class="register-link">
-            Belum punya akun? 
-            <router-link to="/register">Daftar sekarang</router-link>
-          </p>
+          <!-- Info Box: Hanya untuk staff -->
+          <div class="info-box">
+            <p class="info-text">
+              🔒 Halaman ini hanya untuk <strong>staff SITARA</strong> (Admin, Dokter, Terapis).
+              <br />
+              <small>Hubungi administrator jika Anda belum memiliki akun.</small>
+            </p>
+          </div>
         </form>
       </div>
     </div>
@@ -82,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 
@@ -98,6 +109,14 @@ const form = ref({
 const errors = ref({
   email: '',
   password: ''
+})
+
+// Detect jika error adalah "akun tidak aktif"
+const isInactiveError = computed(() => {
+  return authStore.error && (
+    authStore.error.includes('tidak aktif') ||
+    authStore.error.includes('ditangguhkan')
+  )
 })
 
 const handleLogin = async () => {
@@ -118,6 +137,7 @@ const handleLogin = async () => {
   const result = await authStore.login(form.value.email, form.value.password)
   
   if (result.success) {
+    // Redirect ke dashboard
     router.push('/dashboard')
   }
 }
@@ -326,24 +346,57 @@ const handleLogin = async () => {
   border: 1px solid #fecaca;
   border-radius: 0.5rem;
   color: #dc2626;
-  text-align: center;
   font-size: 0.875rem;
 }
 
-.register-link {
-  text-align: center;
-  color: #64748b;
-  font-size: 0.875rem;
+/* Styling khusus untuk warning (akun tidak aktif) */
+.warning-message {
+  background: #fef3c7;
+  border-color: #fcd34d;
+  color: #92400e;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
 }
 
-.register-link a {
+.warning-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.error-content {
+  flex: 1;
+}
+
+.error-title {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.error-hint {
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  opacity: 0.9;
+}
+
+/* Info box untuk staff only */
+.info-box {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.5rem;
+  padding: 0.875rem 1rem;
+  text-align: center;
+}
+
+.info-text {
+  color: #1e40af;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.info-text small {
   color: #3b82f6;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.register-link a:hover {
-  text-decoration: underline;
+  font-size: 0.75rem;
 }
 
 @media (max-width: 768px) {
