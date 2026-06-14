@@ -46,29 +46,36 @@ class AuthController extends Controller
      */
     public function register(Request $request)
 {
-    $request->validate([
-        'name'     => 'required|string|max:255',
-        'email'    => 'required|string|email|max:255|unique:users',
-        'password' => 'required|string|min:8|confirmed',
-        'role'     => 'sometimes|in:admin,dokter,terapis',
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users',
+        'password' => 'required|string|min:6|confirmed',
+        'role' => 'required|in:dokter,terapis', // ← WAJIB ADA!
     ]);
+
+    // Cegah self-registration sebagai admin
+    if ($validated['role'] === 'admin') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Admin tidak dapat mendaftar sendiri. Hubungi administrator.'
+        ], 403);
+    }
 
     $user = User::create([
-        'name'     => $request->name,
-        'email'    => $request->email,
-        'password' => Hash::make($request->password),
-        'role'     => $request->role ?? 'terapis',
+        'name' => $validated['name'],
+        'email' => $validated['email'],
+        'password' => bcrypt($validated['password']),
+        'role' => $validated['role'], // ← Simpan role dari request
     ]);
 
-    /** @var \App\Models\User $user */  // ✅ Fix IntelliSense warning
-    $token = $user->createToken('sitara-auth-token')->plainTextToken;
+    $token = $user->createToken('auth_token')->plainTextToken;
 
     return response()->json([
         'success' => true,
-        'message' => 'Registrasi berhasil.',
-        'data'    => [
-            'user'  => $user,
-            'token' => $token,
+        'message' => 'Registrasi berhasil',
+        'data' => [
+            'user' => $user,
+            'token' => $token
         ]
     ], 201);
 }
