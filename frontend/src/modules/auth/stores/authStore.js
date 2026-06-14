@@ -10,6 +10,28 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
   const userRole = computed(() => user.value?.role || null)
+  
+  // Permission checks
+  const isAdmin = computed(() => userRole.value === 'admin')
+  const isDokter = computed(() => userRole.value === 'dokter')
+  const isTerapis = computed(() => userRole.value === 'terapis')
+
+  // Menu items berdasarkan role
+  const menuItems = computed(() => {
+    const allMenus = [
+      { name: 'Dashboard', path: '/dashboard', icon: '📊', roles: ['admin', 'dokter', 'terapis'] },
+      { name: 'Data Pasien', path: '/patients', icon: '👥', roles: ['admin', 'dokter', 'terapis'] },
+      { name: 'Antrian', path: '/queue', icon: '🎫', roles: ['admin', 'dokter'] },
+      { name: 'Assessment', path: '/assessment', icon: '📋', roles: ['admin', 'dokter'] },
+      { name: 'Terapi', path: '/therapy', icon: '', roles: ['admin', 'dokter', 'terapis'] },
+      { name: 'Monitoring', path: '/monitoring', icon: '📈', roles: ['admin', 'dokter', 'terapis'] },
+      { name: 'Laporan Medis', path: '/reports', icon: '', roles: ['admin', 'dokter'] },
+      { name: 'Manajemen User', path: '/users', icon: '👤', roles: ['admin'] },
+      { name: 'Pengaturan', path: '/settings', icon: '⚙️', roles: ['admin'] }
+    ]
+
+    return allMenus.filter(menu => menu.roles.includes(userRole.value))
+  })
 
   async function login(email, password) {
     loading.value = true
@@ -18,7 +40,12 @@ export const useAuthStore = defineStore('auth', () => {
       const data = await authService.login(email, password)
       user.value = data.data.user
       token.value = data.data.token
-      return { success: true }
+      
+      // Simpan ke localStorage
+      localStorage.setItem('token', data.data.token)
+      localStorage.setItem('user', JSON.stringify(data.data.user))
+      
+      return { success: true, role: data.data.user.role }
     } catch (err) {
       error.value = err.response?.data?.message || 'Login gagal'
       return { success: false, error: error.value }
@@ -52,6 +79,22 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // Check permission untuk akses fitur
+  function canAccess(feature) {
+    const permissions = {
+      'patients': ['admin', 'dokter', 'terapis'],
+      'queue': ['admin', 'dokter'],
+      'assessment': ['admin', 'dokter'],
+      'therapy': ['admin', 'dokter', 'terapis'],
+      'monitoring': ['admin', 'dokter', 'terapis'],
+      'reports': ['admin', 'dokter'],
+      'users': ['admin'],
+      'settings': ['admin']
+    }
+
+    return permissions[feature]?.includes(userRole.value) || false
+  }
+
   return {
     user,
     token,
@@ -59,8 +102,13 @@ export const useAuthStore = defineStore('auth', () => {
     error,
     isAuthenticated,
     userRole,
+    isAdmin,
+    isDokter,
+    isTerapis,
+    menuItems,
     login,
     register,
-    logout
+    logout,
+    canAccess
   }
 })
