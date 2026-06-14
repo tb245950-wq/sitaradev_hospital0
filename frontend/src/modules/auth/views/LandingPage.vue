@@ -6,7 +6,6 @@
 
     <!-- Header Buttons -->
     <div class="header-buttons">
-      <router-link to="/register" class="btn btn-outline">Daftar</router-link>
       <router-link to="/login" class="btn btn-primary">Masuk</router-link>
     </div>
 
@@ -23,7 +22,50 @@
         <h2>Selamat Datang</h2>
         <p>Sistem Informasi Terpadu Assessment dan Rekam Anak</p>
       </div>
+
+      <!-- Info Box untuk Staff -->
+      <div class="staff-info-box">
+        <div class="staff-icon">🔒</div>
+        <h3>Akses Khusus Staff</h3>
+        <p>
+          Sistem ini hanya untuk <strong>Admin, Dokter, dan Terapis</strong> 
+          yang telah terdaftar di klinik SITARA.
+        </p>
+        <p class="staff-note">
+          Jika Anda adalah staff dan belum memiliki akun, 
+          silakan hubungi administrator klinik.
+        </p>
+      </div>
+
+      <!-- Features Preview -->
+      <div class="features-preview">
+        <div class="feature-item">
+          <div class="feature-icon">👥</div>
+          <h4>Manajemen Pasien</h4>
+          <p>Kelola data pasien dengan mudah</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📋</div>
+          <h4>Assessment Medis</h4>
+          <p>Rekam assessment dan diagnosis</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🧠</div>
+          <h4>Program Terapi</h4>
+          <p>Atur dan pantau program terapi</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📊</div>
+          <h4>Laporan Lengkap</h4>
+          <p>Generate laporan harian & bulanan</p>
+        </div>
+      </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+      <p>&copy; 2026 SITARA - Sistem Informasi Terpadu Assessment dan Rekam Anak</p>
+    </footer>
   </div>
 </template>
 
@@ -37,6 +79,8 @@
   background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .circle {
@@ -80,17 +124,6 @@
   font-size: 1rem;
 }
 
-.btn-outline {
-  background: transparent;
-  color: #1e40af;
-  border: 2px solid #1e40af;
-}
-
-.btn-outline:hover {
-  background: #1e40af;
-  color: white;
-}
-
 .btn-primary {
   background: #1e40af;
   color: white;
@@ -112,11 +145,12 @@
   position: relative;
   z-index: 1;
   padding: 2rem;
+  gap: 2rem;
 }
 
 .logo-container {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
 }
 
 .logo {
@@ -165,6 +199,94 @@
   line-height: 1.6;
 }
 
+/* Staff Info Box */
+.staff-info-box {
+  background: white;
+  border: 2px solid #1e40af;
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 600px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.1);
+}
+
+.staff-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.staff-info-box h3 {
+  font-size: 1.5rem;
+  color: #1e40af;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.staff-info-box p {
+  color: #475569;
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.staff-note {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Features Preview */
+.features-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  max-width: 900px;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.feature-item {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+}
+
+.feature-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.feature-item h4 {
+  font-size: 1rem;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.feature-item p {
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* Footer */
+.landing-footer {
+  background: #1e293b;
+  color: white;
+  text-align: center;
+  padding: 1.5rem;
+  position: relative;
+  z-index: 1;
+  font-size: 0.875rem;
+}
+
 @media (max-width: 768px) {
   .header-buttons {
     top: 1rem;
@@ -182,6 +304,14 @@
 
   .welcome-text p {
     font-size: 1rem;
+  }
+
+  .features-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-info-box {
+    padding: 1.5rem;
   }
 }
 </style>
