@@ -6,6 +6,7 @@
     </div>
 
     <nav class="sidebar-nav">
+      <!-- Menu Utama (Semua Role) -->
       <router-link to="/dashboard" class="nav-item">
         <span class="icon">📊</span>
         <span class="label">Dashboard</span>
@@ -21,7 +22,7 @@
         <span class="label">Antrian</span>
       </router-link>
 
-      <!-- Role-based Menu Items -->
+      <!-- Section: Tindakan (Dokter & Admin) -->
       <template v-if="authStore.userRole === 'dokter' || authStore.userRole === 'admin'">
         <div class="nav-divider">Tindakan</div>
         
@@ -31,19 +32,41 @@
         </router-link>
       </template>
 
+      <!-- Section: Terapi & Monitoring (Semua Role Medis) -->
       <template v-if="authStore.userRole === 'dokter' || authStore.userRole === 'terapis' || authStore.userRole === 'admin'">
         <router-link to="/therapies" class="nav-item">
           <span class="icon">🧠</span>
           <span class="label">Terapi</span>
         </router-link>
+
+        <router-link to="/monitoring" class="nav-item">
+          <span class="icon">📈</span>
+          <span class="label">Monitoring</span>
+        </router-link>
       </template>
 
+      <!-- Section: Laporan (Dokter & Admin) -->
       <template v-if="authStore.userRole === 'dokter' || authStore.userRole === 'admin'">
         <div class="nav-divider">Laporan</div>
 
         <router-link to="/reports" class="nav-item">
           <span class="icon">📄</span>
           <span class="label">Laporan Medis</span>
+        </router-link>
+      </template>
+
+      <!-- Section: Administrasi (HANYA ADMIN) -->
+      <template v-if="authStore.userRole === 'admin'">
+        <div class="nav-divider">Administrasi</div>
+
+        <router-link to="/users" class="nav-item">
+          <span class="icon">👤</span>
+          <span class="label">Manajemen User</span>
+        </router-link>
+
+        <router-link to="/settings" class="nav-item">
+          <span class="icon">⚙️</span>
+          <span class="label">Pengaturan</span>
         </router-link>
       </template>
     </nav>
@@ -77,6 +100,7 @@ defineProps({
   top: 0;
   z-index: 1000;
   transition: transform 0.3s;
+  overflow-y: auto;
 }
 
 @media (max-width: 768px) {
