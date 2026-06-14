@@ -42,12 +42,15 @@
           </div>
 
           <div class="form-group">
-            <label for="role">Role</label>
+            <label for="role">Role <span class="text-red-500">*</span></label>
             <select id="role" v-model="form.role" required>
               <option value="" disabled>Pilih Role</option>
               <option value="dokter">Dokter</option>
               <option value="terapis">Terapis</option>
-            </select>
+          </select>
+          <p class="text-xs text-gray-500 italic mt-1">
+            * Akun Admin hanya dapat dibuat oleh administrator sistem
+          </p>
           </div>
 
           <div class="form-group">
