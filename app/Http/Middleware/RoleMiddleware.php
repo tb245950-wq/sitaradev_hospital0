@@ -12,10 +12,20 @@ class RoleMiddleware
      * Handle an incoming request.
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  string  ...$roles  Expected roles (admin, dokter, terapis)
      */
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        if (!$request->user() || $request->user()->role !== $role) {
+        // Check if user is authenticated
+        if (!$request->user()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        // Check if user has one of the required roles
+        if (!in_array($request->user()->role, $roles)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses ditolak. Insufficient permissions.'

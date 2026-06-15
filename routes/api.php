@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\AssessmentController;
 use App\Http\Controllers\Api\TherapyController;
 use App\Http\Controllers\Api\MonitoringController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
@@ -18,6 +19,17 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+
+    // Admin only routes
+    Route::prefix('admin')->middleware('role:admin')->group(function () {
+        Route::get('/users', [UserManagementController::class, 'index']);
+        Route::post('/users', [UserManagementController::class, 'store']);
+        Route::get('/users/{user}', [UserManagementController::class, 'show']);
+        Route::put('/users/{user}', [UserManagementController::class, 'update']);
+        Route::patch('/users/{user}/status', [UserManagementController::class, 'updateStatus']);
+        Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword']);
+        Route::delete('/users/{user}', [UserManagementController::class, 'destroy']);
+    });
 
     // Patient
     Route::middleware('role:admin,dokter')->group(function () {
