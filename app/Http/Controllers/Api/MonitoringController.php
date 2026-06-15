@@ -157,4 +157,59 @@ class MonitoringController extends Controller
             'data' => $stats
         ], 200);
     }
+
+    /**
+     * POST /api/monitorings/generate-assessment/{id_terapi}
+     * Auto-generate assessment from therapy monitoring
+     */
+    public function generateAssessment(Request $request, $id_terapi)
+    {
+        $user = Auth::user();
+        
+        if ($user->role !== 'dokter' && $user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya dokter yang dapat membuat assessment'
+            ], 403);
+        }
+        
+        $therapy = Therapy::findOrFail($id_terapi);
+        $monitorings = TherapyMonitoring::where('id_terapi', $id_terapi)
+            ->where('kehadiran', 'hadir')
+            ->orderBy('tanggal_sesi', 'desc')
+            ->get();
+        
+        if ($monitorings->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Belum ada sesi monitoring yang hadir'
+            ], 400);
+        }
+        
+        // Compile progress notes
+        $progressSummary = $monitorings->map(function($m) {
+            return "Sesi (" . $m->tanggal_sesi->format('d/m/Y') . "):\n" .
+                   "- Progress: {$m->catatan_perkembangan}\n" .
+                   "- Kondisi: {$m->kondisi_pasien}\n";
+        })->take(5)->join("\n\n");
+        
+        // Create assessment
+        $assessment = \App\Models\MedicalAssessment::create([
+            'id_pasien' => $therapy->id_pasien,
+            'id_pengguna' => $user->id,
+            'tanggal_assessment' => now(),
+            'keluhan_utama' => "Monitoring Terapi: {$therapy->nama_terapi}\n\nRingkasan 5 Sesi Terakhir:\n{$progressSummary}",
+            'diagnosis' => $therapy->deskripsi,
+            'rencana_terapi' => $monitorings->first()->rekomendasi ?? 'Lanjutkan terapi',
+            'catatan_medis' => "Assessment otomatis dari monitoring terapi #{$therapy->id_terapi}",
+            'status' => 'draft',
+            'hasil_pemeriksaan' => ['tensi' => '-', 'nadi' => '-', 'suhu' => '-']
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Assessment berhasil dibuat dari monitoring terapi',
+            'data' => new \App\Http\Resources\AssessmentResource($assessment)
+        ], 201);
+    }
 }

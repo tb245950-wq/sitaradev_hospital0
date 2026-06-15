@@ -41,6 +41,16 @@ class PatientController extends Controller
     {
         $patient = Patient::create($request->validated());
 
+        // Create activity log
+        \App\Models\ActivityLog::create([
+            'id_pasien' => $patient->id_pasien,
+            'id_pengguna' => Auth::id(),
+            'activity_type' => 'Registrasi Pasien',
+            'department' => 'Umum',
+            'status' => 'Selesai',
+            'description' => 'Pasien: ' . $patient->nama_lengkap
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Pasien berhasil didaftarkan.',

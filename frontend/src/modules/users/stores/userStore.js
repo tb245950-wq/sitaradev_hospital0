@@ -34,11 +34,13 @@ export const useUserStore = defineStore('users', () => {
 
       const response = await userService.getUsers(params)
       users.value = response.data.data
+      
+      const meta = response.data.meta || response.data
       pagination.value = {
-        current_page: response.data.current_page,
-        last_page: response.data.last_page,
-        per_page: response.data.per_page,
-        total: response.data.total
+        current_page: meta.current_page,
+        last_page: meta.last_page,
+        per_page: meta.per_page,
+        total: meta.total
       }
     } catch (err) {
       error.value = err.response?.data?.message || 'Gagal mengambil data user'

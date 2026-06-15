@@ -39,7 +39,7 @@ export const useQueueStore = defineStore('queue', () => {
     }
   }
   
-  async function callNext(params = {}) {
+  async callNext(params = {}) {
     try {
       const response = await queueService.callNext(params)
       await fetchQueues()
@@ -50,7 +50,19 @@ export const useQueueStore = defineStore('queue', () => {
       return { success: false }
     }
   }
-  
+
+  async function callQueue(id) {
+    try {
+      const response = await queueService.callQueue(id)
+      await fetchQueues()
+      await getStats()
+      return response
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Gagal memanggil pasien'
+      return { success: false }
+    }
+  }
+
   async function completeQueue(id) {
     try {
       const response = await queueService.completeQueue(id)

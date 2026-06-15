@@ -56,6 +56,16 @@ class TherapyController extends Controller
             'status' => 'terjadwal',
         ]));
 
+        // Create activity log
+        \App\Models\ActivityLog::create([
+            'id_pasien' => $validated['id_pasien'],
+            'id_pengguna' => Auth::id(),
+            'activity_type' => 'Program Terapi',
+            'department' => 'Terapi',
+            'status' => 'Baru',
+            'description' => 'Terapi: ' . $therapy->nama_terapi
+        ]);
+
         $therapy->load(['patient', 'terapis', 'assessment']);
 
         return response()->json([

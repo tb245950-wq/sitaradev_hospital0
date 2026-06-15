@@ -2,7 +2,7 @@
   <div class="activities-card">
     <div class="activities-header">
       <h3 class="activities-title">Aktivitas Terbaru</h3>
-      <button class="view-all-btn">Lihat Semua</button>
+      <router-link to="/activities" class="view-all-btn">Lihat Semua</router-link>
     </div>
     
     <div class="table-container">

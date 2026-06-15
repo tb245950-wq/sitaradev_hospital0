@@ -86,6 +86,16 @@ class QueueController extends Controller
             'catatan' => $validated['catatan'] ?? null,
         ]);
 
+        // Create activity log
+        \App\Models\ActivityLog::create([
+            'id_pasien' => $validated['id_pasien'],
+            'id_pengguna' => Auth::id(),
+            'activity_type' => 'Registrasi Antrian',
+            'department' => $validated['jenis_layanan'] === 'terapi' ? 'Terapi' : 'Umum',
+            'status' => 'Baru',
+            'description' => 'Nomor Antrian: Q' . str_pad($nomorAntrian, 3, '0', STR_PAD_LEFT)
+        ]);
+
         $queue->load(['patient', 'user']);
 
         return response()->json([
@@ -168,15 +178,35 @@ public function destroy(Queue $queue)
 }
 
     /**
+     * GET /api/queues/stats
+     */
+    public function stats()
+    {
+        $today = today();
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'waiting' => Queue::where('status', 'menunggu')->whereDate('waktu_daftar', $today)->count(),
+                'calling' => Queue::where('status', 'dipanggil')->whereDate('waktu_daftar', $today)->count(),
+                'completed' => Queue::where('status', 'selesai')->whereDate('waktu_daftar', $today)->count(),
+                'high_priority' => Queue::where('prioritas', '>', 5)
+                    ->where('status', 'menunggu')
+                    ->whereDate('waktu_daftar', $today)
+                    ->count()
+            ]
+        ]);
+    }
+
+    /**
      * Generate Nomor Antrian Otomatis
-     * Format: A001 untuk assessment, T001 untuk terapi
+     * Format: Q001, Q002, dst
      */
     private function generateNomorAntrian(string $jenisLayanan): int
     {
         $today = today();
 
-        $lastQueue = Queue::where('jenis_layanan', $jenisLayanan)
-            ->whereDate('waktu_daftar', $today)
+        $lastQueue = Queue::whereDate('waktu_daftar', $today)
             ->orderBy('nomor_antrian', 'desc')
             ->first();
 
@@ -209,6 +239,16 @@ public function destroy(Queue $queue)
         $nextQueue->status = 'dipanggil';
         $nextQueue->waktu_panggil = now();
         $nextQueue->save();
+
+        // Create activity log
+        \App\Models\ActivityLog::create([
+            'id_pasien' => $nextQueue->id_pasien,
+            'id_pengguna' => Auth::id(),
+            'activity_type' => 'Panggil Antrian',
+            'department' => $nextQueue->jenis_layanan === 'terapi' ? 'Terapi' : 'Umum',
+            'status' => 'Berlangsung',
+            'description' => 'Memanggil: Q' . str_pad($nextQueue->nomor_antrian, 3, '0', STR_PAD_LEFT)
+        ]);
 
         $nextQueue->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
 

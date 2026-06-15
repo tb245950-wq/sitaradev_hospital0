@@ -77,9 +77,16 @@ class UserManagementController extends Controller
             'email' => 'required|email|unique:users,email',
             'nip' => 'nullable|string|unique:users,nip',
             'role' => 'required|in:admin,dokter,terapis',
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
             'status' => 'sometimes|in:active,inactive,suspended',
         ]);
+
+        // Auto-generate NIP if not provided
+        if (!isset($validated['nip']) || empty($validated['nip'])) {
+            $year = date('Y');
+            $count = \App\Models\User::whereYear('created_at', $year)->count() + 1;
+            $validated['nip'] = $year . str_pad($count, 4, '0', STR_PAD_LEFT);
+        }
 
         // Create user
         $user = User::create([

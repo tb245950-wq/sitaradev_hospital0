@@ -27,6 +27,11 @@ export const queueService = {
     return response.data
   },
   
+  async callQueue(id) {
+    const response = await api.put(`/queues/${id}`, { status: 'dipanggil' })
+    return response.data
+  },
+  
   async completeQueue(id) {
     const response = await api.put(`/queues/${id}`, { status: 'selesai' })
     return response.data

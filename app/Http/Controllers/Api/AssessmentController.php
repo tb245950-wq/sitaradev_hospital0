@@ -85,6 +85,16 @@ class AssessmentController extends Controller
             'catatan_medis' => $validated['catatan_medis'] ?? '',
         ]));
 
+        // Create activity log
+        \App\Models\ActivityLog::create([
+            'id_pasien' => $validated['id_pasien'],
+            'id_pengguna' => Auth::id(),
+            'activity_type' => 'Assessment Medis',
+            'department' => 'Umum',
+            'status' => 'Selesai',
+            'description' => 'Diagnosis: ' . $assessment->diagnosis
+        ]);
+
         $assessment->load(['patient', 'user', 'queue']);
 
         return response()->json([

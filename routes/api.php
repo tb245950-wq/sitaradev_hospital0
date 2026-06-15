@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\MonitoringController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\Api\ActivityLogController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
@@ -74,6 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/monitorings', [MonitoringController::class, 'index']);
         Route::get('/monitorings/{monitoring}', [MonitoringController::class, 'show']);
         Route::get('/patients/{id_pasien}/progress-stats', [MonitoringController::class, 'progressStats']);
+        Route::post('/monitorings/generate-assessment/{id_terapi}', [MonitoringController::class, 'generateAssessment']);
     });
     Route::post('/monitorings', [MonitoringController::class, 'store'])->middleware('role:dokter,terapis');
     Route::put('/monitorings/{monitoring}', [MonitoringController::class, 'update'])->middleware('role:dokter,terapis');
@@ -95,4 +97,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::get('/reports/dashboard', [ReportController::class, 'dashboard'])->middleware('role:admin,dokter,terapis');
     Route::get('/reports/patients/{id_pasien}', [ReportController::class, 'patientReport'])->middleware('role:admin,dokter,terapis');
+
+    // Activity Logs Routes
+    Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+    Route::get('/activity-logs/all', [ActivityLogController::class, 'allActivities']);
 });

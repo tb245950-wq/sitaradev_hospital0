@@ -42,7 +42,13 @@ const routes = [
   {
     path: '/queues',
     name: 'Queues',
-    component: QueueView,
+    component: () => import('../../modules/queue/views/QueueView.vue'),
+    meta: { requiresAuth: true, roles: ['admin', 'dokter'] }
+  },
+  {
+    path: '/queues/create',
+    name: 'QueueCreate',
+    component: () => import('../../modules/queue/views/QueueCreateView.vue'),
     meta: { requiresAuth: true, roles: ['admin', 'dokter'] }
   },
   {
@@ -59,6 +65,12 @@ const routes = [
     meta: { requiresAuth: true, roles: ['admin', 'dokter'] }
   },
   {
+    path: '/assessments/create',
+    name: 'AssessmentCreate',
+    component: () => import('../../modules/assessment/views/AssessmentCreateView.vue'),
+    meta: { requiresAuth: true, roles: ['admin', 'dokter'] }
+  },
+  {
     path: '/assessment',
     name: 'Assessment',
     redirect: '/assessments'
@@ -70,6 +82,12 @@ const routes = [
     name: 'Therapies',
     component: TherapyListView,
     meta: { requiresAuth: true, roles: ['admin', 'dokter', 'terapis'] }
+  },
+  {
+    path: '/therapies/create',
+    name: 'TherapyCreate',
+    component: () => import('../../modules/therapy/views/TherapyCreateView.vue'),
+    meta: { requiresAuth: true, roles: ['admin', 'dokter'] }
   },
   {
     path: '/therapy',
@@ -97,6 +115,12 @@ const routes = [
       requiresAuth: true, 
       roles: ['admin', 'dokter'] 
     }
+  },
+  {
+    path: '/activities',
+    name: 'ActivityLog',
+    component: () => import('../../modules/dashboard/views/ActivityLogView.vue'),
+    meta: { requiresAuth: true }
   },
   
   // Unauthorized Page

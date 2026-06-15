@@ -97,12 +97,23 @@ const callNextPatient = async () => {
 }
 
 const callPatient = async (id) => {
-  // We can use callNext with specific ID or just update status to 'dipanggil'
-  alert('Memanggil pasien...')
+  if (confirm('Panggil pasien ini?')) {
+    const result = await queueStore.callQueue(id)
+    if (result.success) {
+      alert('Pasien dipanggil')
+    } else {
+      alert(result.message || 'Gagal memanggil pasien')
+    }
+  }
 }
 
 const completeQueue = async (id) => {
-  await queueStore.completeQueue(id)
+  if (confirm('Selesaikan antrian ini?')) {
+    const result = await queueStore.completeQueue(id)
+    if (result.success) {
+      alert('Antrian selesai')
+    }
+  }
 }
 
 const cancelQueue = async (id) => {

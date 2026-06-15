@@ -62,14 +62,20 @@
                 </tr>
                 <tr v-for="m in filteredMonitorings" :key="m.id">
                   <td>{{ formatDate(m.tanggal_sesi) }}</td>
-                  <td><strong>{{ m.patient?.nama }}</strong></td>
-                  <td>{{ m.user?.name || 'Unknown' }}</td>
-                  <td><span class="truncate">{{ m.catatan_progress }}</span></td>
+                  <td><strong>{{ m.pasien?.nama }}</strong></td>
+                  <td>{{ m.terapis?.nama || 'Unknown' }}</td>
+                  <td><span class="truncate">{{ m.catatan_perkembangan }}</span></td>
                   <td class="text-right">
                     <div class="action-buttons justify-end">
-                      <button @click="viewDetail(m)" class="btn-icon-sm">👁️</button>
-                      <template v-if="authStore.isDokter">
-                        <button @click="deleteMonitoring(m)" class="btn-icon-sm text-red-500">🗑️</button>
+                      <button @click="viewDetail(m)" class="btn-icon-sm" title="Detail">👁️</button>
+                      <button 
+                        v-if="authStore.isDokter || authStore.isAdmin" 
+                        @click="handleGenerateAssessment(m.therapy?.id)" 
+                        class="btn-icon-sm" 
+                        title="Generate Assessment"
+                      >📝</button>
+                      <template v-if="authStore.isDokter || authStore.isAdmin">
+                        <button @click="handleDeleteMonitoring(m.id)" class="btn-icon-sm text-red-500" title="Hapus">🗑️</button>
                       </template>
                     </div>
                   </td>
@@ -138,19 +144,42 @@ const filteredMonitorings = computed(() => {
   if (!searchQuery.value) return monitoringStore.monitorings
   const q = searchQuery.value.toLowerCase()
   return monitoringStore.monitorings.filter(m => 
-    m.patient?.nama.toLowerCase().includes(q) || 
-    m.user?.name.toLowerCase().includes(q)
+    m.pasien?.nama.toLowerCase().includes(q) || 
+    m.terapis?.nama.toLowerCase().includes(q)
   )
 })
 
 const formatDate = (dateStr) => {
+  if (!dateStr) return '-'
   return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })
 }
 
-const openCreateModal = () => alert('Buka Modal Catat Sesi Baru')
-const viewDetail = (m) => alert(`Detail Monitoring: ${m.patient?.nama}`)
-const deleteMonitoring = (m) => {
-  if (confirm('Hapus catatan monitoring ini?')) alert('Menghapus...')
+const openCreateModal = () => alert('Fitur Catat Sesi akan segera hadir')
+const viewDetail = (m) => alert(`Detail Monitoring: ${m.pasien?.nama}`)
+
+const handleGenerateAssessment = async (therapyId) => {
+  if (!therapyId) return alert('Data terapi tidak ditemukan')
+  if (confirm('Buat draft assessment medis berdasarkan hasil monitoring ini?')) {
+    const result = await monitoringStore.generateAssessment(therapyId)
+    if (result.success) {
+      alert('Assessment berhasil dibuat (Draft)')
+      router.push('/assessments')
+    } else {
+      alert(result.error)
+    }
+  }
+}
+
+const handleDeleteMonitoring = async (id) => {
+  if (confirm('Hapus catatan monitoring ini?')) {
+    try {
+      await monitoringStore.deleteMonitoring(id)
+      alert('Berhasil dihapus')
+      refreshData()
+    } catch (e) {
+      alert('Gagal menghapus')
+    }
+  }
 }
 </script>
 
