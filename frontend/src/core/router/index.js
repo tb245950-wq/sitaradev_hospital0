@@ -41,8 +41,8 @@ const routes = [
   
   // Queue Route (Admin & Dokter)
   {
-    path: '/queues',
-    name: 'Queues',
+    path: '/queue',
+    name: 'Queue',
     component: () => import('../../modules/queue/views/QueueView.vue'),
     meta: { 
       requiresAuth: true, 
@@ -52,8 +52,8 @@ const routes = [
   
   // Assessment Route (Admin & Dokter)
   {
-    path: '/assessments',
-    name: 'Assessments',
+    path: '/assessment',
+    name: 'Assessment',
     component: () => import('../../modules/assessment/views/AssessmentView.vue'),
     meta: { 
       requiresAuth: true, 
@@ -63,8 +63,8 @@ const routes = [
   
   // Therapy Route (Semua Role Medis)
   {
-    path: '/therapies',
-    name: 'Therapies',
+    path: '/therapy',
+    name: 'Therapy',
     component: () => import('../../modules/therapy/views/TherapyView.vue'),
     meta: { 
       requiresAuth: true, 

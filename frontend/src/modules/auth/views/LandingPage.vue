@@ -40,22 +40,22 @@
       <!-- Features Preview -->
       <div class="features-preview">
         <div class="feature-item">
-          <div class="feature-icon">👥</div>
+          <div class="feature-icon"></div>
           <h4>Manajemen Pasien</h4>
           <p>Kelola data pasien dengan mudah</p>
         </div>
         <div class="feature-item">
-          <div class="feature-icon">📋</div>
+          <div class="feature-icon"></div>
           <h4>Assessment Medis</h4>
           <p>Rekam assessment dan diagnosis</p>
         </div>
         <div class="feature-item">
-          <div class="feature-icon">🧠</div>
+          <div class="feature-icon"></div>
           <h4>Program Terapi</h4>
           <p>Atur dan pantau program terapi</p>
         </div>
         <div class="feature-item">
-          <div class="feature-icon">📊</div>
+          <div class="feature-icon"></div>
           <h4>Laporan Lengkap</h4>
           <p>Generate laporan harian & bulanan</p>
         </div>

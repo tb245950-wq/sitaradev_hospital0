@@ -1,50 +1,58 @@
 <template>
-  <div class="not-found-page">
-    <div class="content">
-      <div class="icon">🔍</div>
+  <div class="error-page">
+    <div class="error-content">
+      <div class="error-icon">🔍</div>
       <h1>404 - Halaman Tidak Ditemukan</h1>
       <p>Maaf, halaman yang Anda cari tidak ada atau telah dipindahkan.</p>
-      <router-link to="/dashboard" class="btn-home">
-        Kembali ke Dashboard
+      <router-link to="/dashboard" class="btn-back">
+        ← Kembali ke Dashboard
       </router-link>
     </div>
   </div>
 </template>
 
+<script setup>
+</script>
+
 <style scoped>
-.not-found-page {
+.error-page {
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f8fafc;
-  text-align: center;
+  padding: 1.5rem;
 }
 
-.content {
+.error-content {
   background: white;
   padding: 3rem;
   border-radius: 1rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
 }
 
-.icon {
+.error-icon {
   font-size: 4rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 h1 {
-  font-size: 2rem;
+  font-size: 2.25rem;
+  font-weight: 700;
   color: #1e293b;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 p {
   color: #64748b;
-  margin-bottom: 2rem;
+  font-size: 1.125rem;
+  margin-bottom: 2.5rem;
 }
 
-.btn-home {
+.btn-back {
   display: inline-block;
   padding: 0.75rem 1.5rem;
   background: #3b82f6;
@@ -55,7 +63,7 @@ p {
   transition: all 0.3s;
 }
 
-.btn-home:hover {
+.btn-back:hover {
   background: #2563eb;
   transform: translateY(-2px);
 }
