@@ -3,13 +3,14 @@
     <!-- Header -->
     <div class="page-header">
       <div>
+        <button @click="goBack" class="btn-back">
+          <span class="arrow">←</span>
+          <span>{{ backButtonText }}</span>
+        </button>
         <h1 class="page-title">Detail Pasien</h1>
         <p class="page-subtitle">Informasi lengkap rekam medis anak</p>
       </div>
       <div class="page-actions">
-        <router-link to="/patients" class="btn-secondary">
-          ← Kembali
-        </router-link>
         <router-link 
           v-if="canManage" 
           :to="`/patients/${patient?.id}/edit`" 
@@ -136,11 +137,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../auth/stores/authStore'
 import { usePatientStore } from '../stores/patientStore'
+import { useNavigation } from '../../../shared/composables/useNavigation'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const patientStore = usePatientStore()
+const { goBack, backButtonText } = useNavigation()
 
 const activeTab = ref('overview')
 const tabs = [

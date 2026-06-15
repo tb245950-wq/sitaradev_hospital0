@@ -2,12 +2,13 @@
   <div class="page-container">
     <div class="page-header">
       <div>
+        <button @click="goBackHistory" class="btn-back">
+          <span class="arrow">←</span>
+          <span>Kembali</span>
+        </button>
         <h1 class="page-title">Tambah Pasien Baru</h1>
         <p class="page-subtitle">Daftarkan pasien rekam medis baru ke sistem</p>
       </div>
-      <router-link to="/patients" class="btn-secondary">
-        ← Kembali
-      </router-link>
     </div>
 
     <div class="form-card">
@@ -136,7 +137,7 @@
         <div class="form-actions">
           <button 
             type="button" 
-            @click="$router.push('/patients')" 
+            @click="cancelForm" 
             class="btn-secondary"
             :disabled="patientStore.loading"
           >
@@ -160,10 +161,12 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../auth/stores/authStore'
 import { usePatientStore } from '../stores/patientStore'
+import { useNavigation } from '../../../shared/composables/useNavigation'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const patientStore = usePatientStore()
+const { goBackHistory, cancelForm } = useNavigation()
 
 // RBAC Check
 onMounted(() => {

@@ -2,6 +2,10 @@
   <div class="page-container">
     <div class="page-header">
       <div>
+        <button @click="goToDashboard" class="btn-back">
+          <span class="arrow">←</span>
+          <span>Kembali ke Dashboard</span>
+        </button>
         <h1 class="page-title">Pengaturan Sistem</h1>
         <p class="page-subtitle">Konfigurasi aplikasi dan pemeliharaan data</p>
       </div>
@@ -90,9 +94,11 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../auth/stores/authStore'
+import { useNavigation } from '../../../shared/composables/useNavigation'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { goToDashboard } = useNavigation()
 
 const activeSection = ref('general')
 const navItems = [

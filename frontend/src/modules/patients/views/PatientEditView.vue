@@ -2,12 +2,13 @@
   <div class="page-container">
     <div class="page-header">
       <div>
+        <button @click="goBackHistory" class="btn-back">
+          <span class="arrow">←</span>
+          <span>Kembali</span>
+        </button>
         <h1 class="page-title">Edit Data Pasien</h1>
         <p class="page-subtitle">Perbarui informasi rekam medis pasien</p>
       </div>
-      <router-link to="/patients" class="btn-secondary">
-        ← Kembali
-      </router-link>
     </div>
 
     <div v-if="patientStore.loading && !form.nama_lengkap" class="loading-state">
@@ -131,7 +132,7 @@
         <div class="form-actions">
           <button 
             type="button" 
-            @click="$router.push('/patients')" 
+            @click="cancelForm" 
             class="btn-secondary"
             :disabled="patientStore.loading"
           >
@@ -155,11 +156,13 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../../auth/stores/authStore'
 import { usePatientStore } from '../stores/patientStore'
+import { useNavigation } from '../../../shared/composables/useNavigation'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const patientStore = usePatientStore()
+const { goBackHistory, cancelForm } = useNavigation()
 
 const form = ref({
   nrm: '',

@@ -7,15 +7,19 @@
       <p v-if="allowedRoles" class="error-detail">
         Halaman ini hanya dapat diakses oleh <strong>{{ allowedRoles }}</strong>.
       </p>
-      <router-link to="/dashboard" class="btn-back">
-        ← Kembali ke Dashboard
-      </router-link>
+      <button @click="goToDashboard" class="btn-back-large">
+        <span class="arrow">←</span>
+        <span>Kembali ke Dashboard</span>
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { useNavigation } from '../../../shared/composables/useNavigation'
+
+const { goToDashboard } = useNavigation()
 
 const props = defineProps({
   allowedRoles: {
@@ -69,19 +73,25 @@ p {
   margin-bottom: 2.5rem;
 }
 
-.btn-back {
-  display: inline-block;
-  padding: 0.75rem 1.5rem;
-  background: #3b82f6;
+.btn-back-large {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: #1e40af;
   color: white;
-  text-decoration: none;
+  border: none;
   border-radius: 0.5rem;
+  font-size: 1rem;
   font-weight: 600;
+  cursor: pointer;
   transition: all 0.3s;
+  margin-top: 2rem;
 }
 
-.btn-back:hover {
-  background: #2563eb;
+.btn-back-large:hover {
+  background: #1e3a8a;
   transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(30, 64, 175, 0.3);
 }
 </style>

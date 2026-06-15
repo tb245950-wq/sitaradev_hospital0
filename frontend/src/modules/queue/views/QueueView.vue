@@ -2,6 +2,10 @@
   <div class="page-container">
     <div class="page-header">
       <div>
+        <button @click="goToDashboard" class="btn-back">
+          <span class="arrow">←</span>
+          <span>Kembali ke Dashboard</span>
+        </button>
         <h1 class="page-title">Antrian Hari Ini</h1>
         <p class="page-subtitle">Kelola urutan pelayanan pasien</p>
       </div>
@@ -118,10 +122,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../auth/stores/authStore'
 import { useQueueStore } from '../stores/queueStore'
+import { useNavigation } from '../../../shared/composables/useNavigation'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const queueStore = useQueueStore()
+const { goToDashboard } = useNavigation()
 
 const filterStatus = ref('semua')
 const statuses = [

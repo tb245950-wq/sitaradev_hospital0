@@ -2,6 +2,10 @@
   <div class="page-container">
     <div class="page-header">
       <div>
+        <button @click="goToDashboard" class="btn-back">
+          <span class="arrow">←</span>
+          <span>Kembali ke Dashboard</span>
+        </button>
         <h1 class="page-title">Monitoring Progress</h1>
         <p class="page-subtitle">Catatan harian dan perkembangan terapi anak</p>
       </div>
@@ -113,10 +117,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../auth/stores/authStore'
 import { useMonitoringStore } from '../stores/monitoringStore'
+import { useNavigation } from '../../../shared/composables/useNavigation'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const monitoringStore = useMonitoringStore()
+const { goToDashboard } = useNavigation()
 
 const searchQuery = ref('')
 

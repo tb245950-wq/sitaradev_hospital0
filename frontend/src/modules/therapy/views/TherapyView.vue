@@ -2,6 +2,10 @@
   <div class="page-container">
     <div class="page-header">
       <div>
+        <button @click="goToDashboard" class="btn-back">
+          <span class="arrow">←</span>
+          <span>Kembali ke Dashboard</span>
+        </button>
         <h1 class="page-title">Program Terapi</h1>
         <p class="page-subtitle">Rencana dan jadwal terapi pasien</p>
       </div>
@@ -117,10 +121,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../auth/stores/authStore'
 import { useTherapyStore } from '../stores/therapyStore'
+import { useNavigation } from '../../../shared/composables/useNavigation'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const therapyStore = useTherapyStore()
+const { goToDashboard } = useNavigation()
 
 const searchQuery = ref('')
 

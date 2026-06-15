@@ -20,3 +20,38 @@ body {
 .fade-leave-to {
   opacity: 0;
 }
+
+/* Back Button Component */
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  margin-bottom: 1rem;
+}
+
+.btn-back:hover {
+  background: #f1f5f9;
+  color: #1e40af;
+  border-color: #3b82f6;
+  transform: translateX(-2px);
+}
+
+.btn-back .arrow {
+  font-size: 1rem;
+  transition: transform 0.2s;
+}
+
+.btn-back:hover .arrow {
+  transform: translateX(-4px);
+}
+

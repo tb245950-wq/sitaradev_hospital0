@@ -3,6 +3,10 @@
     <!-- Header -->
     <div class="page-header">
       <div>
+        <button @click="goToDashboard" class="btn-back">
+          <span class="arrow">←</span>
+          <span>Kembali ke Dashboard</span>
+        </button>
         <h1 class="page-title">Manajemen User</h1>
         <p class="page-subtitle">Kelola akun Admin, Dokter, dan Terapis</p>
       </div>
@@ -326,9 +330,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '../stores/userStore'
 import { useAuthStore } from '../../auth/stores/authStore'
+import { useNavigation } from '../../../shared/composables/useNavigation'
 
 const userStore = useUserStore()
 const authStore = useAuthStore()
+const { goToDashboard } = useNavigation()
 
 // Modal states
 const showModal = ref(false)

@@ -3,6 +3,10 @@
     <!-- Header -->
     <div class="page-header">
       <div>
+        <button @click="goToDashboard" class="btn-back">
+          <span class="arrow">←</span>
+          <span>Kembali ke Dashboard</span>
+        </button>
         <h1 class="page-title">Daftar Pasien</h1>
         <p class="page-subtitle">Kelola data rekam medis anak</p>
       </div>
@@ -134,9 +138,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../../auth/stores/authStore'
 import { usePatientStore } from '../stores/patientStore'
+import { useNavigation } from '../../../shared/composables/useNavigation'
 
 const authStore = useAuthStore()
 const patientStore = usePatientStore()
+const { goToDashboard } = useNavigation()
 
 const searchQuery = ref('')
 let searchTimeout = null
