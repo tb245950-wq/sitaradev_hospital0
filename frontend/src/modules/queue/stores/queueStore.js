@@ -39,7 +39,7 @@ export const useQueueStore = defineStore('queue', () => {
     }
   }
   
-  async callNext(params = {}) {
+  async function callNext(params = {}) {
     try {
       const response = await queueService.callNext(params)
       await fetchQueues()

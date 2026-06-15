@@ -116,13 +116,25 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
+    console.log('AuthStore: Starting logout process...');
     try {
-      await authService.logout()
+      await authService.logout();
+      console.log('AuthStore: Service logout successful');
+    } catch (err) {
+      console.error('AuthStore: Service logout failed', err);
     } finally {
-      user.value = null
-      token.value = null
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
+      // Clear local state
+      user.value = null;
+      token.value = null;
+      
+      // Clear storage just in case
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      console.log('AuthStore: State cleared');
+      
+      // Optional: Force reload to clear all in-memory state
+      // window.location.href = '/login'; 
     }
   }
 

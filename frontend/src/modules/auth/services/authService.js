@@ -1,10 +1,8 @@
-import axios from 'axios'
-
-const API_URL = 'http://127.0.0.1:8000/api'
+import api from '../../../core/services/api'
 
 export const authService = {
   async login(email, password) {
-    const response = await axios.post(`${API_URL}/login`, { 
+    const response = await api.post('/login', { 
       email, 
       password 
     })
@@ -18,28 +16,21 @@ export const authService = {
   },
 
   async register(userData) {
-    const response = await axios.post(`${API_URL}/register`, userData)
+    const response = await api.post('/register', userData)
     return response.data
   },
 
   async logout() {
-    const token = localStorage.getItem('token')
-    await axios.post(`${API_URL}/logout`, {}, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    try {
+      await api.post('/logout')
+    } finally {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+    }
   },
 
   async getCurrentUser() {
-    const token = localStorage.getItem('token')
-    const response = await axios.get(`${API_URL}/user`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
+    const response = await api.get('/user')
     return response.data.data
   },
 

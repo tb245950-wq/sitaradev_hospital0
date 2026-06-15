@@ -46,8 +46,14 @@ const pageTitle = computed(() => {
 
 const handleLogout = async () => {
   if (confirm('Apakah Anda yakin ingin keluar?')) {
-    await authStore.logout()
-    router.push('/login')
+    try {
+      await authStore.logout();
+      // Menggunakan window.location.href untuk memastikan seluruh state terhapus (hard reload)
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/login';
+    }
   }
 }
 </script>

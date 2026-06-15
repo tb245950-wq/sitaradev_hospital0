@@ -124,12 +124,26 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        try {
+            $user = $request->user();
+            
+            if ($user) {
+                // Hapus token yang sedang digunakan
+                if ($user->currentAccessToken()) {
+                    $user->currentAccessToken()->delete();
+                }
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Logout berhasil.',
-        ], 200);
+            return response()->json([
+                'success' => true,
+                'message' => 'Logout berhasil.',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => true, // Tetap return success agar frontend bisa lanjut clear state
+                'message' => 'Logout berhasil (local).',
+            ], 200);
+        }
     }
 
     /**
