@@ -57,6 +57,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/assessments/{assessment}', [AssessmentController::class, 'show']);
     Route::put('/assessments/{assessment}', [AssessmentController::class, 'update'])->middleware('role:admin,dokter');
     Route::get('/patients/{id_pasien}/latest-assessment', [AssessmentController::class, 'latestByPatient']);
+    Route::post('/assessments/{assessment}/submit', [AssessmentController::class, 'submit']);
+    Route::post('/assessments/{assessment}/approve', [AssessmentController::class, 'approve']);
 
     // Therapy
     Route::middleware('role:admin,dokter,terapis')->group(function () {

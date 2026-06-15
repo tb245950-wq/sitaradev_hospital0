@@ -6,16 +6,15 @@ import { authRoutes } from '../../modules/auth/router/authRoutes'
 import { dashboardRoutes } from '../../modules/dashboard/router/dashboardRoutes'
 import { patientRoutes } from '../../modules/patients/router/patientRoutes'
 
+// Import views untuk modul baru
+import AssessmentListView from '../../modules/assessment/views/AssessmentListView.vue'
+import QueueView from '../../modules/queue/views/QueueView.vue'
+import TherapyListView from '../../modules/therapy/views/TherapyListView.vue'
+
 const routes = [
-  // Routes dari modul yang sudah ada
   ...authRoutes,
   ...dashboardRoutes,
   ...patientRoutes,
-  
-  // ============================================
-  // ROUTES DI BAWAH INI DI-COMMENT DULU
-  // Uncomment setelah file Vue-nya dibuat
-  // ============================================
   
   // User Management Route (Admin Only)
   {
@@ -39,37 +38,43 @@ const routes = [
     }
   },
   
-  // Queue Route (Admin & Dokter)
+  // Queue Routes
+  {
+    path: '/queues',
+    name: 'Queues',
+    component: QueueView,
+    meta: { requiresAuth: true, roles: ['admin', 'dokter'] }
+  },
   {
     path: '/queue',
     name: 'Queue',
-    component: () => import('../../modules/queue/views/QueueView.vue'),
-    meta: { 
-      requiresAuth: true, 
-      roles: ['admin', 'dokter'] 
-    }
+    redirect: '/queues'
   },
   
-  // Assessment Route (Admin & Dokter)
+  // Assessment Routes
+  {
+    path: '/assessments',
+    name: 'Assessments',
+    component: AssessmentListView,
+    meta: { requiresAuth: true, roles: ['admin', 'dokter'] }
+  },
   {
     path: '/assessment',
     name: 'Assessment',
-    component: () => import('../../modules/assessment/views/AssessmentView.vue'),
-    meta: { 
-      requiresAuth: true, 
-      roles: ['admin', 'dokter'] 
-    }
+    redirect: '/assessments'
   },
   
-  // Therapy Route (Semua Role Medis)
+  // Therapy Routes
+  {
+    path: '/therapies',
+    name: 'Therapies',
+    component: TherapyListView,
+    meta: { requiresAuth: true, roles: ['admin', 'dokter', 'terapis'] }
+  },
   {
     path: '/therapy',
     name: 'Therapy',
-    component: () => import('../../modules/therapy/views/TherapyView.vue'),
-    meta: { 
-      requiresAuth: true, 
-      roles: ['admin', 'dokter', 'terapis'] 
-    }
+    redirect: '/therapies'
   },
   
   // Monitoring Route (Semua Role Medis)

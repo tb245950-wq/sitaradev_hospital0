@@ -4,52 +4,54 @@ import { assessmentService } from '../services/assessmentService'
 
 export const useAssessmentStore = defineStore('assessment', () => {
   const assessments = ref([])
+  const currentAssessment = ref(null)
+  const loading = ref(false)
+  const error = ref(null)
   const pagination = ref({
     current_page: 1,
     last_page: 1,
-    total: 0,
-    per_page: 15
+    per_page: 15,
+    total: 0
   })
-  const loading = ref(false)
-  const error = ref(null)
-
-  /**
-   * Fetch all assessments
-   */
+  
   async function fetchAssessments(params = {}) {
     loading.value = true
     error.value = null
     try {
       const response = await assessmentService.getAssessments(params)
-      if (response.success) {
-        assessments.value = response.data.data
+      // Laravel Resource Collection structure: { success: true, data: [...], meta: { current_page, ... } }
+      // Or if additional(['success' => true]) is used on collection: { data: [...], success: true, links: ..., meta: ... }
+      assessments.value = response.data
+      
+      if (response.meta) {
         pagination.value = {
-          current_page: response.data.current_page,
-          last_page: response.data.last_page,
-          total: response.data.total,
-          per_page: response.data.per_page
+          current_page: response.meta.current_page,
+          last_page: response.meta.last_page,
+          per_page: response.meta.per_page,
+          total: response.meta.total
+        }
+      } else if (response.current_page) {
+        pagination.value = {
+          current_page: response.current_page,
+          last_page: response.last_page,
+          per_page: response.per_page,
+          total: response.total
         }
       }
     } catch (err) {
-      error.value = err.response?.data?.message || 'Gagal memuat data assessment'
-      console.error('Fetch Assessments Error:', err)
+      error.value = err.response?.data?.message || 'Gagal mengambil data assessment'
     } finally {
       loading.value = false
     }
   }
-
-  /**
-   * Create assessment
-   */
-  async function createAssessment(data) {
+  
+  async function createAssessment(assessmentData) {
     loading.value = true
     error.value = null
     try {
-      const response = await assessmentService.createAssessment(data)
-      if (response.success) {
-        await fetchAssessments() // Refresh list
-        return { success: true, message: response.message }
-      }
+      const response = await assessmentService.createAssessment(assessmentData)
+      await fetchAssessments()
+      return { success: true, data: response.data }
     } catch (err) {
       error.value = err.response?.data?.message || 'Gagal membuat assessment'
       return { success: false, error: error.value }
@@ -57,55 +59,74 @@ export const useAssessmentStore = defineStore('assessment', () => {
       loading.value = false
     }
   }
-
-  /**
-   * Update assessment
-   */
-  async function updateAssessment(id, data) {
+  
+  async function updateAssessment(id, assessmentData) {
     loading.value = true
     error.value = null
     try {
-      const response = await assessmentService.updateAssessment(id, data)
-      if (response.success) {
-        await fetchAssessments() // Refresh list
-        return { success: true, message: response.message }
-      }
+      const response = await assessmentService.updateAssessment(id, assessmentData)
+      await fetchAssessments()
+      return { success: true, data: response.data }
     } catch (err) {
-      error.value = err.response?.data?.message || 'Gagal memperbarui assessment'
+      error.value = err.response?.data?.message || 'Gagal update assessment'
       return { success: false, error: error.value }
     } finally {
       loading.value = false
     }
   }
-
-  /**
-   * Delete assessment
-   */
+  
   async function deleteAssessment(id) {
     loading.value = true
     error.value = null
     try {
-      const response = await assessmentService.deleteAssessment(id)
-      if (response.success) {
-        await fetchAssessments() // Refresh list
-        return { success: true, message: response.message }
-      }
+      await assessmentService.deleteAssessment(id)
+      await fetchAssessments()
+      return { success: true }
     } catch (err) {
-      error.value = err.response?.data?.message || 'Gagal menghapus assessment'
+      error.value = err.response?.data?.message || 'Gagal hapus assessment'
       return { success: false, error: error.value }
     } finally {
       loading.value = false
     }
   }
-
+  
+  async function submitAssessment(id) {
+    try {
+      const response = await assessmentService.submitAssessment(id)
+      await fetchAssessments()
+      return { success: true, data: response.data }
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Gagal submit assessment'
+      return { success: false, error: error.value }
+    }
+  }
+  
+  async function getAssessmentById(id) {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await assessmentService.getAssessmentById(id)
+      currentAssessment.value = response.data
+      return { success: true, data: response.data }
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Gagal mengambil detail assessment'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+  
   return {
     assessments,
-    pagination,
+    currentAssessment,
     loading,
     error,
+    pagination,
     fetchAssessments,
     createAssessment,
     updateAssessment,
-    deleteAssessment
+    deleteAssessment,
+    submitAssessment,
+    getAssessmentById
   }
 })

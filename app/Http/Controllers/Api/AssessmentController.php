@@ -202,4 +202,48 @@ class AssessmentController extends Controller
             'data' => new \App\Http\Resources\AssessmentResource($assessment)
         ], 200);
     }
+
+    /**
+     * Submit Assessment (Change status to final)
+     */
+    public function submit(MedicalAssessment $assessment)
+    {
+        if ($assessment->id_pengguna !== Auth::id() && Auth::user()->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya pembuat assessment atau admin yang dapat mensubmit.'
+            ], 403);
+        }
+
+        $assessment->update(['status' => 'final']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Assessment berhasil disubmit.',
+            'data' => new \App\Http\Resources\AssessmentResource($assessment)
+        ], 200);
+    }
+
+    /**
+     * Approve Assessment (Stub for approval workflow)
+     */
+    public function approve(MedicalAssessment $assessment)
+    {
+        if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'dokter') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya admin atau dokter senior yang dapat menyetujui assessment.'
+            ], 403);
+        }
+
+        // For now, approval just confirms the 'final' status or sets a hypothetical 'approved' state
+        // Since schema only has 'draft' and 'final', we use 'final'
+        $assessment->update(['status' => 'final']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Assessment berhasil disetujui.',
+            'data' => new \App\Http\Resources\AssessmentResource($assessment)
+        ], 200);
+    }
 }

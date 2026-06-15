@@ -1,121 +1,102 @@
 <template>
-  <div class="assessment-list-container">
-    <!-- Header Section -->
-    <div class="header-section">
-      <div class="title-group">
-        <h1 class="title">Daftar Assessment</h1>
-        <p class="subtitle">Manajemen data assessment medis pasien</p>
-      </div>
-      <div class="action-group">
-        <button 
-          v-if="canCreate" 
-          @click="handleCreate" 
-          class="btn-primary"
-        >
-          <span class="icon">+</span> Assessment Baru
-        </button>
-        <button @click="refreshData" class="btn-outline">
-          <span class="icon">🔄</span> Refresh
+  <div class="page-container">
+    <!-- Header -->
+    <div class="page-header">
+      <button @click="goBack" class="btn-back">
+        <span class="arrow">←</span>
+        <span>Kembali ke Dashboard</span>
+      </button>
+      <h1 class="page-title">Assessment Medis</h1>
+      <div class="page-actions">
+        <button v-if="authStore.isDokter" @click="openCreateModal" class="btn-primary">
+          + Assessment Baru
         </button>
       </div>
     </div>
 
-    <!-- Alert Success/Error -->
-    <div v-if="successMessage" class="alert alert-success">
-      {{ successMessage }}
-      <button @click="successMessage = ''" class="close-btn">&times;</button>
-    </div>
-    <div v-if="assessmentStore.error" class="alert alert-error">
-      {{ assessmentStore.error }}
-      <button @click="assessmentStore.error = null" class="close-btn">&times;</button>
-    </div>
-
-    <!-- Filters & Search -->
+    <!-- Filters -->
     <div class="filters-card">
       <div class="filters-grid">
-        <div class="search-input-wrapper">
-          <span class="search-icon">🔍</span>
-          <input 
-            type="text" 
-            v-model="filters.search" 
-            @input="handleSearch"
-            placeholder="Cari NRM atau nama pasien..."
+        <div class="filter-group">
+          <label>Pencarian</label>
+          <input
+            type="text"
+            v-model="searchQuery"
+            placeholder="Cari nama pasien, diagnosis..."
+            @input="debouncedSearch"
             class="form-input"
           />
         </div>
-        
-        <div class="filter-select-wrapper">
-          <select v-model="filters.status" @change="handleFilterChange" class="form-select">
+        <div class="filter-group">
+          <label>Status</label>
+          <select v-model="statusFilter" @change="applyFilters" class="form-select">
             <option value="">Semua Status</option>
             <option value="draft">Draft</option>
-            <option value="final">Final</option>
+            <option value="submitted">Submitted</option>
+            <option value="approved">Approved</option>
           </select>
+        </div>
+        <div class="filter-group filter-actions">
+          <button @click="resetFilters" class="btn-secondary">Reset Filter</button>
         </div>
       </div>
     </div>
 
-    <!-- Data Table -->
-    <div class="table-card">
-      <div class="table-container">
+    <!-- Loading State -->
+    <div v-if="assessmentStore.loading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Memuat data assessment...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="assessmentStore.error" class="error-container">
+      <p>{{ assessmentStore.error }}</p>
+      <button @click="assessmentStore.fetchAssessments()" class="btn-retry">Coba Lagi</button>
+    </div>
+
+    <!-- Assessment Table -->
+    <div v-else-if="assessmentStore.assessments.length > 0" class="table-card">
+      <div class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
-              <th>ID</th>
               <th>Tanggal</th>
               <th>Pasien</th>
-              <th>NRM</th>
               <th>Diagnosis</th>
+              <th>Hasil Fisik</th>
               <th>Status</th>
-              <th class="text-right">Aksi</th>
+              <th>Dokter</th>
+              <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
-            <!-- Loading State -->
-            <tr v-if="assessmentStore.loading">
-              <td colspan="7" class="loading-cell">
-                <div class="spinner"></div>
-                <span>Memuat data...</span>
-              </td>
-            </tr>
-
-            <!-- Empty State -->
-            <tr v-else-if="assessmentStore.assessments.length === 0">
-              <td colspan="7" class="empty-cell">
-                Data assessment tidak ditemukan.
-              </td>
-            </tr>
-
-            <!-- Data Rows -->
-            <tr v-for="assessment in assessmentStore.assessments" :key="assessment.id_assessment">
-              <td class="id-cell">#{{ assessment.id_assessment }}</td>
-              <td>{{ formatDate(assessment.tanggal_assessment) }}</td>
-              <td class="font-bold">{{ assessment.patient?.nama_lengkap || 'N/A' }}</td>
-              <td><span class="nrm-badge">{{ assessment.patient?.nrm || '-' }}</span></td>
-              <td class="diagnosis-cell">
-                <div class="truncate-text" :title="assessment.diagnosis">
-                  {{ assessment.diagnosis || '-' }}
+            <tr v-for="assessment in assessmentStore.assessments" :key="assessment.id">
+              <td>{{ formatDate(assessment.tanggal) }}</td>
+              <td>
+                <div class="patient-info">
+                  <div class="patient-name">{{ assessment.pasien?.nama }}</div>
+                  <div class="patient-nik">NRM: {{ assessment.pasien?.nrm }}</div>
                 </div>
               </td>
+              <td class="diagnosis-cell">{{ assessment.diagnosis }}</td>
               <td>
-                <span :class="['status-badge', `status-${assessment.status}`]">
-                  {{ assessment.status }}
+                <div class="truncate-text" v-if="assessment.hasil_fisik">
+                  T: {{ assessment.hasil_fisik.tensi || '-' }}, N: {{ assessment.hasil_fisik.nadi || '-' }}
+                </div>
+                <span v-else>-</span>
+              </td>
+              <td>
+                <span :class="['status-badge', `status-${assessment.status || 'draft'}`]">
+                  {{ assessment.status || 'draft' }}
                 </span>
               </td>
-              <td class="text-right">
-                <div class="btn-group-actions">
-                  <button @click="handleView(assessment)" class="btn-icon" title="Lihat">👁️</button>
-                  <button 
-                    v-if="canEdit" 
-                    @click="handleEdit(assessment)" 
-                    class="btn-icon" 
-                    title="Edit"
-                  >✏️</button>
-                  <button 
-                    v-if="canDelete" 
-                    @click="confirmDelete(assessment)" 
-                    class="btn-icon text-red" 
-                    title="Hapus"
-                  >🗑️</button>
+              <td>{{ assessment.dokter?.nama }}</td>
+              <td>
+                <div class="action-buttons">
+                  <button @click="viewDetail(assessment.id)" class="btn-icon-sm" title="Lihat Detail">👁️</button>
+                  <button v-if="canEdit(assessment)" @click="editAssessment(assessment.id)" class="btn-icon-sm" title="Edit">✏️</button>
+                  <button v-if="authStore.isDokter && assessment.status === 'draft'" @click="submitAssessment(assessment.id)" class="btn-icon-sm" title="Submit">📤</button>
+                  <button v-if="canDelete(assessment)" @click="confirmDelete(assessment.id)" class="btn-icon-sm btn-delete" title="Hapus">🗑️</button>
                 </div>
               </td>
             </tr>
@@ -124,408 +105,142 @@
       </div>
 
       <!-- Pagination -->
-      <div class="pagination-footer" v-if="assessmentStore.pagination.last_page > 1">
-        <div class="pagination-info">
-          Menampilkan {{ assessmentStore.assessments.length }} dari {{ assessmentStore.pagination.total }} data
-        </div>
-        <div class="pagination-controls">
-          <button 
-            :disabled="assessmentStore.pagination.current_page === 1"
-            @click="changePage(assessmentStore.pagination.current_page - 1)"
-            class="btn-page"
-          >
-            &laquo; Prev
-          </button>
-          
-          <button 
-            v-for="page in visiblePages" 
-            :key="page"
-            @click="changePage(page)"
-            :class="['btn-page', { active: assessmentStore.pagination.current_page === page }]"
-          >
-            {{ page }}
-          </button>
-
-          <button 
-            :disabled="assessmentStore.pagination.current_page === assessmentStore.pagination.last_page"
-            @click="changePage(assessmentStore.pagination.current_page + 1)"
-            class="btn-page"
-          >
-            Next &raquo;
-          </button>
-        </div>
+      <div v-if="assessmentStore.pagination.last_page > 1" class="pagination">
+        <button @click="changePage(assessmentStore.pagination.current_page - 1)" :disabled="assessmentStore.pagination.current_page === 1" class="btn-pagination">← Prev</button>
+        <span class="pagination-info">Halaman {{ assessmentStore.pagination.current_page }} dari {{ assessmentStore.pagination.last_page }}</span>
+        <button @click="changePage(assessmentStore.pagination.current_page + 1)" :disabled="assessmentStore.pagination.current_page === assessmentStore.pagination.last_page" class="btn-pagination">Next →</button>
       </div>
+    </div>
+
+    <!-- Empty State -->
+    <div v-else class="empty-state">
+      <div class="empty-icon">📋</div>
+      <h3>Belum Ada Assessment</h3>
+      <p>Belum ada data assessment yang tercatat</p>
+      <button v-if="authStore.isDokter" @click="openCreateModal" class="btn-primary">+ Buat Assessment Pertama</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAssessmentStore } from '../stores/assessmentStore'
 import { useAuthStore } from '../../auth/stores/authStore'
-import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const assessmentStore = useAssessmentStore()
 const authStore = useAuthStore()
-const router = useRouter()
-
-const filters = reactive({
-  search: '',
-  status: '',
-  page: 1
-})
-
-const successMessage = ref('')
+const searchQuery = ref('')
+const statusFilter = ref('')
 let searchTimeout = null
 
-// RBAC Computed Properties
-const canCreate = computed(() => authStore.userRole === 'dokter' || authStore.userRole === 'admin')
-const canEdit = computed(() => authStore.userRole === 'dokter')
-const canDelete = computed(() => authStore.userRole === 'admin')
+const goBack = () => router.push('/dashboard')
 
-onMounted(() => {
-  fetchData()
-})
-
-const fetchData = () => {
-  assessmentStore.fetchAssessments(filters)
-}
-
-const refreshData = () => {
-  fetchData()
-}
-
-const handleSearch = () => {
+const debouncedSearch = () => {
   clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    filters.page = 1
-    fetchData()
-  }, 500)
+  searchTimeout = setTimeout(() => applyFilters(), 500)
 }
 
-const handleFilterChange = () => {
-  filters.page = 1
-  fetchData()
+const applyFilters = () => {
+  const params = {}
+  if (searchQuery.value) params.search = searchQuery.value
+  if (statusFilter.value) params.status = statusFilter.value
+  assessmentStore.fetchAssessments(params)
+}
+
+const resetFilters = () => {
+  searchQuery.value = ''
+  statusFilter.value = ''
+  assessmentStore.fetchAssessments()
+}
+
+const openCreateModal = () => alert('Fitur Create Assessment akan segera hadir')
+const viewDetail = (id) => alert(`Detail Assessment ID: ${id}`)
+const editAssessment = (id) => alert(`Edit Assessment ID: ${id}`)
+
+const submitAssessment = async (id) => {
+  if (confirm('Submit assessment ini untuk disetujui?')) {
+    const result = await assessmentStore.submitAssessment(id)
+    if (result.success) alert('Assessment berhasil disubmit')
+  }
+}
+
+const confirmDelete = async (id) => {
+  if (confirm('Yakin ingin menghapus assessment ini?')) {
+    const result = await assessmentStore.deleteAssessment(id)
+    if (result.success) alert('Assessment berhasil dihapus')
+  }
+}
+
+const canEdit = (assessment) => {
+  if (authStore.isAdmin) return true
+  if (authStore.isDokter) return (assessment.status || 'draft') === 'draft' || assessment.dokter?.id === authStore.user?.id
+  return false
+}
+
+const canDelete = (assessment) => {
+  if (authStore.isAdmin) return true
+  if (authStore.isDokter) return (assessment.status || 'draft') === 'draft' && assessment.dokter?.id === authStore.user?.id
+  return false
 }
 
 const changePage = (page) => {
-  filters.page = page
-  fetchData()
-}
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  })
-}
-
-const handleCreate = () => {
-  // router.push('/assessment/create')
-  alert('Fitur Create sedang dikembangkan')
-}
-
-const handleView = (item) => {
-  // router.push(`/assessment/${item.id_assessment}`)
-  alert(`Detail Assessment Pasien: ${item.patient?.nama_lengkap}`)
-}
-
-const handleEdit = (item) => {
-  // router.push(`/assessment/${item.id_assessment}/edit`)
-  alert(`Edit Assessment ID: ${item.id_assessment}`)
-}
-
-const confirmDelete = async (item) => {
-  if (confirm(`Apakah Anda yakin ingin menghapus assessment untuk ${item.patient?.nama_lengkap}?`)) {
-    const result = await assessmentStore.deleteAssessment(item.id_assessment)
-    if (result.success) {
-      successMessage.value = 'Assessment berhasil dihapus'
-      setTimeout(() => successMessage.value = '', 3000)
-    }
+  if (page >= 1 && page <= assessmentStore.pagination.last_page) {
+    assessmentStore.fetchAssessments({ page })
   }
 }
 
-// Pagination Logic
-const visiblePages = computed(() => {
-  const current = assessmentStore.pagination.current_page
-  const last = assessmentStore.pagination.last_page
-  const pages = []
-  
-  let start = Math.max(1, current - 2)
-  let end = Math.min(last, current + 2)
-  
-  for (let i = start; i <= end; i++) {
-    pages.push(i)
-  }
-  return pages
+const formatDate = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+onMounted(() => {
+  assessmentStore.fetchAssessments()
 })
 </script>
 
 <style scoped>
-.assessment-list-container {
-  padding: 1.5rem;
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0;
-}
-
-.subtitle {
-  color: #64748b;
-  font-size: 0.875rem;
-  margin: 0.25rem 0 0 0;
-}
-
-.action-group {
-  display: flex;
-  gap: 0.75rem;
-}
-
-/* UI Components */
-.btn-primary {
-  background: #3b82f6;
-  color: white;
-  padding: 0.625rem 1.25rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-outline {
-  background: white;
-  color: #64748b;
-  padding: 0.625rem 1.25rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.filters-card {
-  background: white;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 1rem;
-}
-
-.filters-grid {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.search-input-wrapper {
-  position: relative;
-  flex: 1;
-}
-
-.search-icon {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #94a3b8;
-}
-
-.form-input {
-  width: 100%;
-  padding: 0.625rem 1rem 0.625rem 2.5rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  outline: none;
-}
-
-.form-select {
-  padding: 0.625rem 2rem 0.625rem 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  background-color: white;
-  outline: none;
-}
-
-/* Table Styles */
-.table-card {
-  background: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table th {
-  background: #f8fafc;
-  text-align: left;
-  padding: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.data-table td {
-  padding: 1rem;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 0.875rem;
-  color: #334155;
-}
-
-.id-cell {
-  color: #94a3b8;
-  font-weight: 500;
-}
-
-.nrm-badge {
-  background: #f1f5f9;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-  font-family: monospace;
-  font-weight: 600;
-}
-
-.diagnosis-cell {
-  max-width: 200px;
-}
-
-.truncate-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.status-badge {
-  padding: 0.25rem 0.625rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: capitalize;
-}
-
+.page-container { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+.page-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0; }
+.btn-back { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: transparent; color: #64748b; border: 1px solid #e2e8f0; border-radius: 0.5rem; cursor: pointer; font-size: 0.875rem; }
+.page-title { flex: 1; font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
+.btn-primary { padding: 0.625rem 1.25rem; background: #1e40af; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; }
+.filters-card { background: white; padding: 1.25rem; border-radius: 0.75rem; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.filters-grid { display: grid; grid-template-columns: 2fr 1fr auto; gap: 1rem; align-items: flex-end; }
+.filter-group { display: flex; flex-direction: column; gap: 0.375rem; }
+.filter-group label { font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; }
+.form-input, .form-select { padding: 0.625rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.875rem; outline: none; }
+.btn-secondary { padding: 0.625rem 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; cursor: pointer; font-size: 0.875rem; color: #475569; }
+.loading-container, .error-container { text-align: center; padding: 3rem; background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.loading-spinner { width: 40px; height: 40px; border: 3px solid #f1f5f9; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.table-card { background: white; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.table-responsive { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { background: #f8fafc; padding: 0.875rem 1rem; text-align: left; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+.data-table td { padding: 1rem; border-bottom: 1px solid #f1f5f9; font-size: 0.875rem; color: #334155; }
+.patient-info { display: flex; flex-direction: column; }
+.patient-name { font-weight: 600; color: #1e293b; }
+.patient-nik { font-size: 0.75rem; color: #94a3b8; }
+.diagnosis-cell { max-width: 250px; }
+.truncate-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status-badge { padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
 .status-draft { background: #f1f5f9; color: #475569; }
+.status-submitted { background: #fef3c7; color: #92400e; }
+.status-approved { background: #dcfce7; color: #166534; }
 .status-final { background: #dcfce7; color: #166534; }
-
-.btn-icon {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  padding: 0.375rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  margin-left: 0.25rem;
-}
-
-.btn-icon:hover {
-  background: #f1f5f9;
-}
-
-.text-red { color: #ef4444; }
-.text-right { text-align: right; }
-.font-bold { font-weight: 600; }
-
-/* Pagination */
-.pagination-footer {
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid #f1f5f9;
-}
-
-.pagination-info {
-  font-size: 0.875rem;
-  color: #64748b;
-}
-
-.pagination-controls {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.btn-page {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #e2e8f0;
-  background: white;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-}
-
-.btn-page.active {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
-}
-
-.btn-page:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Alerts */
-.alert {
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-.alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.25rem;
-  cursor: pointer;
-  line-height: 1;
-}
-
-/* Loading Spinner */
-.loading-cell {
-  text-align: center;
-  padding: 4rem !important;
-  color: #64748b;
-}
-
-.spinner {
-  width: 24px;
-  height: 24px;
-  border: 3px solid #f1f5f9;
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  display: inline-block;
-  margin-right: 0.75rem;
-  vertical-align: middle;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+.action-buttons { display: flex; gap: 0.375rem; }
+.btn-icon-sm { background: #f8fafc; border: 1px solid #e2e8f0; cursor: pointer; padding: 0.375rem; border-radius: 0.375rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+.btn-icon-sm:hover { background: #f1f5f9; }
+.btn-delete { color: #ef4444; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 1rem; padding: 1rem; border-top: 1px solid #f1f5f9; }
+.btn-pagination { padding: 0.5rem 0.875rem; background: white; border: 1px solid #e2e8f0; border-radius: 0.375rem; cursor: pointer; font-size: 0.8125rem; }
+.btn-pagination:disabled { opacity: 0.5; cursor: not-allowed; }
+.pagination-info { font-size: 0.8125rem; color: #64748b; }
+.empty-state { text-align: center; padding: 4rem 2rem; background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+.empty-state h3 { font-size: 1.125rem; color: #1e293b; margin: 0 0 0.5rem 0; }
+.empty-state p { color: #64748b; margin-bottom: 1.5rem; font-size: 0.875rem; }
 </style>
