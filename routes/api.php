@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\TherapyController;
 use App\Http\Controllers\Api\MonitoringController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\UserManagementController;
+use App\Http\Controllers\Api\AnalyticsController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
@@ -19,6 +20,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+
+    // Analytics Routes
+    Route::prefix('analytics')->group(function () {
+        Route::get('/stats', [AnalyticsController::class, 'getStats']);
+        Route::get('/visit-trends', [AnalyticsController::class, 'getVisitTrends']);
+        Route::get('/diagnosis-distribution', [AnalyticsController::class, 'getDiagnosisDistribution']);
+        Route::get('/recent-activities', [AnalyticsController::class, 'getRecentActivities']);
+        Route::get('/dashboard', [AnalyticsController::class, 'getDashboardAnalytics']);
+    });
 
     // Admin only routes
     Route::prefix('admin')->middleware('role:admin')->group(function () {

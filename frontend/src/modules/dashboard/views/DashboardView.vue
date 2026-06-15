@@ -6,51 +6,82 @@
       <Navbar @toggle-sidebar="isSidebarOpen = !isSidebarOpen" />
       
       <main class="content-body">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #e0f2fe; color: #0ea5e9;">👥</div>
-            <div class="stat-info">
-              <h3>Total Pasien</h3>
-              <p class="stat-value">{{ stats.total_pasien }}</p>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #f0fdf4; color: #22c55e;">📋</div>
-            <div class="stat-info">
-              <h3>Antrian Menunggu</h3>
-              <p class="stat-value">{{ stats.antrian_menunggu }}</p>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #fef2f2; color: #ef4444;">🩺</div>
-            <div class="stat-info">
-              <h3>Assessment Hari Ini</h3>
-              <p class="stat-value">{{ stats.assessment_hari_ini }}</p>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #faf5ff; color: #a855f7;">🧠</div>
-            <div class="stat-info">
-              <h3>Terapi Aktif</h3>
-              <p class="stat-value">{{ stats.terapi_aktif }}</p>
-            </div>
-          </div>
+        <!-- Loading State -->
+        <div v-if="analyticsStore.loading" class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>Memuat data analytics...</p>
         </div>
-
-        <!-- Welcome Banner Section -->
-        <div class="welcome-banner">
-          <div class="welcome-content">
-            <div class="welcome-image-wrapper">
-              <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="welcome-logo-large" />
+        
+        <!-- Error State -->
+        <div v-else-if="analyticsStore.error" class="error-container">
+          <p>{{ analyticsStore.error }}</p>
+          <button @click="analyticsStore.fetchAnalytics" class="btn-retry">Coba Lagi</button>
+        </div>
+        
+        <!-- Dashboard Content -->
+        <div v-else>
+          <!-- Stat Cards -->
+          <div class="stats-grid">
+            <StatCard
+              title="Total Pasien"
+              :value="analyticsStore.stats.total_patients.value"
+              icon="👥"
+              icon-bg="#e0f2fe"
+              icon-color="#0ea5e9"
+              :trend="analyticsStore.stats.total_patients.trend"
+              :trend-label="analyticsStore.stats.total_patients.trend_label"
+            />
+            
+            <StatCard
+              title="Sesi Terapi Hari Ini"
+              :value="analyticsStore.stats.today_sessions.value"
+              icon="📋"
+              icon-bg="#f0fdf4"
+              icon-color="#22c55e"
+              :subtitle="`${analyticsStore.stats.today_sessions.completed} Selesai, ${analyticsStore.stats.today_sessions.remaining} Tersisa`"
+            />
+            
+            <StatCard
+              title="Waiting List"
+              :value="analyticsStore.stats.waiting_list.value"
+              icon="⏳"
+              icon-bg="#fef3c7"
+              icon-color="#f59e0b"
+              :subtitle="`${analyticsStore.stats.waiting_list.high_priority} Prioritas Tinggi`"
+            />
+            
+            <StatCard
+              title="Tingkat Kehadiran"
+              :value="`${analyticsStore.stats.attendance_rate.value}%`"
+              icon="✅"
+              icon-bg="#f0fdf4"
+              icon-color="#22c55e"
+              :trend-label="analyticsStore.stats.attendance_rate.period"
+            />
+          </div>
+          
+          <!-- Charts Row -->
+          <div class="charts-grid">
+            <div class="chart-item-main">
+              <VisitTrendsChart
+                :data="analyticsStore.visitTrends"
+                :period="analyticsStore.selectedPeriod"
+                @period-change="handlePeriodChange"
+              />
             </div>
-            <div class="welcome-info">
-              <h1>Selamat Datang, {{ authStore.user?.name }}!</h1>
-              <p>Sistem Informasi Terpadu Assessment dan Rekam Anak (SITARA)</p>
-              <div class="welcome-tag">Pusat Layanan Medis Terpadu</div>
+            
+            <div class="chart-item-side">
+              <DiagnosisDistributionChart
+                :data="analyticsStore.diagnosisDistribution"
+              />
             </div>
+          </div>
+          
+          <!-- Recent Activities -->
+          <div class="activities-section">
+            <RecentActivitiesTable
+              :activities="analyticsStore.recentActivities"
+            />
           </div>
         </div>
       </main>
@@ -60,34 +91,25 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useAnalyticsStore } from '../../analytics/stores/analyticsStore'
 import { useAuthStore } from '../../auth/stores/authStore'
-import api from '../../../core/services/api'
 import Sidebar from '../../../shared/components/layout/Sidebar.vue'
 import Navbar from '../../../shared/components/layout/Navbar.vue'
+import StatCard from '../../analytics/components/StatCard.vue'
+import VisitTrendsChart from '../../analytics/components/VisitTrendsChart.vue'
+import DiagnosisDistributionChart from '../../analytics/components/DiagnosisDistributionChart.vue'
+import RecentActivitiesTable from '../../analytics/components/RecentActivitiesTable.vue'
 
+const analyticsStore = useAnalyticsStore()
 const authStore = useAuthStore()
 const isSidebarOpen = ref(false)
 
-const stats = ref({
-  total_pasien: 0,
-  antrian_menunggu: 0,
-  assessment_hari_ini: 0,
-  terapi_aktif: 0
-})
-
-const fetchStats = async () => {
-  try {
-    const response = await api.get('/reports/dashboard')
-    if (response.data.success) {
-      stats.value = response.data.data
-    }
-  } catch (error) {
-    console.error('Failed to fetch dashboard stats:', error)
-  }
+const handlePeriodChange = (period) => {
+  analyticsStore.updatePeriod(period)
 }
 
 onMounted(() => {
-  fetchStats()
+  analyticsStore.fetchAnalytics()
 })
 </script>
 
@@ -112,122 +134,74 @@ onMounted(() => {
 }
 
 .content-body {
-  padding: 2rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.5rem;
 }
 
-.stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-}
-
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-}
-
-.stat-info h3 {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin-bottom: 0.25rem;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-/* Welcome Banner Styling - High Contrast & Centered */
-.welcome-banner {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-  border-radius: 2rem;
-  padding: 5rem 2rem;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 10px 30px rgba(30, 64, 175, 0.25);
-}
-
-.welcome-content {
-  width: 100%;
-  max-width: 700px;
+/* Loading & Error States */
+.loading-container,
+.error-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-}
-
-.welcome-image-wrapper {
-  background: white;
-  padding: 2rem;
-  border-radius: 2.5rem;
-  margin-bottom: 2.5rem;
-  display: flex;
   justify-content: center;
-  align-items: center;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  min-height: 400px;
+  background: white;
+  border-radius: 1rem;
+  padding: 3rem;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.welcome-logo-large {
-  width: 200px; /* Increased size */
-  height: auto;
-  display: block;
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f1f5f9;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
 }
 
-.welcome-info h1 {
-  font-size: 2.75rem;
-  font-weight: 800;
-  margin-bottom: 0.75rem;
-  letter-spacing: -0.02em;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.welcome-info p {
-  font-size: 1.25rem;
-  opacity: 0.95;
-  margin-bottom: 2rem;
-  line-height: 1.6;
-}
-
-.welcome-tag {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.15);
-  padding: 0.6rem 1.5rem;
-  border-radius: 9999px;
+.btn-retry {
+  margin-top: 1rem;
+  padding: 0.5rem 1.25rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
   font-weight: 600;
+  cursor: pointer;
   font-size: 0.875rem;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(8px);
 }
 
-@media (max-width: 768px) {
-  .welcome-banner {
-    padding: 3rem 1.5rem;
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Charts Grid */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 1024px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
   }
-  .welcome-info h1 {
-    font-size: 1.75rem;
-  }
-  .welcome-logo-large {
-    width: 140px;
-  }
+}
+
+.activities-section {
+  margin-bottom: 1rem;
 }
 </style>
