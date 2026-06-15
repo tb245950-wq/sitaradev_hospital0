@@ -25,7 +25,7 @@
 
       <!-- Info Box untuk Staff -->
       <div class="staff-info-box">
-        <div class="staff-icon">🔒</div>
+        <div class="staff-icon"></div>
         <h3>Akses Khusus Staff</h3>
         <p>
           Sistem ini hanya untuk <strong>Admin, Dokter, dan Terapis</strong> 
@@ -154,8 +154,8 @@
 }
 
 .logo {
-  width: 150px;
-  height: 150px;
+  width: 200px;
+  height: 160px;
   object-fit: contain;
   margin-bottom: 1rem;
 }
