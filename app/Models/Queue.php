@@ -14,11 +14,15 @@ class Queue extends Model
 
     protected $fillable = [
         'nomor_antrian',
+        'queue_number',
         'id_pasien',
+        'patient_id',
         'id_pengguna',
         'jenis_layanan',
+        'type',
         'status',
         'prioritas',
+        'priority',
         'poli',
         'doctor_id',
         'booked_by',
@@ -29,8 +33,6 @@ class Queue extends Model
     ];
 
     protected $casts = [
-        'called_at' => 'datetime',
-        'completed_at' => 'datetime',
         'waktu_daftar' => 'datetime',
         'waktu_panggil' => 'datetime',
         'waktu_selesai' => 'datetime',
@@ -42,6 +44,11 @@ class Queue extends Model
         return $this->belongsTo(User::class, 'patient_id');
     }
 
+    public function user() // Menambahkan relasi user agar tidak crash
+    {
+        return $this->belongsTo(User::class, 'id_pengguna');
+    }
+
     public function doctor()
     {
         return $this->belongsTo(User::class, 'doctor_id');
@@ -49,7 +56,7 @@ class Queue extends Model
 
     public function calledBy()
     {
-        return $this->belongsTo(User::class, 'called_by');
+        return $this->belongsTo(User::class, 'booked_by');
     }
 
     // SCOPES

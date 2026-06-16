@@ -96,7 +96,7 @@
           <p>✉️ info@sitara-klinik.com</p>
         </div>
       </div>
-    </main>
+    </footer>
 
     <!-- Footer -->
     <footer class="footer">

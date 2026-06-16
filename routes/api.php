@@ -103,12 +103,13 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // Queue
     Route::middleware('role:admin,dokter,terapis')->group(function () {
         Route::get('/queues', [QueueController::class, 'index']);
+        Route::get('/queues/stats', [QueueController::class, 'stats']); // Pindahkan ke atas
         Route::post('/queues', [QueueController::class, 'store']);
-        Route::get('/queues/{queue}', [QueueController::class, 'show']);
-        Route::put('/queues/{queue}', [QueueController::class, 'update']);
+        Route::get('/queues/{queue}', [QueueController::class, 'show'])->where('queue', '[0-9]+'); // Constraint regex
+        Route::put('/queues/{queue}', [QueueController::class, 'update'])->where('queue', '[0-9]+');
         Route::post('/queues/call-next', [QueueController::class, 'callNext']);
     });
-    Route::delete('/queues/{queue}', [QueueController::class, 'destroy'])->middleware('role:admin');
+    Route::delete('/queues/{queue}', [QueueController::class, 'destroy'])->middleware('role:admin')->where('queue', '[0-9]+');
 
     // Reports
     Route::middleware('role:admin,dokter')->group(function () {
