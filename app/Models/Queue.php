@@ -4,8 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Queue extends Model
 {
@@ -14,47 +12,70 @@ class Queue extends Model
     protected $table = 'queues';
     protected $primaryKey = 'id_antrian';
 
-    /**
-     * Dapatkan nama key route untuk model binding
-     * Ini memberitahu Laravel untuk menggunakan 'id_antrian' bukan 'id'
-     */
-    public function getRouteKeyName()
-    {
-        return 'id_antrian';
-    }
-
     protected $fillable = [
+        'nomor_antrian',
         'id_pasien',
         'id_pengguna',
-        'nomor_antrian',
         'jenis_layanan',
         'status',
         'prioritas',
+        'poli',
+        'doctor_id',
+        'booked_by',
+        'catatan',
         'waktu_daftar',
         'waktu_panggil',
         'waktu_selesai',
-        'catatan',
     ];
 
     protected $casts = [
+        'called_at' => 'datetime',
+        'completed_at' => 'datetime',
         'waktu_daftar' => 'datetime',
         'waktu_panggil' => 'datetime',
         'waktu_selesai' => 'datetime',
     ];
 
-    // Relasi
-    public function patient(): BelongsTo
+    // RELASI
+    public function patient()
     {
-        return $this->belongsTo(Patient::class, 'id_pasien', 'id_pasien');
+        return $this->belongsTo(User::class, 'patient_id');
     }
 
-    public function user(): BelongsTo
+    public function doctor()
     {
-        return $this->belongsTo(User::class, 'id_pengguna', 'id');
+        return $this->belongsTo(User::class, 'doctor_id');
     }
 
-    public function assessments(): HasMany
+    public function calledBy()
     {
-        return $this->hasMany(MedicalAssessment::class, 'id_antrian', 'id_antrian');
+        return $this->belongsTo(User::class, 'called_by');
+    }
+
+    // SCOPES
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', ['waiting', 'calling']);
+    }
+
+    public function scopeByPriority($query, $priority)
+    {
+        return $query->where('priority', $priority);
+    }
+
+    // HELPER
+    public function isWaiting()
+    {
+        return $this->status === 'waiting';
+    }
+
+    public function isCalling()
+    {
+        return $this->status === 'calling';
+    }
+
+    public function isCompleted()
+    {
+        return $this->status === 'completed';
     }
 }

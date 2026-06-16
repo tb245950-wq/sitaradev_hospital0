@@ -10,14 +10,34 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\ActivityLogController;
+use App\Http\Controllers\Api\PatientAuthController;
+use App\Http\Controllers\Api\PatientPortalController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:login');
+
+// ===== PATIENT AUTH ROUTES (PUBLIC) =====
+Route::post('/pasien/login', [PatientAuthController::class, 'login'])->middleware('throttle:login');
+Route::post('/pasien/register', [PatientAuthController::class, 'register'])->middleware('throttle:login');
 
 // Protected routes
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+    // ===== PATIENT PORTAL ROUTES (PROTECTED - Role: pasien) =====
+    Route::prefix('pasien')->group(function () {
+        Route::post('/logout', [PatientAuthController::class, 'logout']);
+        Route::get('/dashboard', [PatientPortalController::class, 'dashboard']);
+        Route::get('/profile', [PatientPortalController::class, 'profile']);
+        Route::put('/profile', [PatientPortalController::class, 'updateProfile']);
+        Route::get('/doctors', [PatientPortalController::class, 'getDoctors']);
+        Route::post('/booking', [PatientPortalController::class, 'bookQueue']);
+        Route::get('/antrian-saya', [PatientPortalController::class, 'getMyQueues']);
+        Route::post('/antrian/{id}/cancel', [PatientPortalController::class, 'cancelQueue']);
+        Route::get('/jadwal', [PatientPortalController::class, 'schedule']);
+        Route::get('/riwayat', [PatientPortalController::class, 'history']);
+    });
+
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);

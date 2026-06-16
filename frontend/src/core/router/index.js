@@ -204,12 +204,12 @@ router.beforeEach((to, from, next) => {
   }
 
   // Prevent staff from accessing patient portal and vice versa
-  if (to.meta.portal === 'patient' && staffAuth && !patientAuth) {
+  if (to.path.startsWith('/pasien/') && staffAuth && !patientAuth) {
     next('/dashboard')
     return
   }
 
-  if (to.meta.portal === 'staff' && patientAuth && !staffAuth) {
+  if (!to.path.startsWith('/pasien/') && patientAuth && !staffAuth) {
     next('/pasien/dashboard')
     return
   }

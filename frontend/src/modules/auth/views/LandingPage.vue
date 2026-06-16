@@ -7,7 +7,7 @@
     <!-- Header Navigation -->
     <header class="header">
       <div class="logo-small">
-        <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" />
+        <img src="../../../assets/SITARA_RM_BG.png" alt="SITARA" />
         <span>SITARA</span>
       </div>
       <nav class="nav-links">
@@ -20,7 +20,7 @@
     <!-- Hero Section dengan 2 Tombol Akses -->
     <section class="hero">
       <div class="hero-content">
-        <img src="@/assets/SITARA_RM_BG.png" alt="SITARA Logo" class="hero-logo" />
+        <img src="../../../assets/SITARA_RM_BG.png" alt="SITARA Logo" class="hero-logo" />
         <h1 class="hero-title">SITARA</h1>
         <p class="hero-subtitle">Sistem Informasi Terpadu</p>
         <p class="hero-subtitle-small">Assessment dan Rekam Anak</p>
@@ -176,7 +176,7 @@
     <footer class="footer">
       <div class="footer-content">
         <div class="footer-section">
-          <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="footer-logo" />
+          <img src="../../../assets/SITARA_RM_BG.png" alt="SITARA" class="footer-logo" />
           <p>Sistem Informasi Terpadu Assessment dan Rekam Anak</p>
         </div>
         <div class="footer-section">
