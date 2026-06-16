@@ -1,219 +1,99 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { authService } from '../../modules/auth/services/authService'
-import { patientService } from '../../modules/patient-portal/services/patientService'
 
-// Import routes dari setiap modul
-import { authRoutes } from '../../modules/auth/router/authRoutes'
-import { dashboardRoutes } from '../../modules/dashboard/router/dashboardRoutes'
-import { patientRoutes } from '../../modules/patients/router/patientRoutes'
-import { patientPortalRoutes } from '../../modules/patient-portal/router/patientPortalRoutes'
-
-// Import views untuk modul baru
-import AssessmentListView from '../../modules/assessment/views/AssessmentListView.vue'
-import QueueView from '../../modules/queue/views/QueueView.vue'
-import TherapyListView from '../../modules/therapy/views/TherapyListView.vue'
+// Import langsung semua component
+import LandingPage from '../../modules/auth/views/LandingPage.vue'
+import LoginPage from '../../modules/auth/views/LoginPage.vue'
+import PatientLoginView from '../../modules/patient-portal/views/PatientLoginView.vue'
+import PatientRegisterView from '../../modules/patient-portal/views/PatientRegisterView.vue'
+import PatientDashboardView from '../../modules/patient-portal/views/PatientDashboardView.vue'
+import DashboardView from '../../modules/dashboard/views/DashboardView.vue'
 
 const routes = [
-  ...authRoutes,
-  ...dashboardRoutes,
-  ...patientRoutes,
-  ...patientPortalRoutes,
-  
-  // User Management Route (Admin Only)
   {
-    path: '/users',
-    name: 'UserManagement',
-    component: () => import('../../modules/users/views/UserManagementView.vue'),
-    meta: { 
-      requiresAuth: true, 
-      roles: ['admin'] 
-    }
-  },
-  
-  // Settings Route (Admin Only)
-  {
-    path: '/settings',
-    name: 'Settings',
-    component: () => import('../../modules/settings/views/SettingsView.vue'),
-    meta: { 
-      requiresAuth: true, 
-      roles: ['admin'] 
-    }
-  },
-  
-  // Queue Routes
-  {
-    path: '/queues',
-    name: 'Queues',
-    component: () => import('../../modules/queue/views/QueueView.vue'),
-    meta: { requiresAuth: true, roles: ['admin', 'dokter'] }
+    path: '/',
+    name: 'Landing',
+    component: LandingPage,
+    meta: { requiresAuth: false, guest: true }
   },
   {
-    path: '/queues/create',
-    name: 'QueueCreate',
-    component: () => import('../../modules/queue/views/QueueCreateView.vue'),
-    meta: { requiresAuth: true, roles: ['admin', 'dokter'] }
+    path: '/login',
+    name: 'Login',
+    component: LoginPage,
+    meta: { requiresAuth: false, guest: true }
   },
   {
-    path: '/queue',
-    name: 'Queue',
-    redirect: '/queues'
-  },
-  
-  // Assessment Routes
-  {
-    path: '/assessments',
-    name: 'Assessments',
-    component: AssessmentListView,
-    meta: { requiresAuth: true, roles: ['admin', 'dokter'] }
+    path: '/pasien/login',
+    name: 'PatientLogin',
+    component: PatientLoginView,
+    meta: { requiresAuth: false, guest: true, portal: 'patient' }
   },
   {
-    path: '/assessments/create',
-    name: 'AssessmentCreate',
-    component: () => import('../../modules/assessment/views/AssessmentCreateView.vue'),
-    meta: { requiresAuth: true, roles: ['admin', 'dokter'] }
+    path: '/pasien/register',
+    name: 'PatientRegister',
+    component: PatientRegisterView,
+    meta: { requiresAuth: false, guest: true, portal: 'patient' }
   },
   {
-    path: '/assessment',
-    name: 'Assessment',
-    redirect: '/assessments'
-  },
-  
-  // Therapy Routes
-  {
-    path: '/therapies',
-    name: 'Therapies',
-    component: TherapyListView,
-    meta: { requiresAuth: true, roles: ['admin', 'dokter', 'terapis'] }
+    path: '/pasien/dashboard',
+    name: 'PatientDashboard',
+    component: PatientDashboardView,
+    meta: { requiresAuth: true, roles: ['pasien'], portal: 'patient' }
   },
   {
-    path: '/therapies/create',
-    name: 'TherapyCreate',
-    component: () => import('../../modules/therapy/views/TherapyCreateView.vue'),
-    meta: { requiresAuth: true, roles: ['admin', 'dokter'] }
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: DashboardView,
+    meta: { requiresAuth: true, roles: ['admin', 'dokter', 'terapis'], portal: 'staff' }
   },
-  {
-    path: '/therapy',
-    name: 'Therapy',
-    redirect: '/therapies'
-  },
-  
-  // Monitoring Route (Semua Role Medis)
-  {
-    path: '/monitoring',
-    name: 'Monitoring',
-    component: () => import('../../modules/monitoring/views/MonitoringView.vue'),
-    meta: { 
-      requiresAuth: true, 
-      roles: ['admin', 'dokter', 'terapis'] 
-    }
-  },
-  
-  // Reports Route (Admin & Dokter)
-  {
-    path: '/reports',
-    name: 'Reports',
-    component: () => import('../../modules/reports/views/ReportsView.vue'),
-    meta: { 
-      requiresAuth: true, 
-      roles: ['admin', 'dokter'] 
-    }
-  },
-  {
-    path: '/activities',
-    name: 'ActivityLog',
-    component: () => import('../../modules/dashboard/views/ActivityLogView.vue'),
-    meta: { requiresAuth: true }
-  },
-  
-  // Unauthorized Page
-  {
-    path: '/unauthorized',
-    name: 'unauthorized',
-    component: () => import('../../shared/components/common/Unauthorized.vue')
-  },
-  
-  // 404 Not Found - HARUS PALING BAWAH
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('../../shared/components/common/NotFound.vue')
+    component: { 
+      template: `
+        <div style="padding: 4rem; text-align: center;">
+          <h1 style="color: #1e40af;">404 - Halaman Tidak Ditemukan</h1>
+          <p style="margin: 1rem 0;">Halaman yang Anda cari tidak ada.</p>
+          <a href="/" style="color: #3b82f6; text-decoration: none;">← Kembali ke Beranda</a>
+        </div>
+      `
+    }
   }
 ]
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes,
-  scrollBehavior(to, from, savedPosition) {
-    if (savedPosition) {
-      return savedPosition
-    } else {
-      return { top: 0 }
-    }
-  }
+  history: createWebHistory(),
+  routes
 })
 
-// Navigation guard dengan RBAC
 router.beforeEach((to, from, next) => {
-  const staffAuth = authService.isAuthenticated()
-  const patientAuth = patientService.isAuthenticated()
-  const isAuthenticated = staffAuth || patientAuth
-
-  const staffUser = authService.getStoredUser()
-  const patientUser = patientService.getStoredUser()
-  const user = staffUser || patientUser
-  const userRole = user?.role
-
-  // Jika route butuh auth tapi belum login
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    if (to.path.startsWith('/pasien/')) {
-      next('/pasien/login')
-    } else {
-      next('/login')
+  console.log('🔍 Navigasi:', from.path, '→', to.path)
+  
+  let token = null
+  let user = null
+  
+  try {
+    token = localStorage.getItem('token') || localStorage.getItem('patient_token')
+    const userStr = localStorage.getItem('user') || localStorage.getItem('patient_user')
+    if (userStr && userStr !== 'undefined' && userStr !== 'null') {
+      user = JSON.parse(userStr)
     }
-    return
+  } catch (e) {
+    console.warn('Error reading localStorage:', e)
+    localStorage.clear()
   }
-
-  // Jika guest page tapi sudah login
-  if (to.meta.guest && isAuthenticated) {
-    if (userRole === 'pasien') {
-      next('/pasien/dashboard')
-    } else {
-      next('/dashboard')
-    }
-    return
+  
+  if (to.meta.requiresAuth && !token) {
+    return next(to.meta.portal === 'patient' ? '/pasien/login' : '/login')
   }
-
-  // Check role access
-  if (to.meta.roles && user) {
-    if (!to.meta.roles.includes(userRole)) {
-      if (userRole === 'pasien') {
-        if (!to.path.startsWith('/pasien/')) {
-          next('/pasien/dashboard')
-          return
-        }
-      } else {
-        if (to.path.startsWith('/pasien/')) {
-          next('/unauthorized')
-          return
-        }
-      }
-      next('/unauthorized')
-      return
-    }
+  
+  if (to.meta.guest && token) {
+    return next(user?.role === 'pasien' ? '/pasien/dashboard' : '/dashboard')
   }
-
-  // Prevent staff from accessing patient portal and vice versa
-  if (to.path.startsWith('/pasien/') && staffAuth && !patientAuth) {
-    next('/dashboard')
-    return
+  
+  if (to.meta.roles && user && !to.meta.roles.includes(user.role)) {
+    return next('/')
   }
-
-  if (!to.path.startsWith('/pasien/') && patientAuth && !staffAuth) {
-    next('/pasien/dashboard')
-    return
-  }
-
+  
   next()
 })
 

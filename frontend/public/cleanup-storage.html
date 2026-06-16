@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cleanup LocalStorage</title>
+</head>
+<body>
+  <h1>Cleanup LocalStorage</h1>
+  <button onclick="clearAll()">Clear All Storage</button>
+  <button onclick="clearInvalid()">Clear Invalid Data Only</button>
+  <div id="output"></div>
+  
+  <script>
+    function clearAll() {
+      localStorage.clear()
+      document.getElementById('output').innerHTML = '<p style="color: green">✅ All localStorage cleared!</p>'
+    }
+    
+    function clearInvalid() {
+      let cleared = 0
+      
+      // Check patient_user
+      try {
+        const patientUser = localStorage.getItem('patient_user')
+        if (patientUser && (patientUser.startsWith('<') || patientUser.startsWith('{error'))) {
+          localStorage.removeItem('patient_user')
+          cleared++
+        }
+      } catch(e) {
+        localStorage.removeItem('patient_user')
+        cleared++
+      }
+      
+      // Check user
+      try {
+        const user = localStorage.getItem('user')
+        if (user && (user.startsWith('<') || user.startsWith('{error'))) {
+          localStorage.removeItem('user')
+          cleared++
+        }
+      } catch(e) {
+        localStorage.removeItem('user')
+        cleared++
+      }
+      
+      // Check tokens
+      const tokens = ['token', 'patient_token']
+      tokens.forEach(key => {
+        const token = localStorage.getItem(key)
+        if (token && token.startsWith('<')) {
+          localStorage.removeItem(key)
+          cleared++
+        }
+      })
+      
+      document.getElementById('output').innerHTML = 
+        `<p style="color: green">✅ Cleared ${cleared} invalid items!</p>`
+    }
+  </script>
+</body>
+</html>
