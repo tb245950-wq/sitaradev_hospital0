@@ -1,10 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { authService } from '../../modules/auth/services/authService'
+import { patientService } from '../../modules/patient-portal/services/patientService'
 
 // Import routes dari setiap modul
 import { authRoutes } from '../../modules/auth/router/authRoutes'
 import { dashboardRoutes } from '../../modules/dashboard/router/dashboardRoutes'
 import { patientRoutes } from '../../modules/patients/router/patientRoutes'
+import { patientPortalRoutes } from '../../modules/patient-portal/router/patientPortalRoutes'
 
 // Import views untuk modul baru
 import AssessmentListView from '../../modules/assessment/views/AssessmentListView.vue'
@@ -15,6 +17,7 @@ const routes = [
   ...authRoutes,
   ...dashboardRoutes,
   ...patientRoutes,
+  ...patientPortalRoutes,
   
   // User Management Route (Admin Only)
   {
@@ -152,30 +155,65 @@ const router = createRouter({
 
 // Navigation guard dengan RBAC
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = authService.isAuthenticated()
-  const requiresAuth = to.meta.requiresAuth !== false
-  const user = authService.getStoredUser()
+  const staffAuth = authService.isAuthenticated()
+  const patientAuth = patientService.isAuthenticated()
+  const isAuthenticated = staffAuth || patientAuth
 
-  // Jika route butuh auth tapi user belum login
-  if (requiresAuth && !isAuthenticated) {
-    next('/login')
+  const staffUser = authService.getStoredUser()
+  const patientUser = patientService.getStoredUser()
+  const user = staffUser || patientUser
+  const userRole = user?.role
+
+  // Jika route butuh auth tapi belum login
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    if (to.path.startsWith('/pasien/')) {
+      next('/pasien/login')
+    } else {
+      next('/login')
+    }
     return
   }
-  
-  // Jika route untuk guest tapi user sudah login
+
+  // Jika guest page tapi sudah login
   if (to.meta.guest && isAuthenticated) {
-    next('/dashboard')
+    if (userRole === 'pasien') {
+      next('/pasien/dashboard')
+    } else {
+      next('/dashboard')
+    }
     return
   }
-  
-  // Check role-based access
+
+  // Check role access
   if (to.meta.roles && user) {
-    if (!to.meta.roles.includes(user.role)) {
+    if (!to.meta.roles.includes(userRole)) {
+      if (userRole === 'pasien') {
+        if (!to.path.startsWith('/pasien/')) {
+          next('/pasien/dashboard')
+          return
+        }
+      } else {
+        if (to.path.startsWith('/pasien/')) {
+          next('/unauthorized')
+          return
+        }
+      }
       next('/unauthorized')
       return
     }
   }
-  
+
+  // Prevent staff from accessing patient portal and vice versa
+  if (to.meta.portal === 'patient' && staffAuth && !patientAuth) {
+    next('/dashboard')
+    return
+  }
+
+  if (to.meta.portal === 'staff' && patientAuth && !staffAuth) {
+    next('/pasien/dashboard')
+    return
+  }
+
   next()
 })
 
