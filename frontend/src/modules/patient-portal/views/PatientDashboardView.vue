@@ -3,7 +3,7 @@
     <!-- Sidebar Pasien -->
     <aside class="patient-sidebar">
       <div class="sidebar-header">
-        <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
+        <img src="../../../../assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
         <div>
           <h2>SITARA</h2>
           <p>Portal Pasien</p>

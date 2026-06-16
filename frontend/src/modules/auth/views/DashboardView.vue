@@ -40,7 +40,7 @@
         <div class="welcome-banner">
           <div class="welcome-content">
             <div class="welcome-image-wrapper">
-              <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="welcome-logo-large" />
+              <img src="../../../assets/SITARA_RM_BG.png" alt="SITARA" class="welcome-logo-large" />
             </div>
             <div class="welcome-info">
               <h1>Sistem Informasi Terpadu</h1>

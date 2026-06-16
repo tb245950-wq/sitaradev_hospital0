@@ -9,7 +9,7 @@
 
     <div class="register-container">
       <div class="logo-section">
-        <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
+        <img src="../../../assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
         <h1>SITARA</h1>
         <p>Sistem Informasi Terpadu</p>
       </div>
