@@ -4,73 +4,209 @@
     <div class="circle circle-1"></div>
     <div class="circle circle-2"></div>
 
-    <!-- Header Buttons -->
-    <div class="header-buttons">
-      <router-link to="/login" class="btn btn-primary">Masuk</router-link>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-      <div class="logo-container">
-        <img src="@/assets/SITARA_RM_BG.png" alt="SITARA Logo" class="logo" />
-        <h1 class="title">SITARA</h1>
-        <p class="subtitle">Sistem Informasi Terpadu</p>
-        <p class="subtitle-small">Assessment dan Rekam Anak</p>
+    <!-- Header Navigation -->
+    <header class="header">
+      <div class="logo-small">
+        <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" />
+        <span>SITARA</span>
       </div>
+      <nav class="nav-links">
+        <a href="#layanan">Layanan</a>
+        <a href="#tentang">Tentang</a>
+        <a href="#kontak">Kontak</a>
+      </nav>
+    </header>
 
-      <div class="welcome-text">
-        <h2>Selamat Datang</h2>
-        <p>Sistem Informasi Terpadu Assessment dan Rekam Anak</p>
-      </div>
+    <!-- Hero Section dengan 2 Tombol Akses -->
+    <section class="hero">
+      <div class="hero-content">
+        <img src="@/assets/SITARA_RM_BG.png" alt="SITARA Logo" class="hero-logo" />
+        <h1 class="hero-title">SITARA</h1>
+        <p class="hero-subtitle">Sistem Informasi Terpadu</p>
+        <p class="hero-subtitle-small">Assessment dan Rekam Anak</p>
+        
+        <div class="hero-description">
+          <h2>Selamat Datang di Klinik SITARA</h2>
+          <p>Pusat layanan terpadu untuk assessment dan tumbuh kembang anak dengan tim profesional berpengalaman.</p>
+        </div>
 
-      <!-- Info Box untuk Staff -->
-      <div class="staff-info-box">
-        <div class="staff-icon"></div>
-        <h3>Akses Khusus Staff</h3>
-        <p>
-          Sistem ini hanya untuk <strong>Admin, Dokter, dan Terapis</strong> 
-          yang telah terdaftar di klinik SITARA.
-        </p>
-        <p class="staff-note">
-          Jika Anda adalah staff dan belum memiliki akun, 
-          silakan hubungi administrator klinik.
-        </p>
-      </div>
-
-      <!-- Features Preview -->
-      <div class="features-preview">
-        <div class="feature-item">
-          <div class="feature-icon"></div>
-          <h4>Manajemen Pasien</h4>
-          <p>Kelola data pasien dengan mudah</p>
-        </div>
-        <div class="feature-item">
-          <div class="feature-icon"></div>
-          <h4>Assessment Medis</h4>
-          <p>Rekam assessment dan diagnosis</p>
-        </div>
-        <div class="feature-item">
-          <div class="feature-icon"></div>
-          <h4>Program Terapi</h4>
-          <p>Atur dan pantau program terapi</p>
-        </div>
-        <div class="feature-item">
-          <div class="feature-icon"></div>
-          <h4>Laporan Lengkap</h4>
-          <p>Generate laporan harian & bulanan</p>
+        <!-- 2 TOMBOL UTAMA -->
+        <div class="access-buttons">
+          <router-link to="/login" class="btn-access btn-staff">
+            <span class="btn-icon">👨‍⚕️</span>
+            <div class="btn-content">
+              <strong>Portal Staff</strong>
+              <small>Masuk untuk Admin, Dokter, Terapis</small>
+            </div>
+          </router-link>
+          
+          <router-link to="/pasien/login" class="btn-access btn-patient">
+            <span class="btn-icon">👶</span>
+            <div class="btn-content">
+              <strong>Portal Pasien</strong>
+              <small>Login atau Daftar sebagai Pasien</small>
+            </div>
+          </router-link>
         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- Section: Layanan Kami -->
+    <section id="layanan" class="services-section">
+      <div class="section-container">
+        <h2 class="section-title">Layanan Kami</h2>
+        <p class="section-subtitle">Layanan profesional untuk tumbuh kembang optimal anak Anda</p>
+        
+        <div class="services-grid">
+          <div class="service-card">
+            <div class="service-icon">🧠</div>
+            <h3>Terapi Wicara</h3>
+            <p>Terapi untuk mengatasi gangguan bicara dan bahasa pada anak, meningkatkan kemampuan komunikasi verbal dan non-verbal.</p>
+          </div>
+          
+          <div class="service-card">
+            <div class="service-icon">👶</div>
+            <h3>Terapi Okupasi</h3>
+            <p>Terapi untuk meningkatkan kemandirian anak dalam aktivitas sehari-hari, motorik halus, dan keterampilan hidup.</p>
+          </div>
+          
+          <div class="service-card">
+            <div class="service-icon">📋</div>
+            <h3>Assessment Medis</h3>
+            <p>Evaluasi menyeluruh perkembangan anak oleh dokter spesialis untuk diagnosis dan rekomendasi terapi yang tepat.</p>
+          </div>
+          
+          <div class="service-card">
+            <div class="service-icon">📈</div>
+            <h3>Monitoring Progress</h3>
+            <p>Pemantauan berkala perkembangan anak selama menjalani program terapi untuk memastikan kemajuan optimal.</p>
+          </div>
+          
+          <div class="service-card">
+            <div class="service-icon">🌱</div>
+            <h3>Poli Tumbuh Kembang</h3>
+            <p>Layanan khusus untuk pemantauan tumbuh kembang anak dengan pendekatan holistik dan terintegrasi.</p>
+          </div>
+          
+          <div class="service-card">
+            <div class="service-icon">🧩</div>
+            <h3>Psikologi Anak</h3>
+            <p>Layanan psikologis untuk anak dengan fokus pada perkembangan emosi, perilaku, dan sosial.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Tentang Kami -->
+    <section id="tentang" class="about-section">
+      <div class="section-container">
+        <h2 class="section-title">Tentang SITARA</h2>
+        <div class="about-content">
+          <div class="about-text">
+            <p>
+              <strong>SITARA (Sistem Informasi Terpadu Assessment dan Rekam Anak)</strong> 
+              adalah klinik tumbuh kembang anak yang menyediakan layanan komprehensif untuk 
+              mendukung perkembangan optimal anak Anda.
+            </p>
+            <p>
+              Dengan tim profesional yang terdiri dari dokter spesialis, psikolog, terapis wicara, 
+              terapis okupasi, dan tenaga medis berpengalaman, kami berkomitmen memberikan 
+              layanan terbaik untuk tumbuh kembang anak.
+            </p>
+            <div class="about-stats">
+              <div class="stat-item">
+                <div class="stat-number">500+</div>
+                <div class="stat-label">Pasien Dilayani</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number">15+</div>
+                <div class="stat-label">Tenaga Profesional</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number">10+</div>
+                <div class="stat-label">Tahun Pengalaman</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Kontak -->
+    <section id="kontak" class="contact-section">
+      <div class="section-container">
+        <h2 class="section-title">Kontak Kami</h2>
+        <div class="contact-grid">
+          <div class="contact-item">
+            <div class="contact-icon">📍</div>
+            <div class="contact-info">
+              <h4>Alamat</h4>
+              <p>Jl. Kesehatan Anak No. 123<br/>Jakarta Selatan, DKI Jakarta 12345</p>
+            </div>
+          </div>
+          
+          <div class="contact-item">
+            <div class="contact-icon">📞</div>
+            <div class="contact-info">
+              <h4>Telepon</h4>
+              <p>(021) 1234-5678<br/>+62 812-3456-7890 (WhatsApp)</p>
+            </div>
+          </div>
+          
+          <div class="contact-item">
+            <div class="contact-icon">✉️</div>
+            <div class="contact-info">
+              <h4>Email</h4>
+              <p>info@sitara-klinik.com<br/>admin@sitara-klinik.com</p>
+            </div>
+          </div>
+          
+          <div class="contact-item">
+            <div class="contact-icon">🕐</div>
+            <div class="contact-info">
+              <h4>Jam Operasional</h4>
+              <p>Senin - Jumat: 08.00 - 17.00<br/>Sabtu: 08.00 - 14.00<br/>Minggu: Tutup</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- Footer -->
-    <footer class="landing-footer">
-      <p>&copy; 2026 SITARA - Sistem Informasi Terpadu Assessment dan Rekam Anak</p>
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="footer-section">
+          <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="footer-logo" />
+          <p>Sistem Informasi Terpadu Assessment dan Rekam Anak</p>
+        </div>
+        <div class="footer-section">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><router-link to="/login">Portal Staff</router-link></li>
+            <li><router-link to="/pasien/login">Portal Pasien</router-link></li>
+            <li><a href="#layanan">Layanan</a></li>
+            <li><a href="#kontak">Kontak</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Layanan</h4>
+          <ul>
+            <li>Terapi Wicara</li>
+            <li>Terapi Okupasi</li>
+            <li>Assessment Medis</li>
+            <li>Poli Tumbuh Kembang</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 SITARA - Klinik Tumbuh Kembang Anak. All rights reserved.</p>
+      </div>
     </footer>
   </div>
 </template>
 
 <script setup>
-// Component logic here
+// Landing page is static, no logic needed
 </script>
 
 <style scoped>
@@ -78,9 +214,7 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
   position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  overflow-x: hidden;
 }
 
 .circle {
@@ -90,228 +224,337 @@
   z-index: 0;
 }
 
-.circle-1 {
-  width: 400px;
-  height: 400px;
-  top: -100px;
-  left: -100px;
-}
+.circle-1 { width: 400px; height: 400px; top: -100px; left: -100px; }
+.circle-2 { width: 300px; height: 300px; bottom: -50px; right: -50px; }
 
-.circle-2 {
-  width: 300px;
-  height: 300px;
-  bottom: -50px;
-  right: -50px;
-}
-
-.header-buttons {
-  position: absolute;
-  top: 2rem;
-  right: 2rem;
+/* Header */
+.header {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
   display: flex;
-  gap: 1rem;
-  z-index: 10;
-}
-
-.btn {
-  padding: 0.75rem 2rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.3s;
-  cursor: pointer;
-  border: none;
-  font-size: 1rem;
-}
-
-.btn-primary {
-  background: #1e40af;
-  color: white;
-  box-shadow: 0 4px 6px rgba(30, 64, 175, 0.2);
-}
-
-.btn-primary:hover {
-  background: #1e3a8a;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(30, 64, 175, 0.3);
-}
-
-.main-content {
-  display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  min-height: 100vh;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+}
+
+.logo-small {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-small img { width: 40px; height: 40px; }
+.logo-small span { font-size: 1.25rem; font-weight: 700; color: #1e40af; }
+
+.nav-links { display: flex; gap: 2rem; }
+.nav-links a {
+  color: #475569;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: #1e40af; }
+
+/* Hero Section */
+.hero {
   position: relative;
   z-index: 1;
-  padding: 2rem;
-  gap: 2rem;
+  padding: 4rem 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
 }
 
-.logo-container {
+.hero-content {
   text-align: center;
-  margin-bottom: 1rem;
+  max-width: 900px;
 }
 
-.logo {
-  width: 200px;
-  height: 160px;
-  object-fit: contain;
-  margin-bottom: 1rem;
+.hero-logo {
+  width: 150px;
+  height: 150px;
+  margin-bottom: 1.5rem;
 }
 
-.title {
-  font-size: 3rem;
-  font-weight: 700;
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 800;
   color: #1e40af;
-  margin: 0.5rem 0;
   letter-spacing: 0.1em;
+  margin: 0.5rem 0;
 }
 
-.subtitle {
-  font-size: 1rem;
+.hero-subtitle {
+  font-size: 1.125rem;
   color: #64748b;
   margin: 0.25rem 0;
   font-weight: 500;
 }
 
-.subtitle-small {
-  font-size: 0.875rem;
+.hero-subtitle-small {
+  font-size: 0.95rem;
   color: #94a3b8;
-  margin: 0;
+  margin-bottom: 2rem;
 }
 
-.welcome-text {
-  text-align: center;
-  color: #334155;
-}
-
-.welcome-text h2 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #1e293b;
-}
-
-.welcome-text p {
-  font-size: 1.25rem;
-  color: #64748b;
-  max-width: 600px;
-  line-height: 1.6;
-}
-
-/* Staff Info Box */
-.staff-info-box {
+.hero-description {
   background: white;
-  border: 2px solid #1e40af;
-  border-radius: 1rem;
   padding: 2rem;
-  max-width: 600px;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.1);
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2.5rem;
 }
 
-.staff-icon {
+.hero-description h2 {
+  font-size: 1.75rem;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+}
+
+.hero-description p {
+  color: #64748b;
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+/* 2 Tombol Akses Utama */
+.access-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.btn-access {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-radius: 1rem;
+  text-decoration: none;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-access:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.btn-content {
+  text-align: left;
+}
+
+.btn-content strong {
+  display: block;
+  font-size: 1.125rem;
+  margin-bottom: 0.25rem;
+}
+
+.btn-content small {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.btn-staff {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: white;
+}
+
+.btn-patient {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: white;
+}
+
+/* Section Umum */
+.section-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.section-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.section-subtitle {
+  text-align: center;
+  color: #64748b;
+  margin-bottom: 3rem;
+  font-size: 1.05rem;
+}
+
+/* Services */
+.services-section {
+  background: white;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.service-card {
+  background: #f8fafc;
+  padding: 2rem;
+  border-radius: 1rem;
+  text-align: center;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+}
+
+.service-card:hover {
+  transform: translateY(-4px);
+  border-color: #3b82f6;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1);
+}
+
+.service-icon {
   font-size: 3rem;
   margin-bottom: 1rem;
 }
 
-.staff-info-box h3 {
-  font-size: 1.5rem;
-  color: #1e40af;
-  margin-bottom: 1rem;
-  font-weight: 700;
-}
-
-.staff-info-box p {
-  color: #475569;
-  line-height: 1.6;
+.service-card h3 {
+  color: #1e293b;
   margin-bottom: 0.75rem;
+  font-size: 1.25rem;
 }
 
-.staff-note {
-  font-size: 0.9rem;
+.service-card p {
   color: #64748b;
-  font-style: italic;
+  line-height: 1.6;
+  font-size: 0.95rem;
 }
 
-/* Features Preview */
-.features-preview {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  max-width: 900px;
-  width: 100%;
-  margin-top: 1rem;
+/* About */
+.about-section {
+  background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
 }
 
-.feature-item {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s;
-}
-
-.feature-item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
-
-.feature-icon {
-  font-size: 2.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.feature-item h4 {
+.about-text p {
+  color: #475569;
+  line-height: 1.8;
+  margin-bottom: 1rem;
   font-size: 1rem;
+}
+
+.about-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.stat-item { text-align: center; }
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1e40af;
+  margin-bottom: 0.25rem;
+}
+.stat-label {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+/* Contact */
+.contact-section {
+  background: white;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.contact-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 1rem;
+}
+
+.contact-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.contact-info h4 {
   color: #1e293b;
   margin-bottom: 0.5rem;
-  font-weight: 600;
 }
 
-.feature-item p {
-  font-size: 0.85rem;
+.contact-info p {
   color: #64748b;
-  line-height: 1.4;
+  line-height: 1.6;
+  font-size: 0.9rem;
 }
 
 /* Footer */
-.landing-footer {
+.footer {
   background: #1e293b;
   color: white;
-  text-align: center;
-  padding: 1.5rem;
+  padding: 3rem 2rem 1rem;
   position: relative;
   z-index: 1;
-  font-size: 0.875rem;
 }
 
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 2rem;
+}
+
+.footer-logo { width: 60px; height: 60px; margin-bottom: 1rem; }
+.footer-section p { color: #cbd5e1; line-height: 1.6; font-size: 0.9rem; }
+.footer-section h4 { margin-bottom: 1rem; color: white; }
+.footer-section ul { list-style: none; padding: 0; }
+.footer-section ul li { margin-bottom: 0.5rem; }
+.footer-section a { color: #cbd5e1; text-decoration: none; transition: color 0.2s; }
+.footer-section a:hover { color: white; }
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 2rem;
+  border-top: 1px solid #334155;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .header-buttons {
-    top: 1rem;
-    right: 1rem;
-    flex-direction: column;
-  }
-
-  .title {
-    font-size: 2rem;
-  }
-
-  .welcome-text h2 {
-    font-size: 1.5rem;
-  }
-
-  .welcome-text p {
-    font-size: 1rem;
-  }
-
-  .features-preview {
-    grid-template-columns: 1fr;
-  }
-
-  .staff-info-box {
-    padding: 1.5rem;
-  }
+  .header { padding: 1rem; }
+  .nav-links { display: none; }
+  .hero-title { font-size: 2.5rem; }
+  .access-buttons { grid-template-columns: 1fr; }
+  .btn-access { padding: 1.25rem; }
+  .about-stats { grid-template-columns: 1fr; gap: 1rem; }
+  .footer-content { grid-template-columns: 1fr; gap: 2rem; }
+  .section-title { font-size: 1.75rem; }
 }
 </style>
