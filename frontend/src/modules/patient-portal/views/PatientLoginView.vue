@@ -7,7 +7,7 @@
 
     <div class="login-container">
       <div class="logo-section">
-        <img src="../../../../assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
+        <img src="../../../assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
         <h1>Portal Pasien</h1>
         <p>SITARA - Klinik Tumbuh Kembang Anak</p>
       </div>

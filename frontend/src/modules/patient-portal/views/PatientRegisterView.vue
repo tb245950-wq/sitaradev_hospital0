@@ -7,7 +7,7 @@
 
     <div class="register-container">
       <div class="logo-section">
-        <img src="../../../../assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
+        <img src="../../../assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
         <h1>Daftar Pasien</h1>
         <p>Buat akun untuk akses layanan SITARA</p>
       </div>

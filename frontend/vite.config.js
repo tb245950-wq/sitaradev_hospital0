@@ -1,21 +1,19 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [vue()],
-  server: {
-    port: 5173,
-    headers: {
-      'Cache-Control': 'public, max-age=31536000, immutable',
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
+  server: {
+    port: 5173,
+    host: true
+  },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['vue', 'vue-router', 'pinia', 'axios'],
-        }
-      }
-    }
+    // Revert manualChunks to default (function) to fix build error
   }
 })
