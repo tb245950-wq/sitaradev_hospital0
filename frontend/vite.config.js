@@ -23,7 +23,15 @@ export default defineConfig({
   server: {
     port: 5173,
     host: '0.0.0.0',
-    cors: true
+    cors: true,
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        secure: false,
+        // Rewrite is NOT needed — Laravel already expects /api prefix
+      }
+    }
   },
   build: {
     rollupOptions: {
