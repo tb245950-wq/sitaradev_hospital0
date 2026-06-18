@@ -6,6 +6,11 @@
       <Navbar @toggle-sidebar="isSidebarOpen = !isSidebarOpen" />
       
       <main class="content-body">
+        <div class="welcome-section">
+          <h1>Dashboard Admin</h1>
+          <p class="date-display">{{ analyticsStore.todayFormatted }}</p>
+        </div>
+
         <!-- Loading State -->
         <div v-if="analyticsStore.loading" class="loading-container">
           <div class="loading-spinner"></div>
@@ -24,39 +29,38 @@
           <div class="stats-grid">
             <StatCard
               title="Total Pasien"
-              :value="analyticsStore.stats.total_patients.value"
-              icon="👥"
-              icon-bg="#e0f2fe"
-              icon-color="#0ea5e9"
-              :trend="analyticsStore.stats.total_patients.trend"
-              :trend-label="analyticsStore.stats.total_patients.trend_label"
+              :value="analyticsStore.stats.total_patients"
+              icon="👥" 
+              icon-bg="#f0fdf4"
+              icon-color="#22c55e"
+              :subtitle="`${analyticsStore.stats.patients_today} pasien hari ini`"
             />
             
             <StatCard
               title="Sesi Terapi Hari Ini"
-              :value="analyticsStore.stats.today_sessions.value"
+              :value="analyticsStore.stats.assessments_today"
               icon="📋"
               icon-bg="#f0fdf4"
               icon-color="#22c55e"
-              :subtitle="`${analyticsStore.stats.today_sessions.completed} Selesai, ${analyticsStore.stats.today_sessions.remaining} Tersisa`"
+              :subtitle="`${analyticsStore.stats.completed_queues} Selesai hari ini`"
             />
             
             <StatCard
               title="Waiting List"
-              :value="analyticsStore.stats.waiting_list.value"
+              :value="analyticsStore.stats.waiting_queues"
               icon="⏳"
               icon-bg="#fef3c7"
               icon-color="#f59e0b"
-              :subtitle="`${analyticsStore.stats.waiting_list.high_priority} Prioritas Tinggi`"
+              :subtitle="`${analyticsStore.stats.calling_queues} Sedang Dipanggil`"
             />
             
             <StatCard
               title="Tingkat Kehadiran"
-              :value="`${analyticsStore.stats.attendance_rate.value}%`"
+              :value="`${analyticsStore.stats.attendance_rate}%`"
               icon="✅"
               icon-bg="#f0fdf4"
               icon-color="#22c55e"
-              :trend-label="analyticsStore.stats.attendance_rate.period"
+              subtitle="Dari total sesi monitoring"
             />
           </div>
           

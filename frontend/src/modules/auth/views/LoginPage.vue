@@ -60,18 +60,18 @@
           </div>
 
           <!-- Submit Button -->
-          <button type="submit" class="btn-login" :disabled="authStore.loading">
-            <span v-if="authStore.loading">Loading...</span>
+          <button type="submit" class="btn-login" :disabled="loading">
+            <span v-if="loading">Loading...</span>
             <span v-else>Masuk</span>
           </button>
 
           <!-- Error Message -->
-          <div v-if="authStore.error" 
+          <div v-if="localError" 
                :class="['error-message', isInactiveError ? 'warning-message' : '']">
             <div v-if="isInactiveError" class="warning-icon">⚠️</div>
             <div class="error-content">
               <p class="error-title" v-if="isInactiveError">Akun Tidak Aktif</p>
-              <p>{{ authStore.error }}</p>
+              <p>{{ localError }}</p>
               <p v-if="isInactiveError" class="error-hint">
                 Silakan hubungi administrator klinik untuk mengaktifkan akun Anda.
               </p>
@@ -95,6 +95,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { authService } from '../services/authService'
 import { useAuthStore } from '../stores/authStore'
 
 const router = useRouter()
@@ -111,34 +112,75 @@ const errors = ref({
   password: ''
 })
 
+const localError = ref('')
+const loading = ref(false)
+
 // Detect jika error adalah "akun tidak aktif"
 const isInactiveError = computed(() => {
-  return authStore.error && (
-    authStore.error.includes('tidak aktif') ||
-    authStore.error.includes('ditangguhkan')
+  return localError.value && (
+    localError.value.includes('tidak aktif') ||
+    localError.value.includes('ditangguhkan')
   )
 })
 
 const handleLogin = async () => {
+  console.log('🔵 === HANDLE LOGIN START ===')
+  console.log('Form:', { email: form.value.email, password: '***' })
+  
   // Reset errors
   errors.value = { email: '', password: '' }
+  localError.value = ''
 
   // Validation
   if (!form.value.email) {
     errors.value.email = 'Email harus diisi'
+    console.error('❌ Validation failed: Email empty')
     return
   }
 
   if (!form.value.password) {
     errors.value.password = 'Password harus diisi'
+    console.error('❌ Validation failed: Password empty')
     return
   }
 
-  const result = await authStore.login(form.value.email, form.value.password)
+  loading.value = true
   
-  if (result.success) {
-    // Redirect ke dashboard
-    router.push('/dashboard')
+  try {
+    console.log('🟡 Calling authService.login()...')
+    
+    // PANGGIL SERVICE LANGSUNG (BUKAN STORE!)
+    const result = await authService.login(form.value.email, form.value.password)
+    
+    console.log('🟢 Result from authService:', result)
+    
+    if (result.success === true) {
+      console.log('✅ LOGIN BERHASIL!')
+      console.log('User:', result.data.user)
+      console.log('Token saved:', !!result.data.token)
+      
+      // UPDATE STORE MANUALLY agar Sidebar/Navbar terupdate
+      authStore.user = result.data.user
+      authStore.token = result.data.token
+      console.log('📦 Store state manually updated')
+      
+      localError.value = ''
+      
+      setTimeout(() => {
+        console.log('🔄 Redirecting to dashboard...')
+        router.push('/dashboard')
+      }, 500)
+    } else {
+      console.error('❌ LOGIN GAGAL!')
+      console.error('Error:', result.error)
+      localError.value = result.error || 'Email atau password salah'
+    }
+  } catch (err) {
+    console.error('💥 Exception caught in component:', err)
+    localError.value = 'Terjadi kesalahan sistem'
+  } finally {
+    loading.value = false
+    console.log('⚪ Loading reset')
   }
 }
 </script>

@@ -59,7 +59,7 @@ class SitaraDemoSeeder extends Seeder
                 'name' => 'Super Admin',
                 'role' => 'admin',
                 'status' => 'active',
-                'password' => Hash::make('admin123'),
+                'password' => 'admin123',
             ]
         );
 
@@ -70,7 +70,7 @@ class SitaraDemoSeeder extends Seeder
                 'role' => 'dokter',
                 'nip' => '20240001',
                 'status' => 'active',
-                'password' => Hash::make('password123'),
+                'password' => 'password123',
             ]
         );
         
@@ -81,7 +81,7 @@ class SitaraDemoSeeder extends Seeder
                 'role' => 'terapis',
                 'nip' => '20240002',
                 'status' => 'active',
-                'password' => Hash::make('password123'),
+                'password' => 'password123',
             ]
         );
         

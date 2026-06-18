@@ -94,7 +94,7 @@ class UserManagementController extends Controller
             'email' => $validated['email'],
             'nip' => $validated['nip'] ?? null,
             'role' => $validated['role'],
-            'password' => Hash::make($validated['password']),
+            'password' => $validated['password'],
             'status' => $validated['status'] ?? 'active',
         ]);
 
@@ -226,7 +226,7 @@ class UserManagementController extends Controller
 
         // Update password
         $user->update([
-            'password' => Hash::make($validated['password'])
+            'password' => $validated['password']
         ]);
 
         return response()->json([

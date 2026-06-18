@@ -81,10 +81,15 @@
             <tr v-for="patient in patientStore.patients" :key="patient.id">
               <td><strong>{{ patient.nrm }}</strong></td>
               <td>{{ patient.nama }}</td>
-              <td>{{ patient.nik || '-' }}</td>
+              <td>
+                <MaskedNIK 
+                  :full-nik="patient.nik" 
+                  :masked-nik="patient.masked_nik" 
+                />
+              </td>
               <td>{{ patient.jenis_kelamin }}</td>
-              <td>{{ formatDate(patient.info_lahir?.tanggal) }}</td>
-              <td>{{ patient.wali?.nama || '-' }}</td>
+              <td>{{ formatDate(patient.tanggal_lahir) }}</td>
+              <td>{{ patient.nama_wali || '-' }}</td>
               <td class="text-right">
                 <div class="action-buttons justify-end">
                   <router-link :to="`/patients/${patient.id}`" class="btn-icon-sm" title="Detail">
@@ -139,6 +144,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../../auth/stores/authStore'
 import { usePatientStore } from '../stores/patientStore'
 import { useNavigation } from '../../../shared/composables/useNavigation'
+import MaskedNIK from '../../../shared/components/MaskedNIK.vue'
 
 const authStore = useAuthStore()
 const patientStore = usePatientStore()

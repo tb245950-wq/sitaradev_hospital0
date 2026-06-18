@@ -81,21 +81,43 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   async function login(email, password) {
+    console.log('📦 authStore.login() called')
+    
     loading.value = true
     error.value = null
+    
     try {
-      const data = await authService.login(email, password)
-      user.value = data.data.user
-      token.value = data.data.token
+      // PANGGIL SERVICE
+      const result = await authService.login(email, password)
       
-      // Simpan ke localStorage
-      localStorage.setItem('token', data.data.token)
-      localStorage.setItem('user', JSON.stringify(data.data.user))
+      console.log('📦 Store received result:', result)
       
-      return { success: true, role: data.data.user.role }
+      if (result.success) {
+        // UPDATE STATE
+        user.value = result.data.user
+        token.value = result.data.token
+        
+        console.log('📦 Store state updated:', { user: user.value, token: !!token.value })
+        
+        return {
+          success: true,
+          data: result.data
+        }
+      } else {
+        console.error('📦 Store received failure from service:', result.error)
+        error.value = result.error || 'Login gagal'
+        return {
+          success: false,
+          error: error.value
+        }
+      }
     } catch (err) {
-      error.value = err.response?.data?.message || 'Login gagal'
-      return { success: false, error: error.value }
+      console.error('📦 Store catch block error:', err)
+      error.value = err.message || 'Terjadi kesalahan sistem'
+      return {
+        success: false,
+        error: error.value
+      }
     } finally {
       loading.value = false
     }

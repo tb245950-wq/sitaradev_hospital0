@@ -25,8 +25,8 @@
             <td class="time-cell">{{ activity.time }}</td>
             <td>
               <div class="patient-info">
-                <div class="patient-name">{{ activity.patient.name }}</div>
-                <div class="patient-nik">NIK: {{ activity.patient.nik }}</div>
+                <div class="patient-name">{{ activity.patient?.name || 'Unknown' }}</div>
+                <div class="patient-nik">NIK: {{ activity.patient?.nik || '-' }}</div>
               </div>
             </td>
             <td>{{ activity.activity }}</td>

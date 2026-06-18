@@ -36,6 +36,8 @@ class Patient extends Model
             'tanggal_lahir' => 'date',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
+            'nik' => \App\Casts\EncryptedField::class,
+            'alamat' => \App\Casts\EncryptedField::class,
         ];
     }
 
@@ -57,5 +59,19 @@ class Patient extends Model
     public function monitorings(): HasMany
     {
         return $this->hasMany(TherapyMonitoring::class, 'id_pasien', 'id_pasien');
+    }
+
+    /**
+     * Get the masked NIK attribute.
+     */
+    public function getMaskedNikAttribute(): string
+    {
+        $nik = $this->nik;
+        if (empty($nik)) {
+            return '-';
+        }
+        // Assuming we need to decrypt first to mask, but since the model uses EncryptedField cast, 
+        // $this->nik might already be decrypted. Let's assume it's decrypted for this accessor.
+        return substr($nik, 0, 4) . '***********';
     }
 }

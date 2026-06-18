@@ -13,6 +13,7 @@ class PatientResource extends JsonResource
             'id' => $this->id_pasien,
             'nrm' => $this->nrm,
             'nik' => $this->nik,
+            'masked_nik' => $this->masked_nik,
             'nama' => $this->nama_lengkap,
             'nama_panggilan' => $this->nama_panggilan,
             'info_lahir' => [

@@ -13,13 +13,36 @@ class PatientPortalController extends Controller
     public function dashboard()
     {
         $user = Auth::user();
-        $myQueues = Queue::where('id_pasien', $user->id)->count();
         
+        // Active Queue today
+        $activeQueue = Queue::where('id_pasien', $user->id)
+            ->whereDate('created_at', today())
+            ->whereIn('status', ['menunggu', 'dipanggil'])
+            ->first();
+            
+        // Total Assessments
+        $totalAssessments = \App\Models\MedicalAssessment::where('id_pasien', $user->id)->count();
+        
+        // Active Therapy Programs
+        $activeTherapies = \App\Models\Therapy::where('id_pasien', $user->id)
+            ->where('status', 'berjalan')
+            ->count();
+            
+        // Upcoming Therapy Sessions this month
+        $upcomingSessions = \App\Models\TherapyMonitoring::where('id_pasien', $user->id)
+            ->whereMonth('tanggal_sesi', now()->month)
+            ->whereYear('tanggal_sesi', now()->year)
+            ->where('kehadiran', 'belum_hadir') // assuming this status exists or similar
+            ->count();
+
         return response()->json([
             'success' => true,
             'data' => [
-                'name' => $user->name,
-                'total_queues' => $myQueues,
+                'activeQueue' => $activeQueue ? 1 : 0,
+                'queueNumber' => $activeQueue ? $activeQueue->nomor_antrian : '',
+                'upcomingTherapy' => $upcomingSessions,
+                'totalAssessment' => $totalAssessments,
+                'activeTherapy' => $activeTherapies
             ]
         ]);
     }

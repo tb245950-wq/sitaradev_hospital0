@@ -1,39 +1,39 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
-import vueDevTools from 'vite-plugin-vue-devtools'
 
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    vue(),
-    vueDevTools()
+    vue({
+      template: {
+        compilerOptions: {
+          // Support runtime compilation if using template: '...' in components
+          isCustomElement: (tag) => false
+        }
+      }
+    })
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      'vue': 'vue/dist/vue.esm-bundler.js' // Fix for "runtime compilation is not supported"
     }
   },
   server: {
     port: 5173,
-    host: '0.0.0.0', // Listen on all interfaces
-    strictPort: true,
-    hmr: {
-      protocol: 'ws',
-      host: 'localhost',
-      port: 5173,
-      clientPort: 5173
-    },
-    cors: {
-      origin: '*',
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization']
-    },
-    watch: {
-      usePolling: true,
-      interval: 100
-    }
+    host: '0.0.0.0',
+    cors: true
   },
   build: {
-    sourcemap: true
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        }
+      }
+    }
   }
 })

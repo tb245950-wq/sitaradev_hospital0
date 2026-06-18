@@ -24,23 +24,24 @@ export const patientService = {
   }
 },
   getToken() {
-    try {
-      const token = localStorage.getItem('patient_token')
-      if (token && typeof token === 'string' && !token.startsWith('<')) {
-        return token
-      }
-      if (token && token.startsWith('<')) {
-        console.error('Invalid token detected (HTML instead of JWT), clearing...')
-        localStorage.removeItem('patient_token')
-      }
+  try {
+    const token = localStorage.getItem('patient_token')
+    if (!token || token === 'undefined' || token === 'null') {
       return null
-    } catch (error) {
-      console.error('Error getting token:', error)
+    }
+    
+    // Cek apakah token valid JWT (bukan HTML)
+    if (token.startsWith('<') || token.startsWith('{')) {
+      console.warn('Invalid token in localStorage, clearing...')
       localStorage.removeItem('patient_token')
       return null
     }
-  },
-  isAuthenticated() {
-    return !!this.getToken()
+    
+    return token
+  } catch (error) {
+    console.error('Error getting token:', error)
+    localStorage.removeItem('patient_token')
+    return null
   }
+}
 }

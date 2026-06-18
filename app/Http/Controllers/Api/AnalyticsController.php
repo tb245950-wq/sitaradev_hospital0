@@ -16,201 +16,188 @@ use Carbon\Carbon;
 class AnalyticsController extends Controller
 {
     /**
-     * Get dashboard statistics
-     */
-    public function getStats(Request $request)
-    {
-        // Total Patients
-        $totalPatients = Patient::count();
-        $lastMonthPatients = Patient::whereMonth('created_at', Carbon::now()->subMonth()->month)
-            ->whereYear('created_at', Carbon::now()->subMonth()->year)
-            ->count();
-        $patientGrowth = $lastMonthPatients > 0 
-            ? round((($totalPatients - $lastMonthPatients) / $lastMonthPatients) * 100, 1)
-            : 0;
-        
-        // Today's Therapy Sessions
-        $todaySessions = Therapy::whereDate('tanggal_mulai', '<=', Carbon::today())
-            ->where(function($q) {
-                $q->whereNull('tanggal_selesai')
-                  ->orWhereDate('tanggal_selesai', '>=', Carbon::today());
-            })
-            ->whereIn('status', ['terjadwal', 'berjalan'])
-            ->count();
-            
-        $completedSessions = TherapyMonitoring::whereDate('tanggal_sesi', Carbon::today())
-            ->where('kehadiran', 'hadir')
-            ->count();
-            
-        $remainingSessions = max(0, $todaySessions - $completedSessions);
-        
-        // Waiting List
-        $waitingList = Queue::where('status', 'menunggu')->count();
-        $highPriority = Queue::where('status', 'menunggu')
-            ->where('prioritas', '>', 0) // Assuming prioritas > 0 is high
-            ->count();
-        
-        // Attendance Rate (this week)
-        $weekStart = Carbon::now()->startOfWeek();
-        $weekEnd = Carbon::now()->endOfWeek();
-        
-        $attendanceData = TherapyMonitoring::whereBetween('tanggal_sesi', [$weekStart, $weekEnd])
-            ->select('kehadiran', DB::raw('count(*) as count'))
-            ->groupBy('kehadiran')
-            ->get()
-            ->pluck('count', 'kehadiran');
-            
-        $totalScheduled = $attendanceData->sum();
-        $attended = $attendanceData->get('hadir', 0);
-        
-        $attendanceRate = $totalScheduled > 0 
-            ? round(($attended / $totalScheduled) * 100, 1)
-            : 0;
-        
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'total_patients' => [
-                    'value' => $totalPatients,
-                    'trend' => $patientGrowth,
-                    'trend_label' => 'bulan ini'
-                ],
-                'today_sessions' => [
-                    'value' => $todaySessions,
-                    'completed' => $completedSessions,
-                    'remaining' => $remainingSessions
-                ],
-                'waiting_list' => [
-                    'value' => $waitingList,
-                    'high_priority' => $highPriority
-                ],
-                'attendance_rate' => [
-                    'value' => $attendanceRate,
-                    'period' => 'Minggu Ini'
-                ]
-            ]
-        ]);
-    }
-    
-    /**
-     * Get patient visit trends
-     */
-    public function getVisitTrends(Request $request)
-    {
-        $period = $request->input('period', 'month');
-        
-        $query = DB::table('patients')
-            ->select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('COUNT(*) as count')
-            );
-        
-        switch ($period) {
-            case 'week':
-                $query->whereBetween('created_at', [
-                    Carbon::now()->startOfWeek(),
-                    Carbon::now()->endOfWeek()
-                ]);
-                break;
-            case 'month':
-                $query->whereMonth('created_at', Carbon::now()->month)
-                      ->whereYear('created_at', Carbon::now()->year);
-                break;
-            case 'year':
-                $query->whereYear('created_at', Carbon::now()->year)
-                      ->select(
-                          DB::raw('DATE_TRUNC(\'month\', created_at) as date'),
-                          DB::raw('COUNT(*) as count')
-                      );
-                break;
-        }
-        
-        $trends = $query->groupBy('date')
-            ->orderBy('date')
-            ->get();
-        
-        return response()->json([
-            'success' => true,
-            'data' => $trends
-        ]);
-    }
-    
-    /**
-     * Get diagnosis distribution
-     */
-    public function getDiagnosisDistribution(Request $request)
-    {
-        // Since we don't have diagnosis_category, we'll use diagnosis text
-        // and try to group common ones or just use top 5
-        $distribution = DB::table('medical_assessments')
-            ->select('diagnosis as category', DB::raw('COUNT(*) as count'))
-            ->whereNotNull('diagnosis')
-            ->groupBy('diagnosis')
-            ->orderBy('count', 'desc')
-            ->limit(5)
-            ->get();
-        
-        // Color mapping
-        $colors = ['#3b82f6', '#22c55e', '#60a5fa', '#a855f7', '#7c3aed'];
-        
-        $data = $distribution->map(function ($item, $index) use ($colors) {
-            return [
-                'category' => $item->category,
-                'count' => $item->count,
-                'color' => $colors[$index] ?? '#94a3b8'
-            ];
-        });
-        
-        return response()->json([
-            'success' => true,
-            'data' => $data
-        ]);
-    }
-    
-    /**
-     * Get recent activities
-     */
-    public function getRecentActivities(Request $request)
-    {
-        $limit = $request->input('limit', 10);
-        
-        $activities = ActivityLog::with(['patient', 'user'])
-            ->orderBy('created_at', 'desc')
-            ->limit($limit)
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'time' => $item->created_at->format('H:i'),
-                    'patient' => [
-                        'name' => $item->patient->nama_lengkap ?? 'Unknown',
-                        'nik' => $item->patient->nik ?? '-'
-                    ],
-                    'activity' => $item->activity_type,
-                    'staff' => $item->user->name ?? 'System',
-                    'poli' => $item->department ?? '-',
-                    'status' => $item->status
-                ];
-            });
-        
-        return response()->json([
-            'success' => true,
-            'data' => $activities
-        ]);
-    }
-    
-    /**
-     * Get complete dashboard analytics
+     * Get dashboard analytics based on role
      */
     public function getDashboardAnalytics(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'stats' => $this->getStats($request)->original['data'],
-                'visit_trends' => $this->getVisitTrends($request)->original['data'],
-                'diagnosis_distribution' => $this->getDiagnosisDistribution($request)->original['data'],
-                'recent_activities' => $this->getRecentActivities($request)->original['data']
-            ]
-        ]);
+        $user = $request->user();
+        
+        // Set timezone ke Asia/Jakarta (WIB)
+        $now = Carbon::now('Asia/Jakarta');
+        $today = $now->copy()->startOfDay();
+        $thisMonth = $now->copy()->startOfMonth();
+        
+        if ($user->role === 'admin') {
+            return response()->json([
+                'success' => true,
+                'data' => $this->getAdminAnalytics($today, $thisMonth, $now),
+                'today_formatted' => $now->isoFormat('dddd, D MMMM YYYY')
+            ]);
+        } elseif ($user->role === 'dokter') {
+            return response()->json([
+                'success' => true,
+                'data' => $this->getDoctorStats($user, $today),
+                'today_formatted' => $now->isoFormat('dddd, D MMMM YYYY')
+            ]);
+        } elseif ($user->role === 'terapis') {
+            return response()->json([
+                'success' => true,
+                'data' => $this->getTherapistStats($user, $today),
+                'today_formatted' => $now->isoFormat('dddd, D MMMM YYYY')
+            ]);
+        }
+        
+        return response()->json(['success' => false, 'message' => 'Role tidak dikenal'], 403);
+    }
+
+    private function getAdminAnalytics($today, $thisMonth, $now)
+    {
+        // Total Pasien
+        $totalPatients = Patient::count();
+        $patientsToday = Patient::whereDate('created_at', $today)->count();
+        $patientsThisMonth = Patient::where('created_at', '>=', $thisMonth)->count();
+        
+        // Antrian hari ini
+        $todayQueues = Queue::whereDate('created_at', $today)->get();
+        $totalQueuesToday = $todayQueues->count();
+        $waitingQueues = $todayQueues->where('status', 'menunggu')->count();
+        $callingQueues = $todayQueues->where('status', 'dipanggil')->count();
+        $completedQueues = $todayQueues->where('status', 'selesai')->count();
+        
+        // Assessment
+        $totalAssessments = MedicalAssessment::count();
+        $assessmentsToday = MedicalAssessment::whereDate('created_at', $today)->count();
+        
+        // Terapi
+        $totalTherapies = Therapy::where('status', 'berjalan')->count();
+        
+        // Monitoring & Attendance
+        $totalSessions = TherapyMonitoring::count();
+        $sessionsCompleted = TherapyMonitoring::where('kehadiran', 'hadir')->count();
+        $attendanceRate = $totalSessions > 0 ? round(($sessionsCompleted / $totalSessions) * 100, 1) : 0;
+        
+        // Tren kunjungan 7 hari terakhir
+        $visitTrend = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = $now->copy()->subDays($i)->startOfDay();
+            $visitTrend[] = [
+                'date' => $date->format('Y-m-d'),
+                'label' => $date->isoFormat('D MMM'),
+                'patients' => Patient::whereDate('created_at', $date)->count(),
+                'queues' => Queue::whereDate('created_at', $date)->count(),
+                'assessments' => MedicalAssessment::whereDate('created_at', $date)->count()
+            ];
+        }
+        
+        // Distribusi diagnosis (Top 5)
+        $diagnosisDistribution = MedicalAssessment::select('diagnosis', DB::raw('COUNT(*) as count'))
+            ->whereNotNull('diagnosis')
+            ->groupBy('diagnosis')
+            ->orderByDesc('count')
+            ->limit(20)
+            ->get()
+            ->map(function($item, $index) {
+                $colors = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
+                return [
+                    'category' => $item->diagnosis,
+                    'count' => (int)$item->count,
+                    'color' => $colors[$index] ?? '#94a3b8'
+                ];
+            });
+            
+        // Aktivitas terbaru
+        $recentActivities = ActivityLog::with(['patient', 'user'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function($log) {
+                return [
+                    'time' => $log->created_at->format('H:i'),
+                    'patient' => [
+                        'name' => $log->patient->nama_lengkap ?? 'Unknown',
+                        'nik' => $log->patient->nik ?? '-'
+                    ],
+                    'activity' => $log->activity_type,
+                    'staff' => $log->user->name ?? 'System',
+                    'poli' => $log->department ?? '-',
+                    'status' => $log->status
+                ];
+            });
+
+        return [
+            'summary' => [
+                'total_patients' => $totalPatients,
+                'patients_today' => $patientsToday,
+                'patients_this_month' => $patientsThisMonth,
+                'total_queues_today' => $totalQueuesToday,
+                'waiting_queues' => $waitingQueues,
+                'calling_queues' => $callingQueues,
+                'completed_queues' => $completedQueues,
+                'total_assessments' => $totalAssessments,
+                'assessments_today' => $assessmentsToday,
+                'active_therapies' => $totalTherapies,
+                'attendance_rate' => $attendanceRate,
+            ],
+            'visit_trend' => $visitTrend,
+            'diagnosis_distribution' => $diagnosisDistribution,
+            'recent_activities' => $recentActivities,
+            'today' => $today->format('Y-m-d')
+        ];
+    }
+
+    private function getDoctorStats($user, $today)
+    {
+        $myAssessments = MedicalAssessment::where('id_pengguna', $user->id)->count();
+        $assessmentsToday = MedicalAssessment::where('id_pengguna', $user->id)
+            ->whereDate('created_at', $today)->count();
+        $myPatients = MedicalAssessment::where('id_pengguna', $user->id)
+            ->distinct('id_pasien')->count('id_pasien');
+        $waitingQueues = Queue::whereDate('created_at', $today)
+            ->where('status', 'menunggu')->count();
+
+        return [
+            'summary' => [
+                'my_assessments' => $myAssessments,
+                'assessments_today' => $assessmentsToday,
+                'my_patients' => $myPatients,
+                'waiting_queues' => $waitingQueues,
+            ],
+            'recent_patients' => MedicalAssessment::where('id_pengguna', $user->id)
+                ->with('patient')->orderBy('created_at', 'desc')->limit(5)->get()
+        ];
+    }
+
+    private function getTherapistStats($user, $today)
+    {
+        $mySessions = TherapyMonitoring::where('id_terapis', $user->id)->count();
+        $sessionsToday = TherapyMonitoring::where('id_terapis', $user->id)
+            ->whereDate('tanggal_sesi', $today)->count();
+        $activeTherapies = Therapy::where('id_terapis', $user->id)
+            ->where('status', 'berjalan')->count();
+
+        return [
+            'summary' => [
+                'my_sessions' => $mySessions,
+                'sessions_today' => $sessionsToday,
+                'active_therapies' => $activeTherapies,
+            ],
+            'today_schedule' => TherapyMonitoring::where('id_terapis', $user->id)
+                ->whereDate('tanggal_sesi', $today)->with('patient')->get()
+        ];
+    }
+
+    // Keperluan Legacy/Frontend yang memanggil endpoint individual
+    public function getStats(Request $request) { return $this->getDashboardAnalytics($request); }
+    public function getVisitTrends(Request $request) { 
+        $data = $this->getDashboardAnalytics($request)->original['data'];
+        return response()->json(['success' => true, 'data' => $data['visit_trend'] ?? []]);
+    }
+    public function getDiagnosisDistribution(Request $request) {
+        $data = $this->getDashboardAnalytics($request)->original['data'];
+        return response()->json(['success' => true, 'data' => $data['diagnosis_distribution'] ?? []]);
+    }
+    public function getRecentActivities(Request $request) {
+        $data = $this->getDashboardAnalytics($request)->original['data'];
+        return response()->json(['success' => true, 'data' => $data['recent_activities'] ?? []]);
     }
 }

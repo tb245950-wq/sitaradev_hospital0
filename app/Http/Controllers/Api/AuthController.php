@@ -103,8 +103,8 @@ class AuthController extends Controller
     $user = User::create([
         'name' => $validated['name'],
         'email' => $validated['email'],
-        'password' => bcrypt($validated['password']),
-        'role' => $validated['role'], // ← Simpan role dari request
+        'password' => $validated['password'], // Biarkan model yang menghash (password cast)
+        'role' => $validated['role'],
     ]);
 
     $token = $user->createToken('auth_token')->plainTextToken;
