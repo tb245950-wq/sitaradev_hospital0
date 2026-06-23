@@ -26,6 +26,12 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    
+    // Cache busting
+    if (config.method === 'get') {
+      config.params = { ...config.params, _t: Date.now() }
+    }
+    
     return config
   },
   error => {

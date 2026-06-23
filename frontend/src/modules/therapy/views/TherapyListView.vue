@@ -38,12 +38,35 @@
           <span :class="['status-badge', therapy.status]">{{ therapy.status }}</span>
         </div>
         <div class="therapy-body">
-          <div class="therapy-type">🧠 {{ therapy.nama_terapi }}</div>
-          <div class="therapy-schedule">📅 {{ formatDate(therapy.jadwal?.mulai) }} - {{ therapy.jadwal?.selesai ? formatDate(therapy.jadwal?.selesai) : 'Berlanjut' }}</div>
-          <div class="therapy-frequency" v-if="therapy.rencana">
-            ⏱️ {{ therapy.rencana.frekuensi_per_minggu }}x/minggu, {{ therapy.rencana.durasi_hari }} hari
+          <div class="therapy-type">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; display: inline-block; vertical-align: text-bottom; margin-right: 0.25rem; color: #4f46e5;">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            {{ therapy.nama_terapi }}
           </div>
-          <div v-if="therapy.terapis" class="therapy-therapist">👨‍⚕️ {{ therapy.terapis.nama }}</div>
+          <div class="therapy-schedule">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; display: inline-block; vertical-align: text-bottom; margin-right: 0.25rem; color: #64748b;">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            {{ formatDate(therapy.jadwal?.mulai) }} - {{ therapy.jadwal?.selesai ? formatDate(therapy.jadwal?.selesai) : 'Berlanjut' }}
+          </div>
+          <div class="therapy-frequency" v-if="therapy.rencana">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; display: inline-block; vertical-align: text-bottom; margin-right: 0.25rem; color: #64748b;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            {{ therapy.rencana.frekuensi_per_minggu }}x/minggu, {{ therapy.rencana.durasi_hari }} hari
+          </div>
+          <div v-if="therapy.terapis" class="therapy-therapist">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; display: inline-block; vertical-align: text-bottom; margin-right: 0.25rem; color: #0f766e;">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            {{ therapy.terapis.nama }}
+          </div>
         </div>
         <div class="therapy-actions">
           <button @click="viewDetail(therapy.id)" class="btn-secondary">Detail</button>
@@ -62,7 +85,11 @@
 
     <!-- Empty State -->
     <div v-else class="empty-state">
-      <div class="empty-icon">🧠</div>
+      <div class="empty-icon" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; color: #94a3b8;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 48px; height: 48px;">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+      </div>
       <h3>Belum Ada Program Terapi</h3>
       <p>Belum ada program terapi yang tercatat</p>
       <button v-if="authStore.isDokter" @click="openCreateModal" class="btn-primary">+ Buat Program Pertama</button>

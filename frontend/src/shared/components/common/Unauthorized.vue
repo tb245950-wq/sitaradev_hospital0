@@ -1,7 +1,12 @@
 <template>
   <div class="error-page">
     <div class="error-content">
-      <div class="error-icon">🔒</div>
+      <div class="error-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </div>
       <h1>403 - Akses Ditolak</h1>
       <p>Anda tidak memiliki izin untuk mengakses halaman ini.</p>
       <p v-if="allowedRoles" class="error-detail">
@@ -50,8 +55,16 @@ const props = defineProps({
 }
 
 .error-icon {
-  font-size: 4rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #e11d48;
   margin-bottom: 1.5rem;
+}
+
+.error-icon svg {
+  width: 64px;
+  height: 64px;
 }
 
 h1 {

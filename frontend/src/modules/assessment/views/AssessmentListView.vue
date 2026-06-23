@@ -92,11 +92,32 @@
               </td>
               <td>{{ assessment.dokter?.nama }}</td>
               <td>
-                <div class="action-buttons">
-                  <button @click="viewDetail(assessment.id)" class="btn-icon-sm" title="Lihat Detail">👁️</button>
-                  <button v-if="canEdit(assessment)" @click="editAssessment(assessment.id)" class="btn-icon-sm" title="Edit">✏️</button>
-                  <button v-if="authStore.isDokter && assessment.status === 'draft'" @click="submitAssessment(assessment.id)" class="btn-icon-sm" title="Submit">📤</button>
-                  <button v-if="canDelete(assessment)" @click="confirmDelete(assessment.id)" class="btn-icon-sm btn-delete" title="Hapus">🗑️</button>
+                <div class="action-buttons" style="display: flex; gap: 0.5rem;">
+                  <button @click="viewDetail(assessment.id)" class="btn-icon-sm" title="Lihat Detail" style="color: #64748b;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                  <button v-if="canEdit(assessment)" @click="editAssessment(assessment.id)" class="btn-icon-sm" title="Edit" style="color: #3b82f6;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <button v-if="authStore.isDokter && assessment.status === 'draft'" @click="submitAssessment(assessment.id)" class="btn-icon-sm" title="Submit" style="color: #10b981;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </button>
+                  <button v-if="canDelete(assessment)" @click="confirmDelete(assessment.id)" class="btn-icon-sm btn-delete" title="Hapus" style="color: #ef4444; border: 1px solid #fee2e2; background: #fef2f2;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      <line x1="10" y1="11" x2="10" y2="17"></line>
+                      <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                  </button>
                 </div>
               </td>
             </tr>
@@ -114,7 +135,14 @@
 
     <!-- Empty State -->
     <div v-else class="empty-state">
-      <div class="empty-icon">📋</div>
+      <div class="empty-icon" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; color: #94a3b8;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 48px; height: 48px;">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+      </div>
       <h3>Belum Ada Assessment</h3>
       <p>Belum ada data assessment yang tercatat</p>
       <button v-if="authStore.isDokter" @click="openCreateModal" class="btn-primary">+ Buat Assessment Pertama</button>

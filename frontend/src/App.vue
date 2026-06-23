@@ -1,29 +1,23 @@
 <template>
-  <div id="app">
-    <router-view v-slot="{ Component, route }">
-      <transition name="fade" mode="out-in">
-        <component :is="Component" :key="route.path" />
-      </transition>
-    </router-view>
-  </div>
+  <router-view v-slot="{ Component }">
+    <transition name="fade" mode="out-in">
+      <component :is="Component" />
+    </transition>
+  </router-view>
 </template>
 
 <script setup>
 import { onMounted, onErrorCaptured } from 'vue'
 
-console.log('✅ App.vue: Script setup execution')
+console.log('✅ App.vue: Setup')
 
 onMounted(() => {
-  console.log('📱 App.vue: Component mounted')
+  console.log('📱 App.vue: Mounted')
 })
 
-onErrorCaptured((error, instance, info) => {
-  console.error('❌ App.vue: Vue error captured:', {
-    message: error.message,
-    stack: error.stack,
-    info
-  })
-  return true
+onErrorCaptured((error) => {
+  console.error('❌ Vue error:', error.message)
+  return false
 })
 </script>
 
@@ -34,14 +28,12 @@ onErrorCaptured((error, instance, info) => {
   box-sizing: border-box;
 }
 
-#app {
-  min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #f8fafc;
   color: #1e293b;
-  background: #f8fafc;
 }
 
-/* Page transitions */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;

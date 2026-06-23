@@ -2,43 +2,21 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './core/router'
-import * as dateUtils from './utils/dateFormatter'
+import './assets/main.css'
 
 console.log('🚀 Starting SITARA App...')
 
-// Global error handler for uncaught promises
-window.addEventListener('unhandledrejection', event => {
-  console.error('❌ Unhandled promise rejection:', event.reason)
-})
-
-// Global error handler for generic errors
-window.addEventListener('error', event => {
-  console.error('❌ Global error:', event.error)
-})
-
-const app = createApp(App)
-
-// Use Pinia
-const pinia = createPinia()
-app.use(pinia)
-
-// Use Router
-app.use(router)
-
-// Global properties for date formatting
-app.config.globalProperties.$formatDate = dateUtils.formatDate
-app.config.globalProperties.$formatDateForInput = dateUtils.formatDateForInput
-app.config.globalProperties.$getToday = dateUtils.getToday
-app.config.globalProperties.$getCurrentMonth = dateUtils.getCurrentMonth
-app.config.globalProperties.$getRelativeTime = dateUtils.getRelativeTime
-
-// Mount app
 try {
+  const app = createApp(App)
+  
+  // Use plugins
+  app.use(createPinia())
+  app.use(router)
+  
+  // Mount app
   app.mount('#app')
-  console.log('✅ App successfully mounted to #app')
-  console.log('🛣️  Available routes:', router.getRoutes().length)
+  
+  console.log('✅ App mounted successfully!')
 } catch (error) {
-  console.error('💥 Critical error during app mounting:', error)
+  console.error('❌ Failed to mount app:', error)
 }
-
-export { app }

@@ -68,7 +68,13 @@
           <!-- Error Message -->
           <div v-if="localError" 
                :class="['error-message', isInactiveError ? 'warning-message' : '']">
-            <div v-if="isInactiveError" class="warning-icon">⚠️</div>
+            <div v-if="isInactiveError" class="warning-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-warning">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
             <div class="error-content">
               <p class="error-title" v-if="isInactiveError">Akun Tidak Aktif</p>
               <p>{{ localError }}</p>
@@ -81,7 +87,13 @@
           <!-- Info Box: Hanya untuk staff -->
           <div class="info-box">
             <p class="info-text">
-              🔒 Halaman ini hanya untuk <strong>staff SITARA</strong> (Admin, Dokter, Terapis).
+              <span class="info-icon-inline">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </span>
+              Halaman ini hanya untuk <strong>staff SITARA</strong> (Admin, Dokter, Terapis).
               <br />
               <small>Hubungi administrator jika Anda belum memiliki akun.</small>
             </p>
@@ -402,8 +414,28 @@ const handleLogin = async () => {
 }
 
 .warning-icon {
-  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #92400e;
   flex-shrink: 0;
+}
+
+.warning-icon svg, .svg-warning {
+  width: 24px;
+  height: 24px;
+}
+
+.info-icon-inline {
+  display: inline-flex;
+  vertical-align: text-bottom;
+  margin-right: 0.25rem;
+  color: #1e40af;
+}
+
+.info-icon-inline svg {
+  width: 14px;
+  height: 14px;
 }
 
 .error-content {

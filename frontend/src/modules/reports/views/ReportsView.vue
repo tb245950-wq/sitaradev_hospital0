@@ -22,7 +22,7 @@
             :class="['report-type-item', { active: selectedType === type.id }]"
             @click="selectedType = type.id"
           >
-            <span class="report-icon">{{ type.icon }}</span>
+            <span class="report-icon" v-html="iconSvgs[type.icon]"></span>
             <div class="report-info">
               <strong>{{ type.label }}</strong>
               <p>{{ type.description }}</p>
@@ -62,9 +62,20 @@
               <strong>{{ h.name }}</strong>
               <p>{{ h.date }} • {{ h.size }}</p>
             </div>
-            <div class="history-actions">
-              <button class="btn-icon-sm">👁️</button>
-              <button class="btn-icon-sm">📥</button>
+            <div class="history-actions" style="display: flex; gap: 0.5rem;">
+              <button class="btn-icon-sm" style="display: flex; align-items: center; justify-content: center; color: #64748b;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+              <button class="btn-icon-sm" style="display: flex; align-items: center; justify-content: center; color: #2563eb;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </button>
             </div>
           </div>
           <div v-if="history.length === 0" class="empty-history">
@@ -88,10 +99,16 @@ const { goToDashboard } = useNavigation()
 
 const selectedType = ref('daily')
 const reportTypes = [
-  { id: 'daily', icon: '📅', label: 'Laporan Harian', description: 'Rekap antrian dan layanan hari ini' },
-  { id: 'patient', icon: '👤', label: 'Laporan Per Pasien', description: 'Riwayat lengkap medis satu pasien' },
-  { id: 'monthly', icon: '📊', label: 'Statistik Bulanan', description: 'Tren pertumbuhan dan kunjungan' }
+  { id: 'daily', icon: 'calendar', label: 'Laporan Harian', description: 'Rekap antrian dan layanan hari ini' },
+  { id: 'patient', icon: 'user', label: 'Laporan Per Pasien', description: 'Riwayat lengkap medis satu pasien' },
+  { id: 'monthly', icon: 'chart', label: 'Statistik Bulanan', description: 'Tren pertumbuhan dan kunjungan' }
 ]
+
+const iconSvgs = {
+  calendar: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 22px; height: 22px; color: #2563eb;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
+  user: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 22px; height: 22px; color: #0f766e;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
+  chart: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 22px; height: 22px; color: #7c3aed;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>`
+}
 
 const filters = ref({
   period: 'this_month',

@@ -2,38 +2,28 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    vue({
-      template: {
-        compilerOptions: {
-          // Support runtime compilation if using template: '...' in components
-          isCustomElement: (tag) => false
-        }
-      }
-    })
-  ],
+  plugins: [vue()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-      'vue': 'vue/dist/vue.esm-bundler.js' // Fix for "runtime compilation is not supported"
+      '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
   server: {
     port: 5173,
     host: '0.0.0.0',
+    strictPort: false,
     cors: true,
+    Allow: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://172.18.0.1:5173', 'http://172.16.20.218:5173', 'http://172.16.20.218:8000'],
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8000',
-        changeOrigin: true,
-        secure: false,
-        // Rewrite is NOT needed — Laravel already expects /api prefix
+        changeOrigin: true, 
       }
     }
   },
   build: {
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks(id) {

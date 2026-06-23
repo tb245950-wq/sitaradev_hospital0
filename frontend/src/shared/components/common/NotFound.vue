@@ -1,7 +1,12 @@
 <template>
   <div class="error-page">
     <div class="error-content">
-      <div class="error-icon">🔍</div>
+      <div class="error-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
       <h1>404 - Halaman Tidak Ditemukan</h1>
       <p>Maaf, halaman yang Anda cari tidak ada atau telah dipindahkan.</p>
       <button @click="goToDashboard" class="btn-back-large">
@@ -39,8 +44,16 @@ const { goToDashboard } = useNavigation()
 }
 
 .error-icon {
-  font-size: 4rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #64748b;
   margin-bottom: 1.5rem;
+}
+
+.error-icon svg {
+  width: 64px;
+  height: 64px;
 }
 
 h1 {

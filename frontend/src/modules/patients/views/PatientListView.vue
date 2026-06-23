@@ -21,15 +21,26 @@
           <span class="btn-icon">+</span>
           Tambah Pasien
         </router-link>
-        <button @click="refreshData" class="btn-secondary">
-          🔄 Refresh
+        <button @click="refreshData" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          Refresh
         </button>
       </div>
     </div>
 
     <!-- RBAC Info Notice (untuk Terapis) -->
-    <div v-if="authStore.isTerapis" class="rbac-notice">
-      <span class="icon">ℹ️</span>
+    <div v-if="authStore.isTerapis" class="rbac-notice" style="display: flex; align-items: center; gap: 0.75rem;">
+      <span class="icon" style="display: inline-flex; align-items: center; color: #1e3a8a;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      </span>
       <span><strong>Mode Lihat Saja:</strong> Terapis tidak dapat menambah atau mengubah data induk pasien.</span>
     </div>
 
@@ -91,16 +102,27 @@
               <td>{{ formatDate(patient.tanggal_lahir) }}</td>
               <td>{{ patient.nama_wali || '-' }}</td>
               <td class="text-right">
-                <div class="action-buttons justify-end">
-                  <router-link :to="`/patients/${patient.id}`" class="btn-icon-sm" title="Detail">
-                    👁️
+                <div class="action-buttons justify-end" style="display: flex; gap: 0.5rem;">
+                  <router-link :to="`/patients/${patient.id}`" class="btn-icon-sm" title="Detail" style="color: #64748b;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
                   </router-link>
                   <template v-if="canManagePatients">
-                    <router-link :to="`/patients/${patient.id}/edit`" class="btn-icon-sm" title="Edit">
-                      ✏️
+                    <router-link :to="`/patients/${patient.id}/edit`" class="btn-icon-sm" title="Edit" style="color: #3b82f6;">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
                     </router-link>
-                    <button @click="confirmDelete(patient)" class="btn-icon-sm text-red-500" title="Hapus">
-                      🗑️
+                    <button @click="confirmDelete(patient)" class="btn-icon-sm text-red-500" title="Hapus" style="color: #ef4444; border: 1px solid #fee2e2; background: #fef2f2;">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
                     </button>
                   </template>
                 </div>
