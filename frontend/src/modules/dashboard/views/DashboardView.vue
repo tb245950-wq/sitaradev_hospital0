@@ -8,9 +8,10 @@
       <main class="content-body">
         <div v-if="loading" class="p-4">Memverifikasi akses...</div>
         <template v-else>
-          <DoctorDashboard v-if="authStore.user?.role === 'dokter'" />
-          <AdminDashboard v-else-if="authStore.user?.role === 'admin'" />
-          <div v-else class="p-4">Dashboard belum tersedia untuk role Anda.</div>
+          <AdminDashboard v-if="authStore.user?.role === 'admin'" />
+          <DoctorDashboard v-else-if="authStore.user?.role === 'dokter'" />
+          <TerapisDashboard v-else-if="authStore.user?.role === 'terapis'" />
+          <div v-else class="p-4 text-gray-500">Dashboard belum tersedia untuk role Anda.</div>
         </template>
       </main>
     </div>
@@ -18,26 +19,33 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../auth/stores/authStore'
+import { useAnalyticsStore } from '../../analytics/stores/analyticsStore'
 import AdminDashboard from './AdminDashboard.vue'
 import DoctorDashboard from './DoctorDashboard.vue'
+import TerapisDashboard from './TerapisDashboard.vue'
 import Sidebar from '../../../shared/components/layout/Sidebar.vue'
 import Navbar from '../../../shared/components/layout/Navbar.vue'
 
 const authStore = useAuthStore()
+const analyticsStore = useAnalyticsStore()
 const router = useRouter()
 const isSidebarOpen = ref(false)
 const loading = ref(true)
 
 onMounted(() => {
-  // Security Redirect: If user is a patient, send them to patient portal
   if (authStore.user?.role === 'pasien') {
     router.push('/pasien/dashboard')
+    return
   }
+  analyticsStore.fetchAnalytics()
+  analyticsStore.startPolling()
   loading.value = false
 })
+
+onUnmounted(() => analyticsStore.stopPolling())
 </script>
 
 <style scoped>

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Patient extends Model
@@ -17,6 +18,7 @@ class Patient extends Model
     public $incrementing = true;
 
     protected $fillable = [
+        'user_id',
         'nrm',
         'nik',
         'nama_lengkap',
@@ -41,28 +43,65 @@ class Patient extends Model
         ];
     }
 
+    /**
+     * Auto-generate NRM saat creating
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($patient) {
+            // Auto-generate NRM jika tidak ada
+            if (empty($patient->nrm)) {
+                // Format: NRM-YYYYMMDD-XXXX
+                $patient->nrm = 'NRM-' . date('Ymd') . '-' . 
+                    str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
+    /**
+     * Relasi ke User
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    /**
+     * Relasi ke Queue
+     */
     public function queues(): HasMany
     {
         return $this->hasMany(Queue::class, 'id_pasien', 'id_pasien');
     }
 
+    /**
+     * Relasi ke Assessment
+     */
     public function assessments(): HasMany
     {
         return $this->hasMany(MedicalAssessment::class, 'id_pasien', 'id_pasien');
     }
 
+    /**
+     * Relasi ke Therapy
+     */
     public function therapies(): HasMany
     {
         return $this->hasMany(Therapy::class, 'id_pasien', 'id_pasien');
     }
 
+    /**
+     * Relasi ke Monitoring
+     */
     public function monitorings(): HasMany
     {
         return $this->hasMany(TherapyMonitoring::class, 'id_pasien', 'id_pasien');
     }
 
     /**
-     * Get the masked NIK attribute.
+     * Get the masked NIK attribute
      */
     public function getMaskedNikAttribute(): string
     {
@@ -70,8 +109,6 @@ class Patient extends Model
         if (empty($nik)) {
             return '-';
         }
-        // Assuming we need to decrypt first to mask, but since the model uses EncryptedField cast, 
-        // $this->nik might already be decrypted. Let's assume it's decrypted for this accessor.
         return substr($nik, 0, 4) . '***********';
     }
 }

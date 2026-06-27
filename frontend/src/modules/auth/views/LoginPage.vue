@@ -12,7 +12,7 @@
     <!-- Login Form Container -->
     <div class="login-container">
       <div class="logo-section">
-        <img src="../../../assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
+        <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
         <h1>SITARA</h1>
         <p>Sistem Informasi Terpadu</p>
       </div>
@@ -107,7 +107,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { authService } from '../services/authService'
 import { useAuthStore } from '../stores/authStore'
 
 const router = useRouter()
@@ -131,13 +130,13 @@ const loading = ref(false)
 const isInactiveError = computed(() => {
   return localError.value && (
     localError.value.includes('tidak aktif') ||
-    localError.value.includes('ditangguhkan')
+    localError.value.includes('ditangguhkan') ||
+    localError.value.includes('inactive')
   )
 })
 
 const handleLogin = async () => {
   console.log('🔵 === HANDLE LOGIN START ===')
-  console.log('Form:', { email: form.value.email, password: '***' })
   
   // Reset errors
   errors.value = { email: '', password: '' }
@@ -146,53 +145,38 @@ const handleLogin = async () => {
   // Validation
   if (!form.value.email) {
     errors.value.email = 'Email harus diisi'
-    console.error('❌ Validation failed: Email empty')
     return
   }
 
   if (!form.value.password) {
     errors.value.password = 'Password harus diisi'
-    console.error('❌ Validation failed: Password empty')
     return
   }
 
   loading.value = true
   
   try {
-    console.log('🟡 Calling authService.login()...')
+    console.log('🟡 Calling authStore.login()...')
     
-    // PANGGIL SERVICE LANGSUNG (BUKAN STORE!)
-    const result = await authService.login(form.value.email, form.value.password)
+    // Gunakan store action (bukan authService langsung)
+    // Store action akan update user & token secara internal
+    const result = await authStore.login(form.value.email, form.value.password)
     
-    console.log('🟢 Result from authService:', result)
+    console.log('🟢 Result from authStore.login():', result)
     
     if (result.success === true) {
-      console.log('✅ LOGIN BERHASIL!')
-      console.log('User:', result.data.user)
-      console.log('Token saved:', !!result.data.token)
-      
-      // UPDATE STORE MANUALLY agar Sidebar/Navbar terupdate
-      authStore.user = result.data.user
-      authStore.token = result.data.token
-      console.log('📦 Store state manually updated')
-      
+      console.log('✅ LOGIN BERHASIL! Redirecting to /dashboard...')
       localError.value = ''
-      
-      setTimeout(() => {
-        console.log('🔄 Redirecting to dashboard...')
-        router.push('/dashboard')
-      }, 500)
+      router.push('/dashboard')
     } else {
-      console.error('❌ LOGIN GAGAL!')
-      console.error('Error:', result.error)
+      console.error('❌ LOGIN GAGAL:', result.error)
       localError.value = result.error || 'Email atau password salah'
     }
   } catch (err) {
-    console.error('💥 Exception caught in component:', err)
-    localError.value = 'Terjadi kesalahan sistem'
+    console.error('💥 Exception:', err)
+    localError.value = 'Terjadi kesalahan sistem. Coba lagi.'
   } finally {
     loading.value = false
-    console.log('⚪ Loading reset')
   }
 }
 </script>

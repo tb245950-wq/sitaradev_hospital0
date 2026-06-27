@@ -1,94 +1,63 @@
 <template>
-  <div class="register-page">
-    <div class="circle circle-1"></div>
-    <div class="circle circle-2"></div>
-
-    <router-link to="/" class="back-btn">
-      ← Kembali
-    </router-link>
-
-    <div class="register-container">
-      <div class="logo-section">
-        <img src="../../../assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
-        <h1>SITARA</h1>
-        <p>Sistem Informasi Terpadu</p>
+  <div class="register-container">
+    <div class="register-card">
+      <div class="register-header">
+        <h1>🏥 SITARA</h1>
+        <h2>Registrasi Akun Staff</h2>
+        <p>Daftarkan akun untuk Admin, Dokter, atau Terapis</p>
       </div>
 
-      <div class="form-section">
-        <h2>Daftar Akun Baru</h2>
-        <p class="subtitle">Bergabunglah dengan SITARA hari ini</p>
+      <form @submit.prevent="handleRegister" class="register-form">
+        <div class="form-group">
+          <label>Nama Lengkap *</label>
+          <input v-model="form.name" type="text" placeholder="Masukkan nama lengkap" required />
+        </div>
 
-        <form @submit.prevent="handleRegister" class="register-form">
-          <div class="form-group">
-            <label for="name">Nama Lengkap</label>
-            <input
-              type="text"
-              id="name"
-              v-model="form.name"
-              placeholder="Masukkan nama lengkap"
-              required
-            />
-          </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input v-model="form.email" type="email" placeholder="email@rumahsakit.com" required />
+        </div>
 
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              v-model="form.email"
-              placeholder="nama@email.com"
-              required
-            />
-          </div>
+        <div class="form-group">
+          <label>NIP</label>
+          <input v-model="form.nip" type="text" placeholder="Nomor Induk Pegawai" />
+        </div>
 
-          <div class="form-group">
-            <label for="role">Role <span class="text-red-500">*</span></label>
-            <select id="role" v-model="form.role" required>
-              <option value="" disabled>Pilih Role</option>
-              <option value="dokter">Dokter</option>
-              <option value="terapis">Terapis</option>
+        <div class="form-group">
+          <label>No. Telepon</label>
+          <input v-model="form.phone" type="text" placeholder="08xxxxxxxxxx" />
+        </div>
+
+        <div class="form-group">
+          <label>Role *</label>
+          <select v-model="form.role" required>
+            <option value="" disabled>Pilih Role</option>
+            <option value="dokter">Dokter</option>
+            <option value="terapis">Terapis</option>
           </select>
-          <p class="text-xs text-gray-500 italic mt-1">
-            * Akun Admin hanya dapat dibuat oleh administrator sistem
-          </p>
-          </div>
+          <small>Admin hanya dapat dibuat oleh Admin yang sudah ada.</small>
+        </div>
 
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              v-model="form.password"
-              placeholder="••••••••"
-              required
-            />
-          </div>
+        <div class="form-group">
+          <label>Password *</label>
+          <input v-model="form.password" type="password" placeholder="Minimal 8 karakter" minlength="8" required />
+        </div>
 
-          <div class="form-group">
-            <label for="password_confirmation">Konfirmasi Password</label>
-            <input
-              type="password"
-              id="password_confirmation"
-              v-model="form.password_confirmation"
-              placeholder="••••••••"
-              required
-            />
-          </div>
+        <div class="form-group">
+          <label>Konfirmasi Password *</label>
+          <input v-model="form.password_confirmation" type="password" placeholder="Ulangi password" required />
+        </div>
 
-          <button type="submit" class="btn-register" :disabled="authStore.loading">
-            <span v-if="authStore.loading">Memproses...</span>
-            <span v-else>Daftar</span>
-          </button>
+        <div v-if="error" class="error-message">{{ error }}</div>
+        <div v-if="success" class="success-message">{{ success }}</div>
 
-          <div v-if="authStore.error" class="error-message">
-            {{ authStore.error }}
-          </div>
+        <button type="submit" class="btn-register" :disabled="loading">
+          {{ loading ? 'Mendaftarkan...' : 'Daftar' }}
+        </button>
+      </form>
 
-          <p class="login-link">
-            Sudah punya akun? 
-            <router-link to="/login">Masuk di sini</router-link>
-          </p>
-        </form>
+      <div class="register-footer">
+        <p>Sudah punya akun? <router-link to="/login">Login di sini</router-link></p>
       </div>
     </div>
   </div>
@@ -97,232 +66,98 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/authStore'
+import { authService } from '../services/authService'
 
 const router = useRouter()
-const authStore = useAuthStore()
 
 const form = ref({
   name: '',
   email: '',
+  nip: '',
+  phone: '',
   role: '',
   password: '',
   password_confirmation: ''
 })
+const loading = ref(false)
+const error = ref(null)
+const success = ref(null)
 
-const handleRegister = async () => {
+async function handleRegister() {
+  error.value = null
+  success.value = null
+
+  if (form.value.password !== form.value.password_confirmation) {
+    error.value = 'Password dan konfirmasi password tidak cocok.'
+    return
+  }
+
+  loading.value = true
   try {
-    const result = await authStore.register(form.value)
+    const result = await authService.register(form.value)
     if (result.success) {
-      alert('Registrasi berhasil! Silakan login.')
-      router.push('/login')
+      success.value = 'Pendaftaran berhasil! Akun Anda menunggu aktivasi oleh Admin.'
+      setTimeout(() => router.push('/login'), 2000)
+    } else {
+      error.value = result.error || 'Pendaftaran gagal.'
     }
-  } catch (error) {
-    console.error('Registration failed:', error)
+  } finally {
+    loading.value = false
   }
 }
 </script>
 
 <style scoped>
-.register-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
-  position: relative;
-  overflow: hidden;
-  padding: 2rem;
-}
-
-.circle {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(59, 130, 246, 0.1);
-  z-index: 0;
-}
-
-.circle-1 {
-  width: 400px;
-  height: 400px;
-  top: -100px;
-  left: -100px;
-}
-
-.circle-2 {
-  width: 300px;
-  height: 300px;
-  bottom: -50px;
-  right: -50px;
-}
-
-.back-btn {
-  position: absolute;
-  top: 2rem;
-  left: 2rem;
-  color: #1e40af;
-  text-decoration: none;
-  font-weight: 600;
-  z-index: 10;
-  transition: all 0.3s;
-}
-
-.back-btn:hover {
-  color: #1e3a8a;
-  transform: translateX(-4px);
-}
-
 .register-container {
+  min-height: 100vh;
   display: flex;
-  max-width: 1000px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  position: relative;
-  z-index: 1;
-  min-height: 700px;
-}
-
-.logo-section {
-  flex: 1;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-  display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem;
-  color: white;
-  text-align: center;
+  background: linear-gradient(135deg, #0f4c81 0%, #1a73e8 100%);
+  padding: 2rem;
 }
-
-.logo {
-  width: 120px;
-  height: 120px;
-  margin-bottom: 2rem;
+.register-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
 }
-
-.logo-section h1 {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
-}
-
-.logo-section p {
-  font-size: 1rem;
-  opacity: 0.9;
-}
-
-.form-section {
-  flex: 1;
-  padding: 3rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.form-section h2 {
-  font-size: 2rem;
-  color: #1e293b;
-  margin-bottom: 0.5rem;
-}
-
-.subtitle {
-  color: #64748b;
-  margin-bottom: 2rem;
-}
-
-.register-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.form-group label {
-  font-weight: 600;
-  color: #334155;
-  font-size: 0.875rem;
-}
-
-.form-group input, .form-group select {
-  padding: 0.75rem 1rem;
-  border: 2px solid #e2e8f0;
+.register-header { text-align: center; margin-bottom: 2rem; }
+.register-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+.register-header h2 { font-size: 1.3rem; color: #1a73e8; margin-bottom: 0.3rem; }
+.register-header p { color: #6b7280; font-size: 0.9rem; }
+.register-form { display: flex; flex-direction: column; gap: 1rem; }
+.form-group { display: flex; flex-direction: column; gap: 0.25rem; }
+.form-group label { font-size: 0.875rem; font-weight: 600; color: #374151; }
+.form-group input,
+.form-group select {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #d1d5db;
   border-radius: 0.5rem;
-  font-size: 1rem;
-  transition: all 0.3s;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
 }
-
-.form-group input:focus, .form-group select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
+.form-group input:focus,
+.form-group select:focus { outline: none; border-color: #1a73e8; box-shadow: 0 0 0 3px rgba(26,115,232,0.15); }
+.form-group small { color: #9ca3af; font-size: 0.78rem; }
+.error-message { background: #fee2e2; color: #dc2626; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; }
+.success-message { background: #dcfce7; color: #16a34a; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; }
 .btn-register {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: #1e40af;
+  background: #1a73e8;
   color: white;
   border: none;
+  padding: 0.75rem;
   border-radius: 0.5rem;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: background 0.2s;
+  margin-top: 0.5rem;
 }
-
-.btn-register:hover:not(:disabled) {
-  background: #1e3a8a;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(30, 64, 175, 0.3);
-}
-
-.btn-register:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.error-message {
-  padding: 0.75rem;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 0.5rem;
-  color: #dc2626;
-  text-align: center;
-  font-size: 0.875rem;
-}
-
-.login-link {
-  text-align: center;
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.login-link a {
-  color: #3b82f6;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.login-link a:hover {
-  text-decoration: underline;
-}
-
-@media (max-width: 768px) {
-  .register-container {
-    flex-direction: column;
-  }
-
-  .logo-section {
-    padding: 2rem;
-  }
-
-  .form-section {
-    padding: 2rem;
-  }
-}
+.btn-register:hover:not(:disabled) { background: #1557b0; }
+.btn-register:disabled { opacity: 0.6; cursor: not-allowed; }
+.register-footer { text-align: center; margin-top: 1.5rem; color: #6b7280; font-size: 0.9rem; }
+.register-footer a { color: #1a73e8; text-decoration: none; font-weight: 600; }
 </style>

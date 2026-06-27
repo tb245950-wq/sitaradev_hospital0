@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { assessmentService } from '../services/assessmentService'
+import { useAnalyticsStore } from '../../analytics/stores/analyticsStore'
 
 export const useAssessmentStore = defineStore('assessment', () => {
   const assessments = ref([])
@@ -51,6 +52,7 @@ export const useAssessmentStore = defineStore('assessment', () => {
     try {
       const response = await assessmentService.createAssessment(assessmentData)
       await fetchAssessments()
+      useAnalyticsStore().fetchAnalytics()
       return { success: true, data: response.data }
     } catch (err) {
       error.value = err.response?.data?.message || 'Gagal membuat assessment'
@@ -66,6 +68,7 @@ export const useAssessmentStore = defineStore('assessment', () => {
     try {
       const response = await assessmentService.updateAssessment(id, assessmentData)
       await fetchAssessments()
+      useAnalyticsStore().fetchAnalytics()
       return { success: true, data: response.data }
     } catch (err) {
       error.value = err.response?.data?.message || 'Gagal update assessment'
@@ -81,6 +84,7 @@ export const useAssessmentStore = defineStore('assessment', () => {
     try {
       await assessmentService.deleteAssessment(id)
       await fetchAssessments()
+      useAnalyticsStore().fetchAnalytics()
       return { success: true }
     } catch (err) {
       error.value = err.response?.data?.message || 'Gagal hapus assessment'

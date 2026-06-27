@@ -2,7 +2,9 @@
   <div class="stat-card">
     <div class="stat-header">
       <div class="stat-icon" :style="{ background: iconBg, color: iconColor }">
-        <span class="icon-text">{{ icon }}</span>
+        <slot name="icon">
+          <span class="icon-text">{{ icon }}</span>
+        </slot>
       </div>
       <div class="stat-title">{{ title }}</div>
     </div>

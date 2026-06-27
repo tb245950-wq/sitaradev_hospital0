@@ -2,7 +2,7 @@
   <div class="chart-card">
     <div class="chart-header">
       <h3 class="chart-title">Tren Kunjungan Pasien</h3>
-      <select v-model="localPeriod" @change="handlePeriodChange" class="period-select">
+      <select :value="analyticsStore.period" @change="handlePeriodChange" class="period-select">
         <option value="week">Minggu ini</option>
         <option value="month">Bulan ini</option>
         <option value="year">Tahun ini</option>
@@ -18,47 +18,34 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import { Chart, registerables } from 'chart.js'
+import { useAnalyticsStore } from '../stores/analyticsStore'
 
 Chart.register(...registerables)
 
 const props = defineProps({
   data: { type: Array, required: true },
-  period: { type: String, default: 'month' }
 })
 
-const emit = defineEmits(['period-change'])
-
+const analyticsStore = useAnalyticsStore()
 const chartCanvas = ref(null)
-const localPeriod = ref(props.period)
 let chartInstance = null
 
-const handlePeriodChange = () => {
-  emit('period-change', localPeriod.value)
+const handlePeriodChange = (e) => {
+  analyticsStore.setPeriod(e.target.value)
 }
 
 const createChart = () => {
   if (!chartCanvas.value) return
-  
-  if (chartInstance) {
-    chartInstance.destroy()
-  }
-  
+  if (chartInstance) chartInstance.destroy()
+
   const ctx = chartCanvas.value.getContext('2d')
-  
-  const labels = props.data.map(item => {
-    const date = new Date(item.date)
-    if (localPeriod.value === 'year') {
-      return date.toLocaleDateString('id-ID', { month: 'short' })
-    }
-    return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
-  })
-  
-  const values = props.data.map(item => item.count)
-  
+  const labels = props.data.map(item => item.label || item.date)
+  const values = props.data.map(item => item.count ?? item.patients ?? 0)
+
   chartInstance = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: labels,
+      labels,
       datasets: [{
         label: 'Kunjungan',
         data: values,
@@ -83,42 +70,19 @@ const createChart = () => {
           backgroundColor: '#1e293b',
           padding: 12,
           cornerRadius: 8,
-          titleFont: { size: 14 },
-          bodyFont: { size: 13 }
         }
       },
       scales: {
-        x: {
-          grid: { display: false },
-          ticks: { color: '#64748b', font: { size: 11 } }
-        },
-        y: {
-          beginAtZero: true,
-          grid: { color: '#f1f5f9' },
-          ticks: { 
-            color: '#64748b', 
-            font: { size: 11 },
-            stepSize: 1
-          }
-        }
+        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 11 } } },
+        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#64748b', font: { size: 11 }, stepSize: 1 } }
       }
     }
   })
 }
 
-onMounted(() => {
-  createChart()
-})
-
-watch(() => props.data, () => {
-  createChart()
-}, { deep: true })
-
-onBeforeUnmount(() => {
-  if (chartInstance) {
-    chartInstance.destroy()
-  }
-})
+onMounted(() => createChart())
+watch(() => props.data, () => createChart(), { deep: true })
+onBeforeUnmount(() => { if (chartInstance) chartInstance.destroy() })
 </script>
 
 <style scoped>

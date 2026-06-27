@@ -71,8 +71,27 @@ export const authService = {
       }
     }
   },
-  async register(userData) { /* ... */ },
-  async logout() { /* ... */ },
+  async register(userData) {
+    try {
+      const response = await api.post('/register', userData)
+      return { success: true, data: response.data }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Registrasi gagal'
+      }
+    }
+  },
+  async logout() {
+    try {
+      await api.post('/logout')
+    } catch (error) {
+      console.warn('Logout API error (ignored):', error.message)
+    } finally {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+    }
+  },
   getStoredUser() {
   try {
     const user = localStorage.getItem('user')

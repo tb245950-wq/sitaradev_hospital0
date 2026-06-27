@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { monitoringService } from '../services/monitoringService'
+import { useAnalyticsStore } from '../../analytics/stores/analyticsStore'
 
 export const useMonitoringStore = defineStore('monitoring', () => {
   const monitorings = ref([])
@@ -39,6 +40,7 @@ export const useMonitoringStore = defineStore('monitoring', () => {
     error.value = null
     try {
       const response = await monitoringService.generateAssessment(id_terapi)
+      useAnalyticsStore().fetchAnalytics()
       return { success: true, data: response.data.data }
     } catch (err) {
       error.value = err.response?.data?.message || 'Gagal generate assessment'

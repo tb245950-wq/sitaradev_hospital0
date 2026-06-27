@@ -39,7 +39,7 @@
         <div class="welcome-banner">
           <div class="welcome-content">
             <div class="welcome-image-wrapper">
-              <img src="../../../assets/SITARA_RM_BG.png" alt="SITARA" class="welcome-logo-large" />
+              <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="welcome-logo-large" />
             </div>
             <div class="welcome-info">
               <h1>Sistem Informasi Terpadu</h1>
@@ -283,19 +283,19 @@ const quickActions = computed(() => {
       { 
         title: 'Antrian Pasien', 
         description: 'Panggil dan tangani pasien',
-        path: '/queue', 
+        path: '/queues', 
         icon: 'ticket' 
       },
       { 
         title: 'Assessment Baru', 
         description: 'Buat assessment medis baru',
-        path: '/assessment/create', 
+        path: '/assessments/create', 
         icon: 'clipboard' 
       },
       { 
         title: 'Program Terapi', 
         description: 'Buat program terapi untuk pasien',
-        path: '/therapy', 
+        path: '/therapies', 
         icon: 'activity' 
       },
       { 
@@ -316,7 +316,7 @@ const quickActions = computed(() => {
       { 
         title: 'Catat Progress', 
         description: 'Input progress sesi terapi',
-        path: '/monitoring/create', 
+        path: '/therapies/create', 
         icon: 'document' 
       },
       { 
@@ -328,7 +328,7 @@ const quickActions = computed(() => {
       { 
         title: 'Program Terapi', 
         description: 'Lihat program terapi aktif',
-        path: '/therapy', 
+        path: '/therapies', 
         icon: 'activity' 
       }
     ]

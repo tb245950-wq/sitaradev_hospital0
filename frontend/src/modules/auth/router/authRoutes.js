@@ -1,11 +1,5 @@
 export const authRoutes = [
   {
-    path: '/',
-    name: 'landing',
-    component: () => import('../views/LandingPage.vue'),
-    meta: { requiresAuth: false }
-  },
-  {
     path: '/login',
     name: 'login',
     component: () => import('../views/LoginPage.vue'),

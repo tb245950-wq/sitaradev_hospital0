@@ -1,7 +1,7 @@
 <template>
   <aside class="sidebar" :class="{ 'is-open': isOpen }">
     <div class="sidebar-header">
-      <img src="../../../assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
+      <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
       <span class="brand-name">SITARA</span>
     </div>
 
@@ -18,6 +18,7 @@
         </span>
         <span class="label">Dashboard</span>
       </router-link>
+
 
       <router-link to="/patients" class="nav-item">
         <span class="icon">

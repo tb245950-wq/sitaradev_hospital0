@@ -8,133 +8,202 @@ use App\Models\MedicalAssessment;
 use App\Models\Therapy;
 use App\Models\TherapyMonitoring;
 use App\Models\Queue;
-use App\Models\ActivityLog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class AnalyticsController extends Controller
 {
-    /**
-     * Get dashboard analytics based on role
-     */
     public function getDashboardAnalytics(Request $request)
     {
         $user = $request->user();
-        $now = Carbon::now('Asia/Jakarta');
-        
-        // Gunakan tanggal terbaru dari database jika hari ini tidak ada data
-        $latestDate = MedicalAssessment::max('created_at');
-        $today = $latestDate ? Carbon::parse($latestDate)->startOfDay() : $now->copy()->startOfDay();
-        
-        if ($user->role === 'admin') {
-            return response()->json([
-                'success' => true,
-                'data' => $this->getAdminAnalytics($today, $now),
-                'today_formatted' => $now->isoFormat('dddd, D MMMM YYYY')
-            ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        } elseif ($user->role === 'dokter') {
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'summary' => $this->getDoctorStats($user, $today),
-                    'recent_activities' => $this->getDoctorActivities($user),
-                    'visit_trend' => $this->getDoctorVisitTrend($user, $now)
-                ],
-                'today_formatted' => $now->isoFormat('dddd, D MMMM YYYY')
-            ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        } elseif ($user->role === 'terapis') {
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'summary' => $this->getTherapistStats($user, $today),
-                    'recent_activities' => $this->getTherapistActivities($user)
-                ],
-                'today_formatted' => $now->isoFormat('dddd, D MMMM YYYY')
-            ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        $now    = Carbon::now('Asia/Jakarta');
+        $today  = $now->copy()->startOfDay();
+        $period = in_array($request->query('period'), ['week', 'month', 'year'])
+            ? $request->query('period')
+            : 'week';
+
+        $data = match($user->role) {
+            'admin'   => $this->adminData($today, $now, $period),
+            'dokter'  => $this->dokterData($user, $today, $now, $period),
+            'terapis' => $this->terapisData($user, $today, $now),
+            default   => null,
+        };
+
+        if ($data === null) {
+            return response()->json(['success' => false, 'message' => 'Role tidak dikenal'], 403);
         }
-        
-        return response()->json(['success' => false, 'message' => 'Role tidak dikenal'], 403);
+
+        return response()->json([
+            'success'          => true,
+            'data'             => $data,
+            'today_formatted'  => $now->locale('id')->isoFormat('dddd, D MMMM YYYY'),
+        ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     }
 
-    private function getAdminAnalytics($today, $now)
+    /* ─── Admin ─────────────────────────────────────────────── */
+    private function adminData($today, $now, string $period = 'week'): array
     {
-        return [
-            'total_patients' => Patient::count(),
-            'patients_today' => Patient::whereDate('created_at', $today)->count(),
-            'total_queues_today' => Queue::whereDate('created_at', $today)->count(),
-            'waiting_queues' => Queue::whereDate('created_at', $today)->where('status', 'waiting')->count(),
-            'calling_queues' => Queue::whereDate('created_at', $today)->where('status', 'calling')->count(),
-            'completed_queues' => Queue::whereDate('created_at', $today)->where('status', 'completed')->count(),
-            'total_assessments' => MedicalAssessment::count(),
-            'assessments_today' => MedicalAssessment::whereDate('created_at', $today)->count(),
-            'active_therapies' => Therapy::where('status', 'berjalan')->count(),
-            'attendance_rate' => 100 // Simplified for brevity
-        ];
-    }
+        $totalQueues   = Queue::whereDate('created_at', $today)->count();
+        $waiting       = Queue::whereDate('created_at', $today)->where('status', 'waiting')->count();
+        $calling       = Queue::whereDate('created_at', $today)->whereIn('status', ['calling', 'serving'])->count();
+        $completed     = Queue::whereDate('created_at', $today)->where('status', 'completed')->count();
+        $totalAssess   = MedicalAssessment::count();
+        $assessToday   = MedicalAssessment::whereDate('created_at', $today)->count();
+        $activeTherapy = Therapy::where('status', 'berjalan')->count();
 
-    private function getDoctorStats($user, $today)
-    {
-        return [
-            'total_patients' => MedicalAssessment::where('id_pengguna', $user->id)->distinct('id_pasien')->count(),
-            'assessments_today' => MedicalAssessment::where('id_pengguna', $user->id)->whereDate('created_at', $today)->count(),
-            'waiting_queues' => Queue::where('doctor_id', $user->id)->where('status', 'waiting')->count(),
-            'completed_queues' => Queue::where('doctor_id', $user->id)->where('status', 'completed')->count(),
-            'attendance_rate' => 100
-        ];
-    }
-    
-    private function getDoctorActivities($user)
-    {
-        return MedicalAssessment::where('id_pengguna', $user->id)
-            ->with('patient')
-            ->orderBy('created_at', 'desc')
+        $visitTrend = $this->buildVisitTrend($period, $now, function($start, $end) {
+            return Queue::whereBetween('created_at', [$start, $end])->count();
+        });
+
+        // Distribusi diagnosis (top 5)
+        $diagDist = MedicalAssessment::selectRaw('diagnosis, COUNT(*) as total')
+            ->whereNotNull('diagnosis')
+            ->groupBy('diagnosis')
+            ->orderByDesc('total')
+            ->limit(5)
+            ->pluck('total', 'diagnosis')
+            ->toArray();
+
+        // Aktivitas terbaru (5 assessment terbaru)
+        $recentActivities = MedicalAssessment::with('patient')
+            ->latest()
             ->limit(5)
             ->get()
             ->map(fn($a) => [
-                'time' => $a->created_at->format('H:i'),
-                'patient' => ['name' => $a->patient->nama_lengkap ?? 'Unknown'],
+                'time'     => $a->created_at->format('H:i'),
+                'patient'  => ['name' => $a->patient->nama_lengkap ?? 'Unknown'],
                 'activity' => 'Assessment Medis',
-                'status' => 'Selesai'
+                'status'   => 'Selesai',
             ]);
-    }
 
-    private function getDoctorVisitTrend($user, $now)
-    {
-        $trends = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = $now->copy()->subDays($i)->startOfDay();
-            $trends[] = [
-                'date' => $date->format('Y-m-d'),
-                'label' => $date->isoFormat('D MMM'),
-                'patients' => MedicalAssessment::where('id_pengguna', $user->id)->whereDate('created_at', $date)->count()
-            ];
-        }
-        return $trends;
-    }
-
-    private function getTherapistStats($user, $today)
-    {
         return [
-            'my_sessions' => TherapyMonitoring::where('id_terapis', $user->id)->count(),
-            'sessions_today' => TherapyMonitoring::where('id_terapis', $user->id)->whereDate('tanggal_sesi', $today)->count(),
-            'active_therapies' => Therapy::where('id_terapis', $user->id)->where('status', 'berjalan')->count(),
-            'attendance_rate' => 100
+            'total_patients'    => Patient::count(),
+            'patients_today'    => Patient::whereDate('created_at', $today)->count(),
+            'total_queues_today'=> $totalQueues,
+            'waiting_queues'    => $waiting,
+            'calling_queues'    => $calling,
+            'completed_queues'  => $completed,
+            'total_assessments' => $totalAssess,
+            'assessments_today' => $assessToday,
+            'active_therapies'  => $activeTherapy,
+            'attendance_rate'   => $totalQueues > 0 ? round(($completed / $totalQueues) * 100) : 0,
+            'visit_trend'       => $visitTrend,
+            'diagnosis_dist'    => $diagDist,
+            'recent_activities' => $recentActivities,
         ];
     }
 
-    private function getTherapistActivities($user)
+    /* ─── Dokter ─────────────────────────────────────────────── */
+    private function dokterData($user, $today, $now, string $period = 'week'): array
     {
-        return TherapyMonitoring::where('id_terapis', $user->id)
+        $myPatients  = MedicalAssessment::where('id_pengguna', $user->id)->distinct('id_pasien')->count('id_pasien');
+        $assessToday = MedicalAssessment::where('id_pengguna', $user->id)->whereDate('created_at', $today)->count();
+        $waiting     = Queue::whereDate('created_at', $today)->where('status', 'waiting')->count();
+        $completed   = Queue::whereDate('created_at', $today)->where('status', 'completed')->count();
+
+        $visitTrend = $this->buildVisitTrend($period, $now, function($start, $end) use ($user) {
+            return MedicalAssessment::where('id_pengguna', $user->id)
+                ->whereBetween('created_at', [$start, $end])
+                ->count();
+        });
+
+        $recentActivities = MedicalAssessment::where('id_pengguna', $user->id)
             ->with('patient')
-            ->orderBy('tanggal_sesi', 'desc')
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(fn($a) => [
+                'time'     => $a->created_at->format('H:i'),
+                'patient'  => ['name' => $a->patient->nama_lengkap ?? 'Unknown'],
+                'activity' => 'Assessment Medis',
+                'status'   => 'Selesai',
+            ]);
+
+        return [
+            'summary' => [
+                'total_patients'    => $myPatients,
+                'assessments_today' => $assessToday,
+                'waiting_queues'    => $waiting,
+                'completed_queues'  => $completed,
+                'attendance_rate'   => $myPatients > 0 ? round(($assessToday / max($myPatients, 1)) * 100) : 0,
+            ],
+            'visit_trend'       => $visitTrend,
+            'recent_activities' => $recentActivities,
+        ];
+    }
+
+    /* ─── Helper: build visit trend by period ─────────────────── */
+    private function buildVisitTrend(string $period, $now, callable $countFn): array
+    {
+        $trend = [];
+
+        if ($period === 'week') {
+            // 7 hari terakhir, per hari
+            for ($i = 6; $i >= 0; $i--) {
+                $d     = $now->copy()->subDays($i)->startOfDay();
+                $end   = $d->copy()->endOfDay();
+                $trend[] = [
+                    'date'     => $d->format('Y-m-d'),
+                    'label'    => $d->locale('id')->isoFormat('D MMM'),
+                    'patients' => $countFn($d, $end),
+                ];
+            }
+        } elseif ($period === 'month') {
+            // 30 hari terakhir, per hari
+            for ($i = 29; $i >= 0; $i--) {
+                $d     = $now->copy()->subDays($i)->startOfDay();
+                $end   = $d->copy()->endOfDay();
+                $trend[] = [
+                    'date'     => $d->format('Y-m-d'),
+                    'label'    => $d->locale('id')->isoFormat('D MMM'),
+                    'patients' => $countFn($d, $end),
+                ];
+            }
+        } elseif ($period === 'year') {
+            // 12 bulan terakhir, per bulan
+            for ($i = 11; $i >= 0; $i--) {
+                $d     = $now->copy()->subMonths($i)->startOfMonth();
+                $end   = $d->copy()->endOfMonth();
+                $trend[] = [
+                    'date'     => $d->format('Y-m-d'),
+                    'label'    => $d->locale('id')->isoFormat('MMM YYYY'),
+                    'patients' => $countFn($d, $end),
+                ];
+            }
+        }
+
+        return $trend;
+    }
+
+    /* ─── Terapis ─────────────────────────────────────────────── */
+    private function terapisData($user, $today, $now): array
+    {
+        $mySessions    = TherapyMonitoring::where('id_terapis', $user->id)->count();
+        $sessionsToday = TherapyMonitoring::where('id_terapis', $user->id)->whereDate('tanggal_sesi', $today)->count();
+        $activeTherapy = Therapy::where('id_terapis', $user->id)->where('status', 'berjalan')->count();
+        $hadirTotal    = TherapyMonitoring::where('id_terapis', $user->id)->where('kehadiran', 'hadir')->count();
+        $attendRate    = $mySessions > 0 ? round(($hadirTotal / $mySessions) * 100) : 0;
+
+        $recentActivities = TherapyMonitoring::where('id_terapis', $user->id)
+            ->with('patient')
+            ->orderByDesc('tanggal_sesi')
             ->limit(5)
             ->get()
             ->map(fn($m) => [
-                'time' => $m->tanggal_sesi->format('H:i'),
-                'patient' => ['name' => $m->patient->nama_lengkap ?? 'Unknown'],
+                'time'     => optional($m->tanggal_sesi)->format('H:i') ?? '-',
+                'patient'  => ['name' => optional($m->patient)->nama_lengkap ?? 'Unknown'],
                 'activity' => 'Sesi Terapi',
-                'status' => 'Selesai'
+                'status'   => ucfirst($m->kehadiran ?? '-'),
             ]);
+
+        return [
+            'summary' => [
+                'my_sessions'       => $mySessions,
+                'sessions_today'    => $sessionsToday,
+                'active_therapies'  => $activeTherapy,
+                'attendance_rate'   => $attendRate,
+            ],
+            'recent_activities' => $recentActivities,
+        ];
     }
 }

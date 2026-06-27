@@ -22,7 +22,7 @@ api.interceptors.request.use(
       baseURL: config.baseURL,
       fullURL: `${config.baseURL}${config.url}`
     })
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('token') || localStorage.getItem('patient_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }

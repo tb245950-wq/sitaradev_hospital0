@@ -1,159 +1,148 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { analyticsService } from '../services/analyticsService'
+import { useAuthStore } from '../../auth/stores/authStore'
 
 export const useAnalyticsStore = defineStore('analytics', () => {
+  const authStore = useAuthStore()
+
   const stats = ref({
-    total_patients: 0,
-    patients_today: 0,
-    patients_this_month: 0,
-    total_queues_today: 0,
-    waiting_queues: 0,
-    calling_queues: 0,
-    completed_queues: 0,
-    total_assessments: 0,
-    assessments_today: 0,
-    active_therapies: 0,
-    attendance_rate: 0
+    // Admin
+    total_patients: 0, patients_today: 0,
+    total_queues_today: 0, waiting_queues: 0, calling_queues: 0, completed_queues: 0,
+    total_assessments: 0, assessments_today: 0, active_therapies: 0, attendance_rate: 0,
+    // Dokter
+    my_patients: 0, assessments_today_me: 0, waiting_queues_me: 0, completed_queues_me: 0,
+    // Terapis
+    my_sessions: 0, sessions_today: 0, active_therapies_me: 0,
   })
-  
-  const visitTrends = ref([])
-  const diagnosisDistribution = ref([])
-  const recentActivities = ref([])
-  
-  const loading = ref(false)
-  const error = ref(null)
-  const errorCode = ref(null)
-  const selectedPeriod = ref('month')
-  const todayFormatted = ref('')
-  
-  /**
-   * Fetch all analytics data with robust error handling
-   */
+
+  const visitTrends          = ref([])  // [{date, label, patients}]
+  const diagnosisDistribution = ref([]) // [{label, value}]
+  const recentActivities     = ref([])
+  const todayFormatted       = ref('')
+  const loading              = ref(false)
+  const error                = ref(null)
+  const period               = ref('week') // week | month | year
+
+  const role = computed(() => authStore.userRole)
+
   async function fetchAnalytics() {
+    if (!role.value) return
+
     loading.value = true
-    error.value = null
-    errorCode.value = null
-    
+    error.value   = null
+
     try {
-      const response = await analyticsService.getDashboardAnalytics(selectedPeriod.value)
-      
-      if (response.success && response.data) {
-        const data = response.data
-        
-        // Map summary to stats
-        if (data.summary) {
-          stats.value = {
-            total_patients: data.summary.total_patients || 0,
-            patients_today: data.summary.patients_today || 0,
-            patients_this_month: data.summary.patients_this_month || 0,
-            total_queues_today: data.summary.total_queues_today || 0,
-            waiting_queues: data.summary.waiting_queues || 0,
-            calling_queues: data.summary.calling_queues || 0,
-            completed_queues: data.summary.completed_queues || 0,
-            total_assessments: data.summary.total_assessments || 0,
-            assessments_today: data.summary.assessments_today || 0,
-            active_therapies: data.summary.active_therapies || 0,
-            attendance_rate: data.summary.attendance_rate || 0,
-            // Support doctor/therapist-specific keys
-            my_assessments: data.summary.my_assessments || 0,
-            my_patients: data.summary.my_patients || 0,
-            my_sessions: data.summary.my_sessions || 0,
-            sessions_today: data.summary.sessions_today || 0
-          }
-        }
-        
-        // Map visit_trend to include 'count' for Chart.js
-        visitTrends.value = (data.visit_trend || []).map(item => ({
-          ...item,
-          count: item.patients || 0 // Chart.js expects 'count'
-        }))
-        
-        diagnosisDistribution.value = data.diagnosis_distribution || []
-        recentActivities.value = data.recent_activities || []
-        todayFormatted.value = response.today_formatted || ''
-      } else {
-        error.value = response.message || 'Gagal memuat data analytics'
+      const response = await analyticsService.getDashboardAnalytics(period.value)
+
+      if (!response.success) {
+        error.value = response.message || 'Gagal memuat data'
+        return
       }
+
+      const d = response.data
+      todayFormatted.value = response.today_formatted || ''
+
+      if (role.value === 'admin') {
+        stats.value = {
+          ...stats.value,
+          total_patients:     d.total_patients     ?? 0,
+          patients_today:     d.patients_today     ?? 0,
+          total_queues_today: d.total_queues_today ?? 0,
+          waiting_queues:     d.waiting_queues     ?? 0,
+          calling_queues:     d.calling_queues     ?? 0,
+          completed_queues:   d.completed_queues   ?? 0,
+          total_assessments:  d.total_assessments  ?? 0,
+          assessments_today:  d.assessments_today  ?? 0,
+          active_therapies:   d.active_therapies   ?? 0,
+          attendance_rate:    d.attendance_rate    ?? 0,
+        }
+        visitTrends.value = (d.visit_trend || []).map(item => ({
+          date:  item.date,
+          label: item.label,
+          count: item.patients ?? item.count ?? 0,
+        }))
+        recentActivities.value = d.recent_activities || []
+        // diagnosis_dist dari backend: { "Skizofrenia": 12, "Depresi": 8 }
+        const colors = ['#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6']
+        diagnosisDistribution.value = Object.entries(d.diagnosis_dist || {})
+          .map(([category, count], i) => ({ category, count, color: colors[i % colors.length] }))
+
+      } else if (role.value === 'dokter') {
+        const s = d.summary || {}
+        stats.value = {
+          ...stats.value,
+          my_patients:          s.total_patients    ?? 0,
+          assessments_today_me: s.assessments_today ?? 0,
+          waiting_queues_me:    s.waiting_queues    ?? 0,
+          completed_queues_me:  s.completed_queues  ?? 0,
+          attendance_rate:      s.attendance_rate   ?? 0,
+        }
+        visitTrends.value = (d.visit_trend || []).map(item => ({
+          date:  item.date,
+          label: item.label,
+          count: item.patients ?? item.count ?? 0,
+        }))
+        recentActivities.value = d.recent_activities || []
+
+      } else if (role.value === 'terapis') {
+        const s = d.summary || {}
+        stats.value = {
+          ...stats.value,
+          my_sessions:         s.my_sessions      ?? 0,
+          sessions_today:      s.sessions_today   ?? 0,
+          active_therapies_me: s.active_therapies ?? 0,
+          attendance_rate:     s.attendance_rate  ?? 0,
+        }
+        recentActivities.value = d.recent_activities || []
+      }
+
     } catch (err) {
       const status = err.response?.status
-      errorCode.value = status || null
-
-      // Handle specific HTTP error codes with user-friendly messages
-      switch (status) {
-        case 401:
-          error.value = 'Sesi Anda telah berakhir. Silakan login kembali.'
-          break
-        case 403:
-          error.value = 'Anda tidak memiliki izin untuk mengakses data analytics.'
-          break
-        case 404:
-          error.value = 'Endpoint analytics tidak ditemukan. Hubungi administrator.'
-          break
-        case 422:
-          error.value = err.response?.data?.message || 'Data yang dikirim tidak valid.'
-          break
-        case 500:
-          error.value = 'Terjadi kesalahan pada server. Silakan coba lagi nanti.'
-          break
-        case 503:
-          error.value = 'Server sedang dalam maintenance. Silakan coba beberapa saat lagi.'
-          break
-        default:
-          if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-            error.value = 'Koneksi timeout. Periksa koneksi internet Anda.'
-          } else if (!err.response) {
-            error.value = 'Tidak dapat terhubung ke server. Periksa koneksi Anda.'
-          } else {
-            error.value = err.response?.data?.message || 'Gagal mengambil data analytics'
-          }
-      }
-
-      console.error('Analytics Error:', {
-        status,
-        message: err.message,
-        data: err.response?.data
-      })
+      if (status === 401)      error.value = 'Sesi berakhir. Silakan login kembali.'
+      else if (status === 403) error.value = 'Akses ditolak.'
+      else if (!err.response)  error.value = 'Tidak dapat terhubung ke server.'
+      else                     error.value = err.response?.data?.message || 'Gagal memuat data.'
     } finally {
       loading.value = false
     }
   }
-  
-  // Update period and refetch
-  async function updatePeriod(period) {
-    selectedPeriod.value = period
-    await fetchAnalytics()
+
+  // Polling
+  let _timer = null
+  function startPolling(ms = 30000) {
+    stopPolling()
+    _timer = setInterval(fetchAnalytics, ms)
+  }
+  function stopPolling() {
+    if (_timer) { clearInterval(_timer); _timer = null }
   }
 
-  // Reset store state
+  function setPeriod(p) {
+    period.value = p
+    fetchAnalytics()
+  }
+
   function $reset() {
     stats.value = {
-      total_patients: 0, patients_today: 0, patients_this_month: 0,
+      total_patients: 0, patients_today: 0,
       total_queues_today: 0, waiting_queues: 0, calling_queues: 0, completed_queues: 0,
       total_assessments: 0, assessments_today: 0, active_therapies: 0, attendance_rate: 0,
-      my_assessments: 0, my_patients: 0, my_sessions: 0, sessions_today: 0
+      my_patients: 0, assessments_today_me: 0, waiting_queues_me: 0, completed_queues_me: 0,
+      my_sessions: 0, sessions_today: 0, active_therapies_me: 0,
     }
     visitTrends.value = []
     diagnosisDistribution.value = []
     recentActivities.value = []
     loading.value = false
     error.value = null
-    errorCode.value = null
     todayFormatted.value = ''
   }
-  
+
   return {
-    stats,
-    visitTrends,
-    diagnosisDistribution,
-    recentActivities,
-    loading,
-    error,
-    errorCode,
-    selectedPeriod,
-    todayFormatted,
-    fetchAnalytics,
-    updatePeriod,
-    $reset
+    stats, visitTrends, diagnosisDistribution, recentActivities, todayFormatted,
+    loading, error, role, period,
+    fetchAnalytics, setPeriod, startPolling, stopPolling, $reset
   }
 })

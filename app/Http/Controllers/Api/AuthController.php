@@ -51,6 +51,46 @@ class AuthController extends BaseApiController
         ], 'Login berhasil');
     }
     
+    /**
+     * Self-registration untuk staff (dokter/terapis).
+     * Akun baru otomatis berstatus 'inactive' — menunggu aktivasi Admin.
+     * POST /register (public)
+     */
+    public function register(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
+            'password' => 'required|min:8|confirmed',
+            'role'     => 'required|in:dokter,terapis',
+            'nip'      => 'nullable|string|max:50|unique:users,nip',
+            'phone'    => 'nullable|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors());
+        }
+
+        $user = User::create([
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => $request->password,
+            'role'     => $request->role,
+            'nip'      => $request->nip,
+            'phone'    => $request->phone,
+            'status'   => 'inactive', // Menunggu aktivasi oleh Admin
+        ]);
+
+        return $this->successResponse([
+            'user' => [
+                'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
+                'role'  => $user->role,
+            ]
+        ], 'Pendaftaran berhasil. Akun Anda menunggu aktivasi oleh Admin.', 201);
+    }
+
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { queueService } from '../services/queueService'
+import { useAnalyticsStore } from '../../analytics/stores/analyticsStore'
 
 export const useQueueStore = defineStore('queue', () => {
   const queues = ref([])
@@ -38,12 +39,17 @@ export const useQueueStore = defineStore('queue', () => {
       return { success: false }
     }
   }
+
+  function _refreshAnalytics() {
+    useAnalyticsStore().fetchAnalytics()
+  }
   
   async function callNext(params = {}) {
     try {
       const response = await queueService.callNext(params)
       await fetchQueues()
       await getStats()
+      _refreshAnalytics()
       return response
     } catch (err) {
       error.value = err.response?.data?.message || 'Gagal memanggil pasien'
@@ -56,6 +62,7 @@ export const useQueueStore = defineStore('queue', () => {
       const response = await queueService.callQueue(id)
       await fetchQueues()
       await getStats()
+      _refreshAnalytics()
       return response
     } catch (err) {
       error.value = err.response?.data?.message || 'Gagal memanggil pasien'
@@ -68,6 +75,7 @@ export const useQueueStore = defineStore('queue', () => {
       const response = await queueService.completeQueue(id)
       await fetchQueues()
       await getStats()
+      _refreshAnalytics()
       return response
     } catch (err) {
       error.value = err.response?.data?.message || 'Gagal menyelesaikan antrian'
@@ -80,6 +88,7 @@ export const useQueueStore = defineStore('queue', () => {
       const response = await queueService.cancelQueue(id)
       await fetchQueues()
       await getStats()
+      _refreshAnalytics()
       return response
     } catch (err) {
       error.value = err.response?.data?.message || 'Gagal membatalkan antrian'

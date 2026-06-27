@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { therapyService } from '../services/therapyService'
+import { useAnalyticsStore } from '../../analytics/stores/analyticsStore'
 
 export const useTherapyStore = defineStore('therapy', () => {
   const therapies = ref([])
@@ -56,6 +57,7 @@ export const useTherapyStore = defineStore('therapy', () => {
     try {
       const response = await therapyService.createTherapy(therapyData)
       await fetchTherapies()
+      useAnalyticsStore().fetchAnalytics()
       return { success: true, data: response.data }
     } catch (err) {
       error.value = err.response?.data?.message || 'Gagal membuat program terapi'
@@ -71,6 +73,7 @@ export const useTherapyStore = defineStore('therapy', () => {
     try {
       const response = await therapyService.updateTherapy(id, therapyData)
       await fetchTherapies()
+      useAnalyticsStore().fetchAnalytics()
       return { success: true, data: response.data }
     } catch (err) {
       error.value = err.response?.data?.message || 'Gagal update terapi'
@@ -86,6 +89,7 @@ export const useTherapyStore = defineStore('therapy', () => {
     try {
       await therapyService.deleteTherapy(id)
       await fetchTherapies()
+      useAnalyticsStore().fetchAnalytics()
       return { success: true }
     } catch (err) {
       error.value = err.response?.data?.message || 'Gagal hapus terapi'
