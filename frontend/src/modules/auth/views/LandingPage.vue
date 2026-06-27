@@ -4,7 +4,7 @@
     <nav class="navbar">
       <div class="container nav-container">
         <div class="nav-brand">
-          <img src="@/assets/SITARA_logo.png" alt="SITARA" class="logo" />
+          <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
           <div>
             <h1 class="brand-title">SITARA</h1>
             <p class="brand-subtitle">Sistem Informasi Terpadu Assessment dan Rekam Anak</p>
