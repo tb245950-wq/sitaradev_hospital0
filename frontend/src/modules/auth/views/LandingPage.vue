@@ -25,28 +25,12 @@
           <!-- Portal Selection -->
           <div class="portal-selection">
             <div class="portal-card staff" @click="goToStaff">
-              <div class="portal-icon-wrapper">
-                <svg class="portal-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-              </div>
               <h3>Portal Staff</h3>
               <p>Masuk untuk Admin, Dokter, dan Terapis</p>
               <button class="btn btn-staff">Masuk Sekarang <span class="arrow-right">→</span></button>
             </div>
 
             <div class="portal-card patient" @click="goToPatient">
-              <div class="portal-icon-wrapper">
-                <svg class="portal-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-              </div>
               <h3>Portal Pasien</h3>
               <p>Login atau Daftar sebagai Pasien</p>
               <button class="btn btn-patient">Masuk Sekarang <span class="arrow-right">→</span></button>
@@ -62,44 +46,18 @@
         <h2 class="section-title">Layanan Kami</h2>
         <div class="services-grid">
           <div class="service-card">
-            <div class="service-icon-container speech">
-              <svg class="service-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              </svg>
-            </div>
             <h3>Terapi Wicara</h3>
             <p>Terapi untuk mengatasi gangguan bicara dan bahasa pada anak</p>
           </div>
           <div class="service-card">
-            <div class="service-icon-container occupational">
-              <svg class="service-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-              </svg>
-            </div>
             <h3>Terapi Okupasi</h3>
             <p>Meningkatkan kemandirian anak dalam aktivitas sehari-hari</p>
           </div>
           <div class="service-card">
-            <div class="service-icon-container assessment">
-              <svg class="service-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-              </svg>
-            </div>
             <h3>Assessment Medis</h3>
             <p>Evaluasi menyeluruh perkembangan anak oleh dokter spesialis</p>
           </div>
           <div class="service-card">
-            <div class="service-icon-container monitoring">
-              <svg class="service-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="20" x2="18" y2="10"></line>
-                <line x1="12" y1="20" x2="12" y2="4"></line>
-                <line x1="6" y1="20" x2="6" y2="14"></line>
-                <path d="M3 3v18h18"></path>
-              </svg>
-            </div>
             <h3>Monitoring Progress</h3>
             <p>Pemantauan berkala perkembangan anak selama terapi</p>
           </div>
@@ -113,35 +71,18 @@
         <h2 class="section-title">Kontak Kami</h2>
         <div class="contact-grid">
           <div class="contact-item">
-            <div class="contact-icon-wrapper">
-              <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-            </div>
             <div>
               <h4>Alamat</h4>
               <p>Jl. Kesehatan No. 123<br/>Jakarta, Indonesia</p>
             </div>
           </div>
           <div class="contact-item">
-            <div class="contact-icon-wrapper">
-              <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-              </svg>
-            </div>
             <div>
               <h4>Telepon</h4>
               <p>(021) 1234-5678</p>
             </div>
           </div>
           <div class="contact-item">
-            <div class="contact-icon-wrapper">
-              <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                <polyline points="22,6 12,13 2,6"></polyline>
-              </svg>
-            </div>
             <div>
               <h4>Email</h4>
               <p>Dev@sitara-klinik.com</p>
@@ -343,36 +284,6 @@ const goToPatient = () => {
   border-color: #14b8a6;
 }
 
-.portal-icon-wrapper {
-  width: 84px;
-  height: 84px;
-  margin-bottom: 2rem;
-  border-radius: 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.3s;
-}
-
-.portal-card:hover .portal-icon-wrapper {
-  transform: scale(1.1);
-}
-
-.portal-icon {
-  width: 40px;
-  height: 40px;
-}
-
-.staff .portal-icon-wrapper {
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
-.patient .portal-icon-wrapper {
-  background: #f0fdfa;
-  color: #0f766e;
-}
-
 .portal-card h3 {
   font-size: 1.5rem;
   font-weight: 700;
@@ -480,41 +391,6 @@ const goToPatient = () => {
   border-color: #e2e8f0;
 }
 
-.service-icon-container {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 1.5rem;
-  border-radius: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.service-icon {
-  width: 28px;
-  height: 28px;
-}
-
-.service-icon-container.speech {
-  background: #eef2ff;
-  color: #4f46e5;
-}
-
-.service-icon-container.occupational {
-  background: #fdf2f8;
-  color: #db2777;
-}
-
-.service-icon-container.assessment {
-  background: #f0fdf4;
-  color: #16a34a;
-}
-
-.service-icon-container.monitoring {
-  background: #fffbeb;
-  color: #d97706;
-}
-
 .service-card h3 {
   font-size: 1.25rem;
   font-weight: 700;
@@ -557,23 +433,6 @@ const goToPatient = () => {
 .contact-item:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 16px rgba(0,0,0,0.04);
-}
-
-.contact-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  background: #eff6ff;
-  color: #2563eb;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.contact-icon {
-  width: 24px;
-  height: 24px;
 }
 
 .contact-item h4 {

@@ -133,5 +133,23 @@ export const patientService = {
       localStorage.removeItem('patient_token')
       return null
     }
-  }
+  },
+
+  // Daftar dokter & terapis aktif
+  async getDoctors() {
+    const response = await apiClient.get('/pasien/doctors')
+    return response.data
+  },
+
+  // Daftar poli aktif
+  async getPolis() {
+    const response = await apiClient.get('/pasien/polis')
+    return response.data
+  },
+
+  // Booking antrian
+  async bookQueue(data) {
+    const response = await apiClient.post('/pasien/booking', data)
+    return response.data
+  },
 }

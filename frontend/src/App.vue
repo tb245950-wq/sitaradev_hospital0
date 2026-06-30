@@ -1,4 +1,5 @@
 <template>
+  <AlertNotification />
   <router-view v-slot="{ Component }">
     <transition name="fade" mode="out-in">
       <component :is="Component" />
@@ -8,6 +9,7 @@
 
 <script setup>
 import { onMounted, onErrorCaptured } from 'vue'
+import AlertNotification from './shared/components/AlertNotification.vue'
 
 console.log('✅ App.vue: Setup')
 

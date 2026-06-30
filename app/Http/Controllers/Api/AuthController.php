@@ -32,7 +32,7 @@ class AuthController extends BaseApiController
             return $this->forbiddenResponse('Akun Anda tidak aktif.');
         }
         
-        if (!in_array($user->role, ['admin', 'dokter', 'terapis'])) {
+        if (!in_array($user->role, ['super_admin', 'admin', 'dokter', 'terapis'])) {
             return $this->forbiddenResponse('Akses ditolak.');
         }
         

@@ -155,10 +155,12 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAssessmentStore } from '../stores/assessmentStore'
 import { useAuthStore } from '../../auth/stores/authStore'
+import { useNotificationStore } from '../../../shared/stores/notificationStore'
 
 const router = useRouter()
 const assessmentStore = useAssessmentStore()
 const authStore = useAuthStore()
+const notify = useNotificationStore()
 const searchQuery = ref('')
 const statusFilter = ref('')
 let searchTimeout = null
@@ -183,21 +185,21 @@ const resetFilters = () => {
   assessmentStore.fetchAssessments()
 }
 
-const openCreateModal = () => alert('Fitur Create Assessment akan segera hadir')
-const viewDetail = (id) => alert(`Detail Assessment ID: ${id}`)
-const editAssessment = (id) => alert(`Edit Assessment ID: ${id}`)
+const openCreateModal = () => router.push('/assessments/create')
+const viewDetail = (id) => router.push(`/assessments/${id}`)
+const editAssessment = (id) => router.push(`/assessments/${id}?edit=1`)
 
 const submitAssessment = async (id) => {
-  if (confirm('Submit assessment ini untuk disetujui?')) {
+  if (confirm('Submit assessment ini?')) {
     const result = await assessmentStore.submitAssessment(id)
-    if (result.success) alert('Assessment berhasil disubmit')
+    if (!result.success) alert(result.error || 'Gagal submit')
   }
 }
 
 const confirmDelete = async (id) => {
   if (confirm('Yakin ingin menghapus assessment ini?')) {
     const result = await assessmentStore.deleteAssessment(id)
-    if (result.success) alert('Assessment berhasil dihapus')
+    if (!result.success) alert(result.error || 'Gagal menghapus')
   }
 }
 

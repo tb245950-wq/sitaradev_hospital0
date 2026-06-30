@@ -21,15 +21,9 @@ export const patientPortalRoutes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/pasien/booking',
-    name: 'PatientBooking',
+    path: '/pasien/antrian',
+    name: 'PatientAntrian',
     component: () => import('../views/PatientBookingView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/pasien/antrian-saya',
-    name: 'PatientQueue',
-    component: () => import('../views/PatientQueueView.vue'),
     meta: { requiresAuth: true }
   },
   {

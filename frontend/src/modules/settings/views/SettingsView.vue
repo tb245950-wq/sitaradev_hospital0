@@ -43,6 +43,16 @@
             <div class="form-actions">
               <button class="btn-primary">Simpan Perubahan</button>
             </div>
+
+            <!-- Quick Links -->
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #f1f5f9;">
+              <h3 style="font-size: 1rem; color: #374151; margin-bottom: 1rem;">Kelola Data Master</h3>
+              <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <router-link to="/settings/poli" style="padding: 0.625rem 1.25rem; background: #eff6ff; color: #1d4ed8; border-radius: 0.5rem; text-decoration: none; font-weight: 600; font-size: 0.875rem;">
+                  Manajemen Poli / Klinik
+                </router-link>
+              </div>
+            </div>
           </div>
 
           <div v-if="activeSection === 'backup'" class="settings-section">

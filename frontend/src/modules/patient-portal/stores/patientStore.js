@@ -31,8 +31,6 @@ export const usePatientStore = defineStore('patient', () => {
    * Login pasien
    */
   async function login(email, password) {
-    console.log('🔐 Patient store: Attempting login...')
-    console.log('   Email:', email)
     
     loading.value = true
     error.value = null
@@ -41,7 +39,6 @@ export const usePatientStore = defineStore('patient', () => {
       // Panggil service untuk API call
       const result = await patientService.login(email, password)
       
-      console.log('📥 Patient store: Login result:', result)
       
       if (result.success) {
         // Update state
@@ -49,9 +46,6 @@ export const usePatientStore = defineStore('patient', () => {
         patient.value = result.data.patient
         token.value = result.data.token
         
-        console.log('✅ Patient store: Login successful!')
-        console.log('   User:', user.value)
-        console.log('   Token saved:', !!token.value)
         
         return {
           success: true,
@@ -83,7 +77,6 @@ export const usePatientStore = defineStore('patient', () => {
    * Register pasien baru
    */
   async function register(patientData) {
-    console.log('📝 Patient store: Registering...')
     
     loading.value = true
     error.value = null
@@ -122,7 +115,6 @@ export const usePatientStore = defineStore('patient', () => {
    * Logout pasien
    */
   async function logout() {
-    console.log('🚪 Patient store: Logging out...')
     
     try {
       await patientService.logout()
@@ -141,7 +133,6 @@ export const usePatientStore = defineStore('patient', () => {
       localStorage.removeItem('user')
       localStorage.removeItem('patient')
       
-      console.log('✅ Patient store: Logged out')
     }
   }
 
@@ -149,7 +140,6 @@ export const usePatientStore = defineStore('patient', () => {
    * Get dashboard data
    */
   async function fetchDashboard() {
-    console.log('📊 Patient store: Fetching dashboard...')
     
     loading.value = true
     error.value = null
@@ -194,7 +184,6 @@ export const usePatientStore = defineStore('patient', () => {
         token.value = storedToken
         user.value = storedUser ? JSON.parse(storedUser) : null
         patient.value = storedPatient ? JSON.parse(storedPatient) : null
-        console.log('✅ Patient store: Loaded from localStorage')
       }
     } catch (err) {
       console.error('Error loading from storage:', err)

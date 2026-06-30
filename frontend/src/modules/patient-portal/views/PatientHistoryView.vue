@@ -1,77 +1,112 @@
 <template>
-  <div class="patient-page">
-    <div class="page-header">
-      <h1>📋 Riwayat Medis</h1>
-      <p>Riwayat assessment dan program terapi Anda.</p>
-    </div>
+  <div class="patient-dashboard">
+    <aside class="patient-sidebar">
+      <div class="sidebar-header">
+        <img src="@/assets/SITARA_RM_BG.png" alt="SITARA" class="logo" />
+        <div><h2>SITARA</h2><p>Portal Pasien</p></div>
+      </div>
+      <nav class="sidebar-nav">
+        <router-link to="/pasien/dashboard" class="nav-item">Dashboard</router-link>
+        <router-link to="/pasien/antrian" class="nav-item">Antrian</router-link>
+        <router-link to="/pasien/jadwal" class="nav-item">Jadwal Terapi</router-link>
+        <router-link to="/pasien/riwayat" class="nav-item active">Riwayat Medis</router-link>
+        <router-link to="/pasien/profil" class="nav-item">Profil Saya</router-link>
+      </nav>
+      <div class="sidebar-footer">
+        <button @click="handleLogout" class="btn-logout">Logout</button>
+      </div>
+    </aside>
 
-    <div v-if="loading" class="loading-state">Memuat riwayat medis...</div>
+    <main class="main-content">
+      <div class="content-header">
+        <button @click="$router.push('/pasien/dashboard')" class="btn-back">← Kembali</button>
+        <h1>Riwayat Medis</h1>
+        <p>Riwayat assessment dan program terapi Anda</p>
+      </div>
 
-    <div v-else-if="error" class="error-state">
-      <p>{{ error }}</p>
-      <button @click="loadHistory" class="btn-retry">Coba Lagi</button>
-    </div>
+      <div v-if="loading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Memuat riwayat medis...</p>
+      </div>
 
-    <div v-else>
-      <!-- Assessments -->
-      <section class="history-section">
-        <h2>Assessment Medis</h2>
-        <div v-if="assessments.length === 0" class="empty-state">Belum ada data assessment.</div>
-        <div v-else class="history-list">
-          <div v-for="item in assessments" :key="item.id" class="history-card">
-            <div class="card-header">
-              <span class="badge badge-assessment">Assessment</span>
-              <span class="date">{{ formatDate(item.created_at) }}</span>
-            </div>
-            <div class="card-body">
-              <p><strong>Diagnosis:</strong> {{ item.diagnosis || '-' }}</p>
-              <p><strong>ICD-10:</strong> {{ item.icd10_code || '-' }}</p>
-              <p><strong>Dokter:</strong> {{ item.dokter?.name || '-' }}</p>
-              <p v-if="item.catatan_medis"><strong>Catatan:</strong> {{ item.catatan_medis }}</p>
+      <div v-else-if="error" class="error-message">
+        {{ error }}
+        <button @click="loadHistory" class="btn-retry">Coba Lagi</button>
+      </div>
+
+      <div v-else>
+        <!-- Assessment Section -->
+        <section class="section-card">
+          <h2 class="section-title">Assessment Medis</h2>
+          <div v-if="assessments.length === 0" class="empty-state">
+            <p>Belum ada data assessment medis</p>
+          </div>
+          <div v-else class="card-list">
+            <div v-for="item in assessments" :key="item.id" class="record-card">
+              <div class="record-header">
+                <span class="badge blue">Assessment</span>
+                <span class="record-date">{{ formatDate(item.created_at) }}</span>
+              </div>
+              <div class="record-body">
+                <div class="record-row"><span>Diagnosis</span><strong>{{ item.diagnosis || '-' }}</strong></div>
+                <div class="record-row"><span>ICD-10</span><strong>{{ item.icd10_code || '-' }}</strong></div>
+                <div class="record-row"><span>Dokter</span><strong>{{ item.dokter?.name || '-' }}</strong></div>
+                <div v-if="item.catatan_medis" class="record-row"><span>Catatan</span><strong>{{ item.catatan_medis }}</strong></div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Therapies -->
-      <section class="history-section">
-        <h2>Program Terapi</h2>
-        <div v-if="therapies.length === 0" class="empty-state">Belum ada program terapi.</div>
-        <div v-else class="history-list">
-          <div v-for="item in therapies" :key="item.id" class="history-card">
-            <div class="card-header">
-              <span class="badge badge-therapy">Terapi</span>
-              <span :class="['status-badge', `status-${item.status}`]">{{ item.status }}</span>
-              <span class="date">{{ formatDate(item.created_at) }}</span>
-            </div>
-            <div class="card-body">
-              <p><strong>Jenis Terapi:</strong> {{ item.jenis_terapi || '-' }}</p>
-              <p><strong>Terapis:</strong> {{ item.terapis?.name || '-' }}</p>
-              <p><strong>Total Sesi:</strong> {{ item.total_sesi || 0 }}</p>
-              <p><strong>Sesi Selesai:</strong> {{ item.sesi_selesai || 0 }}</p>
+        <!-- Therapy Section -->
+        <section class="section-card">
+          <h2 class="section-title">Program Terapi</h2>
+          <div v-if="therapies.length === 0" class="empty-state">
+            <p>Belum ada program terapi</p>
+          </div>
+          <div v-else class="card-list">
+            <div v-for="item in therapies" :key="item.id" class="record-card">
+              <div class="record-header">
+                <span class="badge yellow">Terapi</span>
+                <span :class="['status-chip', `status-${item.status}`]">{{ item.status }}</span>
+                <span class="record-date">{{ formatDate(item.created_at) }}</span>
+              </div>
+              <div class="record-body">
+                <div class="record-row"><span>Jenis</span><strong>{{ item.jenis_terapi || '-' }}</strong></div>
+                <div class="record-row"><span>Terapis</span><strong>{{ item.terapis?.name || '-' }}</strong></div>
+                <div class="record-row">
+                  <span>Progress Sesi</span>
+                  <div class="progress-wrap">
+                    <div class="progress-bar">
+                      <div class="progress-fill" :style="{ width: item.total_sesi > 0 ? (item.sesi_selesai / item.total_sesi * 100) + '%' : '0%' }"></div>
+                    </div>
+                    <span>{{ item.sesi_selesai }}/{{ item.total_sesi }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { usePatientStore } from '../stores/patientStore'
 import { patientService } from '../services/patientService'
 
+const router = useRouter()
+const patientStore = usePatientStore()
 const loading = ref(false)
 const error = ref(null)
 const assessments = ref([])
 const therapies = ref([])
 
-function formatDate(dateStr) {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
-}
+const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'
 
-async function loadHistory() {
+const loadHistory = async () => {
   loading.value = true
   error.value = null
   try {
@@ -80,12 +115,19 @@ async function loadHistory() {
       assessments.value = result.data?.assessments || []
       therapies.value = result.data?.therapies || []
     } else {
-      error.value = result.error || 'Gagal memuat riwayat.'
+      error.value = result.error || 'Gagal memuat riwayat'
     }
-  } catch (e) {
-    error.value = 'Terjadi kesalahan saat memuat data.'
+  } catch {
+    error.value = 'Terjadi kesalahan saat memuat data'
   } finally {
     loading.value = false
+  }
+}
+
+const handleLogout = async () => {
+  if (confirm('Yakin ingin keluar?')) {
+    await patientStore.logout()
+    router.push('/pasien/login')
   }
 }
 
@@ -93,26 +135,60 @@ onMounted(loadHistory)
 </script>
 
 <style scoped>
-.patient-page { padding: 2rem; max-width: 900px; }
-.page-header { margin-bottom: 2rem; }
-.page-header h1 { font-size: 1.5rem; font-weight: 700; color: #1e293b; }
-.page-header p { color: #64748b; margin-top: 0.25rem; }
-.loading-state, .empty-state { color: #94a3b8; text-align: center; padding: 2rem; }
-.error-state { text-align: center; padding: 2rem; color: #ef4444; }
-.btn-retry { margin-top: 1rem; padding: 0.5rem 1.5rem; background: #1a73e8; color: white; border: none; border-radius: 0.5rem; cursor: pointer; }
-.history-section { margin-bottom: 2rem; }
-.history-section h2 { font-size: 1.1rem; font-weight: 600; color: #374151; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb; }
-.history-list { display: flex; flex-direction: column; gap: 1rem; }
-.history-card { background: white; border-radius: 0.75rem; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #f1f5f9; }
-.card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
-.date { margin-left: auto; font-size: 0.8rem; color: #9ca3af; }
-.badge { font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 9999px; font-weight: 600; }
-.badge-assessment { background: #dbeafe; color: #1e40af; }
-.badge-therapy { background: #fef3c7; color: #92400e; }
-.status-badge { font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 9999px; }
-.status-aktif { background: #dcfce7; color: #166534; }
-.status-selesai { background: #f1f5f9; color: #64748b; }
-.status-pending { background: #fefce8; color: #713f12; }
-.card-body { display: flex; flex-direction: column; gap: 0.35rem; }
-.card-body p { font-size: 0.875rem; color: #4b5563; margin: 0; }
+.patient-dashboard { display: flex; min-height: 100vh; background: #f8fafc; }
+.patient-sidebar { width: 260px; background: #1e293b; color: white; display: flex; flex-direction: column; position: fixed; left: 0; top: 0; height: 100vh; }
+.sidebar-header { padding: 1.5rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar-header .logo { width: 40px; height: 40px; }
+.sidebar-header h2 { margin: 0; font-size: 1.25rem; }
+.sidebar-header p { margin: 0; font-size: 0.75rem; color: #94a3b8; }
+.sidebar-nav { flex: 1; padding: 1rem 0; }
+.nav-item { display: flex; padding: 0.75rem 1.5rem; color: #cbd5e1; text-decoration: none; transition: all 0.2s; }
+.nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+.nav-item.active { background: #10b981; color: white; border-right: 4px solid white; }
+.sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); }
+.btn-logout { width: 100%; padding: 0.5rem; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid #ef4444; border-radius: 0.5rem; cursor: pointer; font-weight: 600; }
+.btn-logout:hover { background: #ef4444; color: white; }
+
+.main-content { flex: 1; margin-left: 260px; padding: 2rem; }
+.content-header { margin-bottom: 2rem; }
+.btn-back { background: none; border: none; color: #059669; cursor: pointer; font-weight: 600; padding: 0; margin-bottom: 0.5rem; display: block; }
+.content-header h1 { font-size: 1.75rem; color: #1e293b; margin: 0.25rem 0; }
+.content-header p { color: #64748b; margin: 0; }
+
+.loading-container { text-align: center; padding: 3rem; }
+.loading-spinner { width: 40px; height: 40px; border: 3px solid #f1f5f9; border-top-color: #10b981; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-message { background: #fef2f2; border: 1px solid #fecaca; padding: 1.5rem; border-radius: 0.75rem; color: #dc2626; text-align: center; }
+.btn-retry { margin-top: 0.75rem; padding: 0.5rem 1.25rem; background: #059669; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; }
+
+.section-card { background: white; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 1.5rem; }
+.section-title { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0 0 1rem 0; padding-bottom: 0.75rem; border-bottom: 2px solid #f1f5f9; }
+.card-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.record-card { border: 1px solid #e2e8f0; border-radius: 0.5rem; overflow: hidden; }
+.record-header { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+.record-date { margin-left: auto; font-size: 0.75rem; color: #94a3b8; }
+.badge { font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 9999px; }
+.badge.blue { background: #dbeafe; color: #1e40af; }
+.badge.yellow { background: #fef3c7; color: #92400e; }
+.status-chip { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 9999px; font-weight: 600; background: #f1f5f9; color: #64748b; }
+.status-chip.status-berjalan { background: #dcfce7; color: #166534; }
+.status-chip.status-selesai { background: #f1f5f9; color: #64748b; }
+
+.record-body { padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.record-row { display: flex; justify-content: space-between; font-size: 0.875rem; }
+.record-row span { color: #64748b; }
+.record-row strong { color: #1e293b; text-align: right; max-width: 60%; }
+
+.progress-wrap { display: flex; align-items: center; gap: 0.5rem; }
+.progress-bar { width: 80px; height: 6px; background: #e2e8f0; border-radius: 9999px; overflow: hidden; }
+.progress-fill { height: 100%; background: #10b981; border-radius: 9999px; }
+
+.empty-state { text-align: center; padding: 1.5rem; color: #94a3b8; font-size: 0.875rem; }
+
+@media (max-width: 768px) {
+  .patient-sidebar { transform: translateX(-100%); }
+  .main-content { margin-left: 0; padding: 1rem; }
+}
 </style>

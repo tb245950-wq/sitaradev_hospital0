@@ -2,9 +2,6 @@ import api from '../../../core/services/api'
 
 export const authService = {
   async login(email, password) {
-    console.log('🔐 === AUTH SERVICE LOGIN ===')
-    console.log('Email:', email)
-    console.log('API BaseURL:', api.defaults.baseURL)
     
     try {
       const response = await api.post('/login', {
@@ -12,22 +9,16 @@ export const authService = {
         password
       })
       
-      console.log('📥 Response received:', response)
-      console.log('Response data:', response.data)
       
       // Backend response structure: { success: true, message: "...", data: { user: {...}, token: "..." } }
       const backendResponse = response.data
       
       if (backendResponse.success) {
-        console.log('✅ Login successful!')
-        console.log('User data:', backendResponse.data.user)
-        console.log('Token:', backendResponse.data.token)
         
         // Simpan ke localStorage
         localStorage.setItem('token', backendResponse.data.token)
         localStorage.setItem('user', JSON.stringify(backendResponse.data.user))
         
-        console.log('✅ Data saved to localStorage')
         
         // Return structure yang konsisten
         return {

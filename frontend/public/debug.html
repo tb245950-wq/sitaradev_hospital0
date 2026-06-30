@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Debug Super Admin</title>
+  <style>
+    body { font-family: monospace; padding: 20px; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    .success { color: green; }
+    .error { color: red; }
+    pre { background: #f4f4f4; padding: 15px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Debug Super Admin - SITARA</h1>
+  
+  <button onclick="checkStorage()">1. Check Storage</button>
+  <button onclick="testNavigate()">2. Navigate to /super-admin/users</button>
+  <button onclick="clearStorage()">3. Clear All Storage</button>
+  <button onclick="loginSuperAdmin()">4. Test Login API</button>
+  
+  <pre id="output">Click button above to start debugging...</pre>
+
+  <script>
+    function checkStorage() {
+      const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      const output = document.getElementById('output');
+      
+      let result = '=== LOCALSTORAGE CHECK ===\n\n';
+      result += `Token: ${token ? '✅ EXISTS (length: ' + token.length + ')' : '❌ NULL'}\n\n`;
+      result += `User raw: ${user || '❌ NULL'}\n\n`;
+      
+      try {
+        const parsed = JSON.parse(user || '{}');
+        result += `User parsed:\n${JSON.stringify(parsed, null, 2)}\n\n`;
+        result += `✅ Role: "${parsed.role}"\n`;
+        result += `   Type: ${typeof parsed.role}\n`;
+        result += `   Is super_admin: ${parsed.role === 'super_admin'}\n`;
+        result += `   Trimmed match: ${parsed.role?.trim() === 'super_admin'}\n`;
+      } catch (e) {
+        result += `❌ Parse error: ${e.message}\n`;
+      }
+      
+      output.textContent = result;
+    }
+
+    function testNavigate() {
+      console.log('Navigating to /super-admin/users...');
+      window.location.href = '/super-admin/users';
+    }
+    
+    function clearStorage() {
+      localStorage.clear();
+      document.getElementById('output').textContent = '✅ Storage cleared! Refresh and login again.';
+    }
+    
+    async function loginSuperAdmin() {
+      const output = document.getElementById('output');
+      output.textContent = 'Testing login API...\n';
+      
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: 'superadmin@sitara.com',
+            password: 'password123'
+          })
+        });
+        
+        const data = await response.json();
+        output.textContent += '\n✅ Response:\n' + JSON.stringify(data, null, 2);
+        
+        if (data.success && data.data) {
+          localStorage.setItem('token', data.data.token);
+          localStorage.setItem('user', JSON.stringify(data.data.user));
+          output.textContent += '\n\n✅ Saved to localStorage!\n';
+          output.textContent += 'User role: ' + data.data.user.role;
+        }
+      } catch (e) {
+        output.textContent += '\n❌ Error: ' + e.message;
+      }
+    }
+  </script>
+</body>
+</html>

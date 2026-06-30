@@ -11,77 +11,23 @@
       </div>
       <nav class="sidebar-nav">
         <router-link to="/pasien/dashboard" class="nav-item">
-          <span class="icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-          </span>
           <span>Dashboard</span>
         </router-link>
-        <router-link to="/pasien/booking" class="nav-item active">
-          <span class="icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-          </span>
-          <span>Booking Antrian</span>
-        </router-link>
-        <router-link to="/pasien/antrian-saya" class="nav-item">
-          <span class="icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="16" rx="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="4"></line>
-              <line x1="8" y1="2" x2="8" y2="4"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-          </span>
-          <span>Antrian Saya</span>
+        <router-link to="/pasien/antrian" class="nav-item active">
+          <span>Antrian</span>
         </router-link>
         <router-link to="/pasien/jadwal" class="nav-item">
-          <span class="icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"></path>
-              <path d="M12 7v5l3 3"></path>
-            </svg>
-          </span>
           <span>Jadwal Terapi</span>
         </router-link>
         <router-link to="/pasien/riwayat" class="nav-item">
-          <span class="icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-            </svg>
-          </span>
           <span>Riwayat Medis</span>
         </router-link>
         <router-link to="/pasien/profil" class="nav-item">
-          <span class="icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-          </span>
           <span>Profil Saya</span>
         </router-link>
       </nav>
       <div class="sidebar-footer">
         <button @click="handleLogout" class="btn-logout">
-          <span class="icon btn-logout-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-          </span>
           Logout
         </button>
       </div>
@@ -91,60 +37,61 @@
     <main class="main-content">
       <div class="content-header">
         <button @click="goBack" class="btn-back">← Kembali</button>
-        <h1>Booking Antrian</h1>
-        <p>Daftar antrian untuk konsultasi dengan dokter pilihan Anda</p>
+        <h1>Antrian</h1>
+        <p>Booking antrian atau lihat riwayat antrian Anda</p>
       </div>
 
-      <!-- Booking Form -->
-      <div class="booking-card">
+      <!-- Tab Navigation -->
+      <div class="tab-navigation">
+        <button 
+          :class="['tab-btn', { active: activeTab === 'booking' }]"
+          @click="activeTab = 'booking'"
+        >
+          + Booking Antrian
+        </button>
+        <button 
+          :class="['tab-btn', { active: activeTab === 'active' }]"
+          @click="activeTab = 'active'"
+        >
+          🎫 Antrian Aktif
+        </button>
+        <button 
+          :class="['tab-btn', { active: activeTab === 'history' }]"
+          @click="activeTab = 'history'"
+        >
+          📋 Riwayat
+        </button>
+      </div>
+
+      <!-- TAB: BOOKING -->
+      <div v-show="activeTab === 'booking'" class="booking-card">
         <form @submit.prevent="handleBooking" class="booking-form">
           <!-- Pilih Poli -->
           <div class="form-section">
-            <h3 class="section-title">
-              <span class="header-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 21h18"></path>
-                  <path d="M3 7v1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1"></path>
-                  <path d="M19 21V11"></path>
-                  <path d="M5 21V11"></path>
-                  <path d="M9 21v-4a2 2 0 0 1 4 0v4"></path>
-                </svg>
-              </span>
-              Pilih Poli
-            </h3>
+            <h3 class="section-title">Pilih Poli</h3>
             <div class="poli-grid">
               <label v-for="poli in poliOptions" :key="poli.value" class="poli-option" :class="{ selected: form.poli === poli.value }">
                 <input type="radio" :value="poli.value" v-model="form.poli" required />
-                <div class="poli-icon" v-html="iconSvgs[poli.icon]"></div>
                 <div class="poli-name">{{ poli.label }}</div>
                 <div class="poli-desc">{{ poli.description }}</div>
               </label>
             </div>
           </div>
 
-          <!-- Pilih Dokter -->
+          <!-- Pilih Dokter / Terapis -->
           <div class="form-section">
-            <h3 class="section-title">
-              <span class="header-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-              </span>
-              Pilih Dokter
-            </h3>
-            <div v-if="filteredDoctors.length === 0" class="empty-state">
-              <p>Tidak ada dokter tersedia untuk poli ini. Silakan pilih poli lain.</p>
+            <h3 class="section-title">Pilih Dokter / Terapis</h3>
+            <div v-if="loadingDoctors" class="empty-state">Memuat daftar dokter...</div>
+            <div v-else-if="doctors.length === 0" class="empty-state">
+              <p>Tidak ada dokter / terapis tersedia saat ini.</p>
             </div>
             <div v-else class="doctor-grid">
-              <label v-for="doctor in filteredDoctors" :key="doctor.id" class="doctor-option" :class="{ selected: form.doctor_id === doctor.id }">
-                <input type="radio" :value="doctor.id" v-model="form.doctor_id" required />
+              <label v-for="doctor in doctors" :key="doctor.id" class="doctor-option" :class="{ selected: form.doctor_id === doctor.id }">
+                <input type="radio" :value="doctor.id" v-model="form.doctor_id" />
                 <div class="doctor-avatar">{{ getInitials(doctor.name) }}</div>
                 <div class="doctor-info">
                   <div class="doctor-name">{{ doctor.name }}</div>
-                  <div class="doctor-nip">NIP: {{ doctor.nip || '-' }}</div>
+                  <div class="doctor-nip">{{ doctor.role === 'dokter' ? 'Dokter' : 'Terapis' }} · NIP: {{ doctor.nip }}</div>
                 </div>
               </label>
             </div>
@@ -152,17 +99,7 @@
 
           <!-- Pilih Jenis Layanan -->
           <div class="form-section">
-            <h3 class="section-title">
-              <span class="header-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                </svg>
-              </span>
-              Jenis Layanan
-            </h3>
+            <h3 class="section-title">Jenis Layanan</h3>
             <select v-model="form.type" required class="form-select">
               <option value="">Pilih Jenis Layanan</option>
               <option value="consultation">Konsultasi Umum</option>
@@ -174,14 +111,7 @@
 
           <!-- Pilih Prioritas -->
           <div class="form-section">
-            <h3 class="section-title">
-              <span class="header-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                </svg>
-              </span>
-              Prioritas
-            </h3>
+            <h3 class="section-title">Prioritas</h3>
             <div class="priority-options">
               <label class="priority-option" :class="{ selected: form.priority === 'normal', normal: true }">
                 <input type="radio" value="normal" v-model="form.priority" />
@@ -198,15 +128,7 @@
 
           <!-- Catatan -->
           <div class="form-section">
-            <h3 class="section-title">
-              <span class="header-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 20h9"></path>
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                </svg>
-              </span>
-              Keluhan / Catatan (Opsional)
-            </h3>
+            <h3 class="section-title">Keluhan / Catatan (Opsional)</h3>
             <textarea v-model="form.notes" rows="3" class="form-textarea" placeholder="Jelaskan keluhan atau catatan tambahan..."></textarea>
           </div>
 
@@ -221,16 +143,11 @@
 
           <!-- Success Message -->
           <div v-if="bookingSuccess" class="success-message">
-            <div class="success-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </div>
             <div>
               <h3>Booking Berhasil!</h3>
               <p>Nomor Antrian: <strong>{{ queueNumber }}</strong></p>
               <p>Silakan tunggu panggilan dari admin klinik.</p>
-              <router-link to="/pasien/antrian-saya" class="btn-link">Lihat Antrian Saya →</router-link>
+              <button @click="activeTab = 'active'" class="btn-link">Lihat Antrian Aktif →</button>
             </div>
           </div>
 
@@ -240,12 +157,110 @@
           </div>
         </form>
       </div>
+
+      <!-- TAB: ACTIVE QUEUE -->
+      <div v-show="activeTab === 'active'" class="active-queue-section">
+        <div v-if="loadingQueue" class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>Memuat data antrian...</p>
+        </div>
+        <div v-else-if="errorQueue" class="error-message">
+          {{ errorQueue }}
+          <button @click="loadQueue" class="btn-retry">Coba Lagi</button>
+        </div>
+        <div v-else>
+          <div v-if="activeQueue" class="active-queue-card">
+            <div class="queue-badge">Antrian Aktif Hari Ini</div>
+            <div class="queue-number">{{ activeQueue.nomor_antrian }}</div>
+            <p class="queue-label">Nomor Antrian Anda</p>
+            <div :class="['status-badge', `status-${activeQueue.status}`]">
+              {{ statusLabel(activeQueue.status) }}
+            </div>
+            <div class="queue-details">
+              <div class="detail-item">
+                <span class="detail-icon">🏥</span>
+                <div>
+                  <p class="detail-label">Poli</p>
+                  <p class="detail-value">{{ activeQueue.poli || '-' }}</p>
+                </div>
+              </div>
+              <div class="detail-item">
+                <span class="detail-icon">👨‍⚕️</span>
+                <div>
+                  <p class="detail-label">Dokter / Terapis</p>
+                  <p class="detail-value">{{ activeQueue.dokter?.name || '-' }}</p>
+                </div>
+              </div>
+              <div class="detail-item">
+                <span class="detail-icon">📅</span>
+                <div>
+                  <p class="detail-label">Tanggal Daftar</p>
+                  <p class="detail-value">{{ formatDateTime(activeQueue.tanggal) }}</p>
+                </div>
+              </div>
+              <div class="detail-item">
+                <span class="detail-icon">📋</span>
+                <div>
+                  <p class="detail-label">Jenis Layanan</p>
+                  <p class="detail-value">{{ formatServiceType(activeQueue.jenis_layanan) }}</p>
+                </div>
+              </div>
+            </div>
+            <button @click="loadQueue" class="btn-refresh">🔄 Refresh Status</button>
+          </div>
+          <div v-else class="no-queue-card">
+            <p class="no-queue-icon">🎫</p>
+            <h3>Tidak Ada Antrian Aktif</h3>
+            <p>Anda belum memiliki antrian hari ini.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: HISTORY -->
+      <div v-show="activeTab === 'history'" class="history-section">
+        <div v-if="loadingQueue" class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>Memuat riwayat antrian...</p>
+        </div>
+        <div v-else-if="errorQueue" class="error-message">
+          {{ errorQueue }}
+        </div>
+        <div v-else>
+          <div v-if="queueHistory.length > 0" class="history-grid">
+            <div v-for="item in queueHistory" :key="item.id" class="history-card">
+              <div class="history-header">
+                <span class="history-number">{{ item.nomor_antrian }}</span>
+                <span :class="['history-status', `status-${item.status}`]">
+                  {{ statusLabel(item.status) }}
+                </span>
+              </div>
+              <div class="history-body">
+                <div class="history-detail">
+                  <p class="history-label">Poli</p>
+                  <p class="history-value">{{ item.poli || '-' }}</p>
+                </div>
+                <div class="history-detail">
+                  <p class="history-label">Jenis Layanan</p>
+                  <p class="history-value">{{ formatServiceType(item.jenis_layanan) }}</p>
+                </div>
+                <div class="history-detail">
+                  <p class="history-label">Tanggal</p>
+                  <p class="history-value">{{ formatDate(item.tanggal) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="empty-state">
+            <p>Belum ada riwayat antrian</p>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePatientStore } from '../stores/patientStore'
 import { patientService } from '../services/patientService'
@@ -253,11 +268,17 @@ import { patientService } from '../services/patientService'
 const router = useRouter()
 const patientStore = usePatientStore()
 
+const activeTab = ref('booking')
 const loading = ref(false)
+const loadingDoctors = ref(false)
+const loadingQueue = ref(false)
 const bookingSuccess = ref(false)
 const queueNumber = ref('')
 const errorMessage = ref('')
+const errorQueue = ref('')
 const doctors = ref([])
+const activeQueue = ref(null)
+const queueHistory = ref([])
 
 const form = ref({
   poli: '',
@@ -267,47 +288,90 @@ const form = ref({
   notes: ''
 })
 
-const poliOptions = [
-  { 
-    value: 'umum', 
-    label: 'Poli Umum', 
-    icon: 'hospital',
-    description: 'Konsultasi umum dan pemeriksaan awal'
-  },
-  { 
-    value: 'psikolog', 
-    label: 'Poli Psikolog', 
-    icon: 'brain',
-    description: 'Konsultasi psikologi anak dan keluarga'
-  },
-  { 
-    value: 'terapi', 
-    label: 'Poli Terapi', 
-    icon: 'activity',
-    description: 'Terapi wicara, okupasi, dan fisio'
-  },
-  { 
-    value: 'tumbuh_kembang', 
-    label: 'Poli Tumbuh Kembang', 
-    icon: 'child',
-    description: 'Pemantauan tumbuh kembang anak'
-  }
-]
+const poliOptions = ref([])
 
-const iconSvgs = {
-  hospital: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 40px; height: 40px;"><path d="M3 21h18"></path><path d="M3 7v1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1"></path><path d="M19 21V11"></path><path d="M5 21V11"></path><path d="M9 21v-4a2 2 0 0 1 4 0v4"></path></svg>`,
-  brain: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 40px; height: 40px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`,
-  activity: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 40px; height: 40px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`,
-  child: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 40px; height: 40px;"><circle cx="12" cy="7" r="4"></circle><path d="M12 11v10M8 14h8"></path></svg>`
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleDateString('id-ID', { 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric' 
+  })
 }
 
-const filteredDoctors = computed(() => {
-  if (!form.value.poli) return doctors.value
-  return doctors.value
-})
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('id-ID', { 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const statusLabel = (status) => {
+  const labels = {
+    'menunggu': 'Menunggu',
+    'dipanggil': 'Dipanggil',
+    'selesai': 'Selesai',
+    'tidak_hadir': 'Tidak Hadir'
+  }
+  return labels[status] || status
+}
+
+const formatServiceType = (type) => {
+  const types = {
+    'konsultasi': 'Konsultasi Umum',
+    'assessment': 'Assessment Medis',
+    'terapi': 'Sesi Terapi',
+    'kontrol': 'Kontrol'
+  }
+  return types[type] || type
+}
+
+const fetchPolis = async () => {
+  try {
+    const res = await patientService.getPolis()
+    if (res.success) {
+      poliOptions.value = res.data.map(p => ({
+        value: p.kode,
+        label: p.nama,
+        description: p.deskripsi || ''
+      }))
+    }
+  } catch {
+    // fallback ke data lokal jika gagal
+    poliOptions.value = [
+      { value: 'umum',           label: 'Poli Umum',          description: '' },
+      { value: 'terapi',         label: 'Poli Terapi',         description: '' },
+      { value: 'psikolog',       label: 'Poli Psikolog',       description: '' },
+      { value: 'tumbuh_kembang', label: 'Poli Tumbuh Kembang', description: '' },
+    ]
+  }
+}
+
+const loadQueue = async () => {
+  loadingQueue.value = true
+  errorQueue.value = ''
+  try {
+    const result = await patientService.getMyQueue()
+    if (result.success) {
+      activeQueue.value = result.data?.active_queue || null
+      queueHistory.value = result.data?.history || []
+    } else {
+      errorQueue.value = result.error || 'Gagal memuat antrian'
+    }
+  } catch (e) {
+    errorQueue.value = 'Terjadi kesalahan saat memuat data'
+  } finally {
+    loadingQueue.value = false
+  }
+}
 
 const getInitials = (name) => {
-  const parts = name.split(' ')
+  const parts = name.trim().split(' ')
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
   return name.substring(0, 2).toUpperCase()
 }
@@ -322,13 +386,18 @@ const handleLogout = async () => {
 }
 
 const fetchDoctors = async () => {
+  loadingDoctors.value = true
   try {
     const response = await patientService.getDoctors()
     if (response.success) {
       doctors.value = response.data
+    } else {
+      console.error('getDoctors: ', response.message)
     }
   } catch (error) {
     console.error('Error fetching doctors:', error)
+  } finally {
+    loadingDoctors.value = false
   }
 }
 
@@ -356,6 +425,9 @@ const handleBooking = async () => {
         priority: 'normal',
         notes: ''
       }
+      // Refresh antrian lalu pindah ke tab aktif
+      await loadQueue()
+      setTimeout(() => { activeTab.value = 'active' }, 1500)
     } else {
       errorMessage.value = response.message || 'Gagal booking antrian'
     }
@@ -368,6 +440,8 @@ const handleBooking = async () => {
 
 onMounted(() => {
   fetchDoctors()
+  fetchPolis()
+  loadQueue()
 })
 </script>
 
@@ -396,25 +470,6 @@ onMounted(() => {
 .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
 .nav-item.active { background: #10b981; color: white; border-right: 4px solid white; }
 
-.icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  color: #94a3b8;
-}
-
-.nav-item:hover .icon,
-.nav-item.active .icon {
-  color: white;
-}
-
-.icon svg {
-  width: 100%;
-  height: 100%;
-}
-
 .sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); }
 .btn-logout {
   width: 100%;
@@ -432,11 +487,6 @@ onMounted(() => {
   transition: all 0.2s;
 }
 .btn-logout:hover { background: #ef4444; color: white; }
-.btn-logout-icon {
-  color: inherit;
-  width: 16px;
-  height: 16px;
-}
 
 .main-content { flex: 1; margin-left: 260px; padding: 2rem; }
 
@@ -453,18 +503,6 @@ onMounted(() => {
   margin-bottom: 1rem;
   font-size: 1.125rem;
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.header-icon {
-  display: inline-flex;
-  align-items: center;
-  color: #059669;
-}
-.header-icon svg {
-  width: 20px;
-  height: 20px;
 }
 
 /* Poli Grid */
@@ -480,13 +518,6 @@ onMounted(() => {
 .poli-option:hover { border-color: #10b981; }
 .poli-option.selected { border-color: #10b981; background: #f0fdf4; }
 .poli-option input { display: none; }
-.poli-icon {
-  margin: 0 auto 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #10b981;
-}
 .poli-name { font-weight: 600; color: #1e293b; margin-bottom: 0.25rem; }
 .poli-desc { font-size: 0.8rem; color: #64748b; }
 
@@ -546,6 +577,71 @@ onMounted(() => {
 .priority-badge.urgent { background: #fef3c7; color: #92400e; }
 
 .form-actions { display: flex; justify-content: flex-end; gap: 1rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; }
+.btn-secondary { padding: 0.625rem 1.25rem; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.5rem; cursor: pointer; font-weight: 600; font-size: 0.875rem; }
+.btn-secondary:hover { background: #e2e8f0; }
+
+/* ── Tab Navigation ── */
+.tab-navigation { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 2px solid #e2e8f0; }
+.tab-btn { padding: 1rem 1.5rem; background: none; border: none; cursor: pointer; font-weight: 600; font-size: 0.95rem; color: #64748b; border-bottom: 3px solid transparent; transition: all 0.2s; margin-bottom: -2px; }
+.tab-btn:hover { color: #1e293b; }
+.tab-btn.active { color: #10b981; border-bottom-color: #10b981; }
+
+/* ── Active Queue ── */
+.active-queue-card { background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; border-radius: 1.25rem; padding: 2.5rem; text-align: center; box-shadow: 0 10px 30px rgba(5, 150, 105, 0.2); position: relative; overflow: hidden; }
+.active-queue-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #10b981, #6ee7b7); }
+.queue-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; margin-bottom: 1rem; backdrop-filter: blur(10px); }
+.queue-number { font-size: 5rem; font-weight: 900; line-height: 1; margin: 0.5rem 0; }
+.queue-label { font-size: 1rem; opacity: 0.9; margin: 0; }
+.status-badge { display: inline-block; padding: 0.5rem 1.5rem; background: rgba(255,255,255,0.2); border-radius: 9999px; font-weight: 600; margin: 1.5rem 0; font-size: 0.875rem; }
+.queue-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin: 2rem 0; }
+.detail-item { display: flex; gap: 1rem; text-align: left; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 0.75rem; }
+.detail-icon { font-size: 1.5rem; }
+.detail-label { font-size: 0.75rem; opacity: 0.8; margin: 0; text-transform: uppercase; }
+.detail-value { font-size: 0.95rem; font-weight: 600; margin: 0.25rem 0 0 0; }
+.btn-refresh { background: white; color: #059669; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-refresh:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+.no-queue-card { background: white; border-radius: 1rem; padding: 2.5rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.no-queue-icon { font-size: 3rem; display: block; margin-bottom: 0.75rem; }
+.no-queue-card h3 { font-size: 1.2rem; font-weight: 600; color: #1e293b; margin: 0 0 0.5rem 0; }
+
+/* ── History ── */
+.history-section { background: white; border-radius: 1rem; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.section-title { font-size: 1.125rem; font-weight: 700; color: #1e293b; margin-bottom: 1.5rem; }
+.history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+.history-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.75rem; overflow: hidden; transition: all 0.2s; }
+.history-card:hover { border-color: #059669; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.1); }
+.history-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem; border-bottom: 1px solid #e2e8f0; }
+.history-number { font-size: 1.25rem; font-weight: 800; color: #059669; }
+.history-status { display: inline-block; font-size: 0.7rem; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 600; }
+.history-status.status-selesai { background: #dcfce7; color: #166534; }
+.history-status.status-menunggu { background: #fef3c7; color: #92400e; }
+.history-status.status-dipanggil { background: #dbeafe; color: #1e40af; }
+.history-status.status-tidak_hadir { background: #fee2e2; color: #991b1b; }
+.history-body { padding: 1rem; }
+.history-detail { margin-bottom: 0.75rem; }
+.history-detail:last-child { margin-bottom: 0; }
+.history-label { font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin: 0; }
+.history-value { font-size: 0.9rem; color: #1e293b; font-weight: 500; margin: 0.25rem 0 0 0; }
+
+.loading-container { text-align: center; padding: 3rem; }
+.loading-spinner { width: 40px; height: 40px; border: 3px solid #f1f5f9; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-message { background: #fef2f2; border: 1px solid #fecaca; padding: 1.5rem; border-radius: 0.75rem; color: #dc2626; text-align: center; }
+.btn-retry { margin-top: 1rem; padding: 0.5rem 1.5rem; background: #059669; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; }
+
+.empty-state { text-align: center; padding: 2rem; color: #94a3b8; background: white; border-radius: 0.75rem; }
+
+.priority-option { padding: 1rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; cursor: pointer; text-align: center; }
+.priority-option input { display: none; }
+.priority-option.selected.normal { border-color: #3b82f6; background: #eff6ff; }
+.priority-option.selected.urgent { border-color: #f59e0b; background: #fffbeb; }
+.priority-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem; }
+.priority-badge.normal { background: #dbeafe; color: #1e40af; }
+.priority-badge.urgent { background: #fef3c7; color: #92400e; }
+
+.form-actions { display: flex; justify-content: flex-end; gap: 1rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; }
 .btn-secondary { padding: 0.75rem 1.5rem; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.5rem; cursor: pointer; }
 .btn-primary { padding: 0.75rem 1.5rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
 .btn-primary:hover:not(:disabled) { background: #059669; }
@@ -556,26 +652,10 @@ onMounted(() => {
   border: 2px solid #10b981;
   padding: 1.5rem;
   border-radius: 0.75rem;
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-}
-.success-icon {
-  color: #10b981;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.success-icon svg {
-  width: 100%;
-  height: 100%;
 }
 .success-message h3 { color: #166534; margin-bottom: 0.5rem; }
 .success-message p { color: #15803d; margin: 0.25rem 0; }
-.btn-link { color: #059669; font-weight: 600; text-decoration: none; }
+.btn-link { color: #059669; font-weight: 600; text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; font-size: inherit; }
 
 .error-message {
   background: #fef2f2;

@@ -1,7 +1,7 @@
 <template>
   <div class="admin-dashboard">
     <div class="header">
-      <h1>Dashboard Admin</h1>
+      <h1>Dashboard Admin Klinik</h1>
       <p class="date">{{ analyticsStore.todayFormatted }}</p>
     </div>
 
@@ -37,6 +37,53 @@
         <DiagnosisDistributionChart :data="analyticsStore.diagnosisDistribution" />
       </div>
 
+      <!-- Antrian Aktif Hari Ini -->
+      <div class="queue-section">
+        <div class="queue-section-header">
+          <h3>Antrian Aktif Hari Ini</h3>
+          <router-link to="/waiting-list" class="btn-view-all">Kelola Antrian →</router-link>
+        </div>
+
+        <div class="queue-cols">
+          <!-- Menunggu -->
+          <div class="queue-col">
+            <div class="queue-col-title waiting">Menunggu ({{ queueStore.stats.waiting_count || 0 }})</div>
+            <div v-if="queueStore.stats.waiting?.length" class="queue-patient-list">
+              <div v-for="q in queueStore.stats.waiting" :key="q.id" class="queue-patient-item">
+                <span class="q-num">{{ q.nomor }}</span>
+                <span class="q-name">{{ q.pasien?.nama || '-' }}</span>
+                <span v-if="q.prioritas > 5" class="q-priority">❗</span>
+              </div>
+            </div>
+            <div v-else class="queue-empty">Tidak ada antrian</div>
+          </div>
+
+          <!-- Dipanggil -->
+          <div class="queue-col">
+            <div class="queue-col-title calling">Dipanggil ({{ queueStore.stats.calling_count || 0 }})</div>
+            <div v-if="queueStore.stats.calling?.length" class="queue-patient-list">
+              <div v-for="q in queueStore.stats.calling" :key="q.id" class="queue-patient-item calling">
+                <span class="q-num">{{ q.nomor }}</span>
+                <span class="q-name">{{ q.pasien?.nama || '-' }}</span>
+              </div>
+            </div>
+            <div v-else class="queue-empty">Tidak ada</div>
+          </div>
+
+          <!-- Selesai -->
+          <div class="queue-col">
+            <div class="queue-col-title done">Selesai ({{ queueStore.stats.completed_count || 0 }})</div>
+            <div v-if="queueStore.stats.completed?.length" class="queue-patient-list">
+              <div v-for="q in queueStore.stats.completed" :key="q.id" class="queue-patient-item done">
+                <span class="q-num">{{ q.nomor }}</span>
+                <span class="q-name">{{ q.pasien?.nama || '-' }}</span>
+              </div>
+            </div>
+            <div v-else class="queue-empty">Tidak ada</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Aktivitas Terbaru -->
       <div class="recent-card">
         <h3>Aktivitas Terbaru</h3>
@@ -47,15 +94,26 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { useAnalyticsStore } from '../../analytics/stores/analyticsStore'
+import { useQueueStore } from '../../queue/stores/queueStore'
 import StatCard from '../../analytics/components/StatCard.vue'
 import VisitTrendsChart from '../../analytics/components/VisitTrendsChart.vue'
 import DiagnosisDistributionChart from '../../analytics/components/DiagnosisDistributionChart.vue'
 import RecentActivitiesTable from '../../analytics/components/RecentActivitiesTable.vue'
 
 const analyticsStore = useAnalyticsStore()
-onMounted(() => analyticsStore.fetchAnalytics())
+const queueStore = useQueueStore()
+
+let interval = null
+
+onMounted(() => {
+  analyticsStore.fetchAnalytics()
+  queueStore.getStats()
+  interval = setInterval(() => queueStore.getStats(), 30000)
+})
+
+onUnmounted(() => { if (interval) clearInterval(interval) })
 </script>
 
 <style scoped>
@@ -69,5 +127,26 @@ onMounted(() => analyticsStore.fetchAnalytics())
 .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; min-height: 320px; }
 .recent-card { background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 .recent-card h3 { font-size: 1rem; font-weight: 600; color: #374151; margin-bottom: 1rem; }
-@media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } }
+
+/* Queue Section */
+.queue-section { background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 1.5rem; }
+.queue-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.queue-section-header h3 { font-size: 1rem; font-weight: 600; color: #374151; margin: 0; }
+.btn-view-all { font-size: 0.8125rem; color: #1e40af; font-weight: 600; text-decoration: none; }
+.queue-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.queue-col { border-radius: 0.5rem; overflow: hidden; border: 1px solid #e2e8f0; }
+.queue-col-title { padding: 0.5rem 0.75rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+.queue-col-title.waiting { background: #fef3c7; color: #92400e; }
+.queue-col-title.calling { background: #dbeafe; color: #1e40af; }
+.queue-col-title.done { background: #dcfce7; color: #166534; }
+.queue-patient-list { max-height: 200px; overflow-y: auto; }
+.queue-patient-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; font-size: 0.8125rem; }
+.queue-patient-item.calling { background: #eff6ff; }
+.queue-patient-item.done { background: #f0fdf4; opacity: 0.7; }
+.q-num { font-weight: 700; color: #1e40af; min-width: 40px; font-family: monospace; }
+.q-name { flex: 1; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-priority { font-size: 0.75rem; }
+.queue-empty { padding: 1rem; text-align: center; font-size: 0.8125rem; color: #94a3b8; }
+
+@media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } .queue-cols { grid-template-columns: 1fr; } }
 </style>

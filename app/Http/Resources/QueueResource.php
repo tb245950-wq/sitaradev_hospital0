@@ -9,26 +9,29 @@ class QueueResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $patient = $this->patient;
+        $user    = $this->user;
+
         return [
-            'id' => $this->id_antrian,
-            'nomor' => 'Q' . str_pad($this->nomor_antrian, 3, '0', STR_PAD_LEFT),
-            'jenis' => $this->jenis_layanan,
-            'status' => $this->status,
-            'prioritas' => $this->prioritas,
+            'id'       => $this->id_antrian,
+            'nomor'    => 'Q' . str_pad($this->nomor_antrian, 3, '0', STR_PAD_LEFT),
+            'jenis'    => $this->jenis_layanan,
+            'status'   => $this->status,
+            'prioritas'=> $this->prioritas ?? 0,
             'waktu' => [
-                'daftar' => $this->waktu_daftar,
+                'daftar'  => $this->waktu_daftar,
                 'panggil' => $this->waktu_panggil,
                 'selesai' => $this->waktu_selesai,
             ],
-            'pasien' => [
-                'id' => $this->patient->id_pasien,
-                'nama' => $this->patient->nama_lengkap,
-                'nrm' => $this->patient->nrm,
-            ],
-            'petugas' => [
-                'id' => $this->user->id,
-                'nama' => $this->user->name,
-            ],
+            'pasien' => $patient ? [
+                'id'   => $patient->id_pasien,
+                'nama' => $patient->nama_lengkap,
+                'nrm'  => $patient->nrm,
+            ] : null,
+            'petugas' => $user ? [
+                'id'   => $user->id,
+                'nama' => $user->name,
+            ] : null,
             'catatan' => $this->catatan,
         ];
     }

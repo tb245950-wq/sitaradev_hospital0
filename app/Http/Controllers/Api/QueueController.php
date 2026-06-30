@@ -19,6 +19,13 @@ class QueueController extends Controller
     {
         $query = Queue::with(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
 
+        // Default filter hari ini jika tidak ada parameter tanggal
+        $tanggal = $request->has('tanggal') && $request->tanggal != '' 
+            ? $request->tanggal 
+            : today()->toDateString();
+        
+        $query->whereDate('waktu_daftar', $tanggal);
+
         // Filter berdasarkan status
         if ($request->has('status') && $request->status != '') {
             $query->where('status', $request->status);
@@ -27,11 +34,6 @@ class QueueController extends Controller
         // Filter berdasarkan jenis layanan
         if ($request->has('jenis_layanan') && $request->jenis_layanan != '') {
             $query->where('jenis_layanan', $request->jenis_layanan);
-        }
-
-        // Filter berdasarkan tanggal
-        if ($request->has('tanggal') && $request->tanggal != '') {
-            $query->whereDate('waktu_daftar', $request->tanggal);
         }
 
         // Filter berdasarkan pasien (search by NRM atau nama)
@@ -79,11 +81,13 @@ class QueueController extends Controller
             'id_pasien' => $validated['id_pasien'],
             'id_pengguna' => Auth::id(),
             'nomor_antrian' => $nomorAntrian,
+            'queue_number' => 'Q' . str_pad($nomorAntrian, 3, '0', STR_PAD_LEFT),
             'jenis_layanan' => $validated['jenis_layanan'],
             'status' => 'menunggu',
             'prioritas' => $validated['prioritas'] ?? 0,
             'waktu_daftar' => now(),
             'catatan' => $validated['catatan'] ?? null,
+            'booked_by' => Auth::id(),
         ]);
 
         // Create activity log
@@ -96,7 +100,7 @@ class QueueController extends Controller
             'description' => 'Nomor Antrian: Q' . str_pad($nomorAntrian, 3, '0', STR_PAD_LEFT)
         ]);
 
-        $queue->load(['patient', 'user']);
+        $queue->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
 
         return response()->json([
             'success' => true,
@@ -110,7 +114,7 @@ class QueueController extends Controller
  */
 public function show(Queue $queue)
 {
-    $queue->load(['patient', 'user', 'assessments']);
+    $queue->load(['patient', 'user']);
 
     return response()->json([
         'success' => true,
@@ -184,13 +188,88 @@ public function destroy(Queue $queue)
     {
         $today = today();
         
+        $waitingList = Queue::with(['patient:id_pasien,nama_lengkap,nrm'])
+            ->where('status', 'menunggu')
+            ->whereDate('waktu_daftar', $today)
+            ->orderBy('prioritas', 'desc')
+            ->orderBy('nomor_antrian', 'asc')
+            ->get()
+            ->map(fn($q) => [
+                'id' => $q->id_antrian,
+                'nomor' => 'Q' . str_pad($q->nomor_antrian, 3, '0', STR_PAD_LEFT),
+                'pasien' => $q->patient ? [
+                    'id' => $q->patient->id_pasien,
+                    'nama' => $q->patient->nama_lengkap,
+                    'nrm' => $q->patient->nrm,
+                ] : null,
+                'prioritas' => $q->prioritas ?? 0,
+            ]);
+
+        $callingList = Queue::with(['patient:id_pasien,nama_lengkap,nrm'])
+            ->where('status', 'dipanggil')
+            ->whereDate('waktu_daftar', $today)
+            ->orderBy('prioritas', 'desc')
+            ->orderBy('nomor_antrian', 'asc')
+            ->get()
+            ->map(fn($q) => [
+                'id' => $q->id_antrian,
+                'nomor' => 'Q' . str_pad($q->nomor_antrian, 3, '0', STR_PAD_LEFT),
+                'pasien' => $q->patient ? [
+                    'id' => $q->patient->id_pasien,
+                    'nama' => $q->patient->nama_lengkap,
+                    'nrm' => $q->patient->nrm,
+                ] : null,
+                'prioritas' => $q->prioritas ?? 0,
+                'waktu_panggil' => $q->waktu_panggil,
+            ]);
+
+        $completedList = Queue::with(['patient:id_pasien,nama_lengkap,nrm'])
+            ->where('status', 'selesai')
+            ->whereDate('waktu_daftar', $today)
+            ->orderBy('waktu_selesai', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(fn($q) => [
+                'id' => $q->id_antrian,
+                'nomor' => 'Q' . str_pad($q->nomor_antrian, 3, '0', STR_PAD_LEFT),
+                'pasien' => $q->patient ? [
+                    'id' => $q->patient->id_pasien,
+                    'nama' => $q->patient->nama_lengkap,
+                    'nrm' => $q->patient->nrm,
+                ] : null,
+                'prioritas' => $q->prioritas ?? 0,
+                'waktu_selesai' => $q->waktu_selesai,
+            ]);
+
+        $highPriorityList = Queue::with(['patient:id_pasien,nama_lengkap,nrm'])
+            ->where('prioritas', '>', 5)
+            ->where('status', 'menunggu')
+            ->whereDate('waktu_daftar', $today)
+            ->orderBy('prioritas', 'desc')
+            ->orderBy('nomor_antrian', 'asc')
+            ->get()
+            ->map(fn($q) => [
+                'id' => $q->id_antrian,
+                'nomor' => 'Q' . str_pad($q->nomor_antrian, 3, '0', STR_PAD_LEFT),
+                'pasien' => $q->patient ? [
+                    'id' => $q->patient->id_pasien,
+                    'nama' => $q->patient->nama_lengkap,
+                    'nrm' => $q->patient->nrm,
+                ] : null,
+                'prioritas' => $q->prioritas ?? 0,
+            ]);
+
         return response()->json([
             'success' => true,
             'data' => [
-                'waiting' => Queue::where('status', 'menunggu')->whereDate('waktu_daftar', $today)->count(),
-                'calling' => Queue::where('status', 'dipanggil')->whereDate('waktu_daftar', $today)->count(),
-                'completed' => Queue::where('status', 'selesai')->whereDate('waktu_daftar', $today)->count(),
-                'high_priority' => Queue::where('prioritas', '>', 5)
+                'waiting' => $waitingList,
+                'calling' => $callingList,
+                'completed' => $completedList,
+                'high_priority' => $highPriorityList,
+                'waiting_count' => Queue::where('status', 'menunggu')->whereDate('waktu_daftar', $today)->count(),
+                'calling_count' => Queue::where('status', 'dipanggil')->whereDate('waktu_daftar', $today)->count(),
+                'completed_count' => Queue::where('status', 'selesai')->whereDate('waktu_daftar', $today)->count(),
+                'high_priority_count' => Queue::where('prioritas', '>', 5)
                     ->where('status', 'menunggu')
                     ->whereDate('waktu_daftar', $today)
                     ->count()
@@ -219,14 +298,20 @@ public function destroy(Queue $queue)
      */
     public function callNext(Request $request)
     {
-        $jenisLayanan = $request->input('jenis_layanan', 'assessment');
+        $jenisLayanan = $request->input('jenis_layanan');
 
         // Cari pasien berikutnya dengan prioritas tertinggi
-        $nextQueue = Queue::where('jenis_layanan', $jenisLayanan)
-            ->where('status', 'menunggu')
+        $query = Queue::where('status', 'menunggu')
+            ->whereDate('waktu_daftar', today())
             ->orderBy('prioritas', 'desc')
-            ->orderBy('nomor_antrian', 'asc')
-            ->first();
+            ->orderBy('nomor_antrian', 'asc');
+
+        // Filter jenis_layanan hanya jika dikirim
+        if ($jenisLayanan) {
+            $query->where('jenis_layanan', $jenisLayanan);
+        }
+
+        $nextQueue = $query->first();
 
         if (!$nextQueue) {
             return response()->json([

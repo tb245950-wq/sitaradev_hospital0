@@ -12,6 +12,11 @@ class Queue extends Model
     protected $table = 'queues';
     protected $primaryKey = 'id_antrian';
 
+    public function getRouteKeyName(): string
+    {
+        return 'id_antrian';
+    }
+
     protected $fillable = [
         'nomor_antrian',
         'queue_number',
@@ -41,10 +46,10 @@ class Queue extends Model
     // RELASI
     public function patient()
     {
-        return $this->belongsTo(User::class, 'patient_id');
+        return $this->belongsTo(Patient::class, 'id_pasien', 'id_pasien');
     }
 
-    public function user() // Menambahkan relasi user agar tidak crash
+    public function user()
     {
         return $this->belongsTo(User::class, 'id_pengguna');
     }

@@ -11,7 +11,7 @@
       <div class="user-profile">
         <div class="user-info">
           <span class="user-name">{{ authStore.user?.name }}</span>
-          <span class="user-role">{{ authStore.user?.role }}</span>
+          <span class="user-role">{{ roleLabel }}</span>
         </div>
         <div class="user-avatar">
           {{ authStore.user?.name?.charAt(0) }}
@@ -42,6 +42,17 @@ const pageTitle = computed(() => {
     case 'queues': return 'Antrian'
     default: return 'SITARA'
   }
+})
+
+const roleLabel = computed(() => {
+  const role = authStore.user?.role
+  const labels = {
+    'super_admin': 'Super Admin',
+    'admin': 'Admin Klinik',
+    'dokter': 'Dokter',
+    'terapis': 'Terapis'
+  }
+  return labels[role] || role
 })
 
 const handleLogout = async () => {

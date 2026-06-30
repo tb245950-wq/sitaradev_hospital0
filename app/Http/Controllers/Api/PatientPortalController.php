@@ -56,7 +56,16 @@ class PatientPortalController extends Controller
     public function bookQueue(Request $request)
     {
         $user = $request->user();
-        $patientId = $user->id;
+        
+        // Get patient record from patients table
+        $patient = \App\Models\Patient::where('user_id', $user->id)->first();
+        
+        if (!$patient) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data pasien tidak ditemukan'
+            ], 404);
+        }
 
         $validated = $request->validate([
             'poli' => 'required|in:umum,psikolog,terapi,tumbuh_kembang',
@@ -80,23 +89,17 @@ class PatientPortalController extends Controller
 
         $number = $this->generateQueueNumber();
 
-        $queueType = match($validated['type']) {
-            'consultation' => 'consultation',
-            'assessment' => 'assessment',
-            'therapy' => 'therapy',
-            'control' => 'consultation',
-        };
-
         $queue = Queue::create([
             'nomor_antrian' => $number,
-            'id_pasien' => $patientId,
-            'id_pengguna' => $validated['doctor_id'],
+            'queue_number' => 'A' . str_pad($number, 3, '0', STR_PAD_LEFT),
+            'id_pasien' => $patient->id_pasien,
             'poli' => $validated['poli'],
             'doctor_id' => $validated['doctor_id'],
-            'booked_by' => 'patient',
-            'status' => 'menunggu',
-            'jenis_layanan' => 'assessment',
+            'booked_by' => $user->id,
+            'status' => 'waiting',
+            'jenis_layanan' => $validated['type'],
             'waktu_daftar' => now(),
+            'priority' => $validated['priority'] ?? 'normal',
             'prioritas' => 0,
             'catatan' => $validated['notes'] ?? null,
         ]);

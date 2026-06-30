@@ -25,8 +25,6 @@
         <!-- Stats Grid (Berbeda per Role) -->
         <div class="stats-grid">
           <div v-for="stat in statsToShow" :key="stat.title" class="stat-card">
-            <div class="stat-icon" :style="stat.iconStyle" v-html="iconSvgs[stat.icon]">
-            </div>
             <div class="stat-info">
               <h3>{{ stat.title }}</h3>
               <p class="stat-value">{{ stat.value }}</p>
@@ -62,7 +60,6 @@
               :to="action.path" 
               class="action-card"
             >
-              <div class="action-icon" v-html="iconSvgs[action.icon]"></div>
               <div class="action-info">
                 <h4>{{ action.title }}</h4>
                 <p>{{ action.description }}</p>
@@ -136,114 +133,28 @@ const welcomeTag = computed(() => {
   return tags[authStore.userRole] || 'Dashboard SITARA'
 })
 
-// Icon Mapping SVGs
-const iconSvgs = {
-  users: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
-  ticket: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="16" y1="2" x2="16" y2="4"></line><line x1="8" y1="2" x2="8" y2="4"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
-  clipboard: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>`,
-  activity: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`,
-  stethoscope: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>`,
-  calendar: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
-  chart: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>`,
-  user: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
-  cog: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`,
-  document: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`
-}
-
 // Computed: Stats yang ditampilkan berdasarkan role
 const statsToShow = computed(() => {
   if (authStore.isAdmin) {
     return [
-      { 
-        title: 'Total Pasien', 
-        value: stats.value.total_pasien, 
-        label: 'Terdaftar di sistem',
-        icon: 'users', 
-        iconStyle: { background: '#e0f2fe', color: '#0ea5e9' } 
-      },
-      { 
-        title: 'Antrian Hari Ini', 
-        value: stats.value.antrian_hari_ini, 
-        label: 'Pasien datang',
-        icon: 'ticket', 
-        iconStyle: { background: '#fef3c7', color: '#f59e0b' } 
-      },
-      { 
-        title: 'Assessment Hari Ini', 
-        value: stats.value.assessment_hari_ini, 
-        label: 'Dilakukan dokter',
-        icon: 'clipboard', 
-        iconStyle: { background: '#f0fdf4', color: '#22c55e' } 
-      },
-      { 
-        title: 'Terapi Aktif', 
-        value: stats.value.terapi_aktif, 
-        label: 'Sedang berjalan',
-        icon: 'activity', 
-        iconStyle: { background: '#faf5ff', color: '#a855f7' } 
-      }
+      { title: 'Total Pasien', value: stats.value.total_pasien, label: 'Terdaftar di sistem' },
+      { title: 'Antrian Hari Ini', value: stats.value.antrian_hari_ini, label: 'Pasien datang' },
+      { title: 'Assessment Hari Ini', value: stats.value.assessment_hari_ini, label: 'Dilakukan dokter' },
+      { title: 'Terapi Aktif', value: stats.value.terapi_aktif, label: 'Sedang berjalan' }
     ]
   } else if (authStore.isDokter) {
     return [
-      { 
-        title: 'Total Pasien', 
-        value: stats.value.total_pasien, 
-        label: 'Dalam perawatan',
-        icon: 'users', 
-        iconStyle: { background: '#e0f2fe', color: '#0ea5e9' } 
-      },
-      { 
-        title: 'Antrian Menunggu', 
-        value: stats.value.antrian_menunggu, 
-        label: 'Perlu ditangani',
-        icon: 'clipboard', 
-        iconStyle: { background: '#fef2f2', color: '#ef4444' } 
-      },
-      { 
-        title: 'Assessment Hari Ini', 
-        value: stats.value.assessment_hari_ini, 
-        label: 'Sudah dilakukan',
-        icon: 'stethoscope', 
-        iconStyle: { background: '#f0fdf4', color: '#22c55e' } 
-      },
-      { 
-        title: 'Terapi Aktif', 
-        value: stats.value.terapi_aktif, 
-        label: 'Program berjalan',
-        icon: 'activity', 
-        iconStyle: { background: '#faf5ff', color: '#a855f7' } 
-      }
+      { title: 'Total Pasien', value: stats.value.total_pasien, label: 'Dalam perawatan' },
+      { title: 'Antrian Menunggu', value: stats.value.antrian_menunggu, label: 'Perlu ditangani' },
+      { title: 'Assessment Hari Ini', value: stats.value.assessment_hari_ini, label: 'Sudah dilakukan' },
+      { title: 'Terapi Aktif', value: stats.value.terapi_aktif, label: 'Program berjalan' }
     ]
   } else if (authStore.isTerapis) {
     return [
-      { 
-        title: 'Pasien Saya', 
-        value: stats.value.total_pasien, 
-        label: 'Dalam terapi',
-        icon: 'users', 
-        iconStyle: { background: '#e0f2fe', color: '#0ea5e9' } 
-      },
-      { 
-        title: 'Sesi Hari Ini', 
-        value: stats.value.monitoring_hari_ini, 
-        label: 'Terjadwal',
-        icon: 'calendar', 
-        iconStyle: { background: '#f0fdf4', color: '#22c55e' } 
-      },
-      { 
-        title: 'Terapi Aktif', 
-        value: stats.value.terapi_aktif, 
-        label: 'Program berjalan',
-        icon: 'activity', 
-        iconStyle: { background: '#faf5ff', color: '#a855f7' } 
-      },
-      { 
-        title: 'Progress Rata-rata', 
-        value: '75%', 
-        label: 'Kemajuan pasien',
-        icon: 'chart', 
-        iconStyle: { background: '#fef3c7', color: '#f59e0b' } 
-      }
+      { title: 'Pasien Saya', value: stats.value.total_pasien, label: 'Dalam terapi' },
+      { title: 'Sesi Hari Ini', value: stats.value.monitoring_hari_ini, label: 'Terjadwal' },
+      { title: 'Terapi Aktif', value: stats.value.terapi_aktif, label: 'Program berjalan' },
+      { title: 'Progress Rata-rata', value: '75%', label: 'Kemajuan pasien' }
     ]
   }
   return []
@@ -253,84 +164,26 @@ const statsToShow = computed(() => {
 const quickActions = computed(() => {
   if (authStore.isAdmin) {
     return [
-      { 
-        title: 'Kelola User', 
-        description: 'Tambah, edit, atau nonaktifkan akun staff',
-        path: '/users', 
-        icon: 'user' 
-      },
-      { 
-        title: 'Lihat Laporan', 
-        description: 'Laporan harian, bulanan, dan statistik',
-        path: '/reports', 
-        icon: 'chart' 
-      },
-      { 
-        title: 'Data Pasien', 
-        description: 'Kelola data pasien terdaftar',
-        path: '/patients', 
-        icon: 'users' 
-      },
-      { 
-        title: 'Pengaturan', 
-        description: 'Konfigurasi sistem',
-        path: '/settings', 
-        icon: 'cog' 
-      }
+      { title: 'Kelola User',       description: 'Tambah, edit, atau nonaktifkan akun staff', path: '/users' },
+      { title: 'Manajemen Poli',    description: 'Kelola daftar poli/klinik yang tersedia',   path: '/settings/poli' },
+      { title: 'Lihat Laporan',     description: 'Laporan harian, bulanan, dan statistik',    path: '/reports' },
+      { title: 'Data Pasien',       description: 'Kelola data pasien terdaftar',               path: '/patients' },
+      { title: 'Antrian Hari Ini',  description: 'Pantau dan kelola antrian pasien',           path: '/queues' },
+      { title: 'Pengaturan',        description: 'Konfigurasi sistem',                         path: '/settings' },
     ]
   } else if (authStore.isDokter) {
     return [
-      { 
-        title: 'Antrian Pasien', 
-        description: 'Panggil dan tangani pasien',
-        path: '/queues', 
-        icon: 'ticket' 
-      },
-      { 
-        title: 'Assessment Baru', 
-        description: 'Buat assessment medis baru',
-        path: '/assessments/create', 
-        icon: 'clipboard' 
-      },
-      { 
-        title: 'Program Terapi', 
-        description: 'Buat program terapi untuk pasien',
-        path: '/therapies', 
-        icon: 'activity' 
-      },
-      { 
-        title: 'Laporan Medis', 
-        description: 'Lihat laporan medis',
-        path: '/reports', 
-        icon: 'chart' 
-      }
+      { title: 'Antrian Pasien', description: 'Panggil dan tangani pasien', path: '/queues' },
+      { title: 'Assessment Baru', description: 'Buat assessment medis baru', path: '/assessments/create' },
+      { title: 'Program Terapi', description: 'Buat program terapi untuk pasien', path: '/therapies' },
+      { title: 'Laporan Medis', description: 'Lihat laporan medis', path: '/reports' }
     ]
   } else if (authStore.isTerapis) {
     return [
-      { 
-        title: 'Monitoring Hari Ini', 
-        description: 'Lihat jadwal sesi terapi',
-        path: '/monitoring', 
-        icon: 'calendar' 
-      },
-      { 
-        title: 'Catat Progress', 
-        description: 'Input progress sesi terapi',
-        path: '/therapies/create', 
-        icon: 'document' 
-      },
-      { 
-        title: 'Data Pasien', 
-        description: 'Lihat data pasien (read-only)',
-        path: '/patients', 
-        icon: 'users' 
-      },
-      { 
-        title: 'Program Terapi', 
-        description: 'Lihat program terapi aktif',
-        path: '/therapies', 
-        icon: 'activity' 
-      }
+      { title: 'Monitoring Hari Ini', description: 'Lihat jadwal sesi terapi', path: '/monitoring' },
+      { title: 'Catat Progress', description: 'Input progress sesi terapi', path: '/therapies/create' },
+      { title: 'Data Pasien', description: 'Lihat data pasien (read-only)', path: '/patients' },
+      { title: 'Program Terapi', description: 'Lihat program terapi aktif', path: '/therapies' }
     ]
   }
   return []
@@ -467,17 +320,6 @@ onMounted(() => {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  flex-shrink: 0;
-}
-
 .stat-info h3 {
   font-size: 0.875rem;
   color: #64748b;
@@ -600,21 +442,6 @@ onMounted(() => {
   border-color: #3b82f6;
   transform: translateX(4px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-}
-
-.action-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: #3b82f6;
-}
-
-.action-icon svg {
-  width: 100%;
-  height: 100%;
 }
 
 .action-info {

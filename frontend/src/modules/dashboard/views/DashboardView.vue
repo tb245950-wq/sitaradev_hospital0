@@ -8,7 +8,8 @@
       <main class="content-body">
         <div v-if="loading" class="p-4">Memverifikasi akses...</div>
         <template v-else>
-          <AdminDashboard v-if="authStore.user?.role === 'admin'" />
+          <SuperAdminDashboard v-if="authStore.user?.role === 'super_admin'" />
+          <AdminDashboard v-else-if="authStore.user?.role === 'admin'" />
           <DoctorDashboard v-else-if="authStore.user?.role === 'dokter'" />
           <TerapisDashboard v-else-if="authStore.user?.role === 'terapis'" />
           <div v-else class="p-4 text-gray-500">Dashboard belum tersedia untuk role Anda.</div>
@@ -26,6 +27,7 @@ import { useAnalyticsStore } from '../../analytics/stores/analyticsStore'
 import AdminDashboard from './AdminDashboard.vue'
 import DoctorDashboard from './DoctorDashboard.vue'
 import TerapisDashboard from './TerapisDashboard.vue'
+import SuperAdminDashboard from './SuperAdminDashboard.vue'
 import Sidebar from '../../../shared/components/layout/Sidebar.vue'
 import Navbar from '../../../shared/components/layout/Navbar.vue'
 

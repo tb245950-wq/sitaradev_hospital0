@@ -81,7 +81,6 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   async function login(email, password) {
-    console.log('📦 authStore.login() called')
     
     loading.value = true
     error.value = null
@@ -90,14 +89,12 @@ export const useAuthStore = defineStore('auth', () => {
       // PANGGIL SERVICE
       const result = await authService.login(email, password)
       
-      console.log('📦 Store received result:', result)
       
       if (result.success) {
         // UPDATE STATE
         user.value = result.data.user
         token.value = result.data.token
         
-        console.log('📦 Store state updated:', { user: user.value, token: !!token.value })
         
         return {
           success: true,
@@ -138,10 +135,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
-    console.log('AuthStore: Starting logout process...');
     try {
       await authService.logout();
-      console.log('AuthStore: Service logout successful');
     } catch (err) {
       console.error('AuthStore: Service logout failed', err);
     } finally {
@@ -153,7 +148,6 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       
-      console.log('AuthStore: State cleared');
       
       // Optional: Force reload to clear all in-memory state
       // window.location.href = '/login'; 

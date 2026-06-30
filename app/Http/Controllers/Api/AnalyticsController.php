@@ -22,6 +22,11 @@ class AnalyticsController extends Controller
             ? $request->query('period')
             : 'week';
 
+        // Super admin tidak boleh akses analytics operasional
+        if ($user->role === 'super_admin') {
+            return response()->json(['success' => false, 'message' => 'Super admin akses ke dashboard sistem saja'], 403);
+        }
+
         $data = match($user->role) {
             'admin'   => $this->adminData($today, $now, $period),
             'dokter'  => $this->dokterData($user, $today, $now, $period),
@@ -43,16 +48,16 @@ class AnalyticsController extends Controller
     /* ─── Admin ─────────────────────────────────────────────── */
     private function adminData($today, $now, string $period = 'week'): array
     {
-        $totalQueues   = Queue::whereDate('created_at', $today)->count();
-        $waiting       = Queue::whereDate('created_at', $today)->where('status', 'waiting')->count();
-        $calling       = Queue::whereDate('created_at', $today)->whereIn('status', ['calling', 'serving'])->count();
-        $completed     = Queue::whereDate('created_at', $today)->where('status', 'completed')->count();
+        $totalQueues   = Queue::whereDate('waktu_daftar', $today)->count();
+        $waiting       = Queue::whereDate('waktu_daftar', $today)->where('status', 'menunggu')->count();
+        $calling       = Queue::whereDate('waktu_daftar', $today)->where('status', 'dipanggil')->count();
+        $completed     = Queue::whereDate('waktu_daftar', $today)->where('status', 'selesai')->count();
         $totalAssess   = MedicalAssessment::count();
         $assessToday   = MedicalAssessment::whereDate('created_at', $today)->count();
         $activeTherapy = Therapy::where('status', 'berjalan')->count();
 
         $visitTrend = $this->buildVisitTrend($period, $now, function($start, $end) {
-            return Queue::whereBetween('created_at', [$start, $end])->count();
+            return Queue::whereBetween('waktu_daftar', [$start, $end])->count();
         });
 
         // Distribusi diagnosis (top 5)
@@ -64,8 +69,20 @@ class AnalyticsController extends Controller
             ->pluck('total', 'diagnosis')
             ->toArray();
 
-        // Aktivitas terbaru (5 assessment terbaru)
-        $recentActivities = MedicalAssessment::with('patient')
+        // Aktivitas terbaru: gabungan queue dan assessment (10 terbaru)
+        $recentQueues = Queue::with('patient:id_pasien,nama_lengkap,nrm')
+            ->whereDate('waktu_daftar', $today)
+            ->latest('waktu_daftar')
+            ->limit(5)
+            ->get()
+            ->map(fn($q) => [
+                'time'     => $q->waktu_daftar->format('H:i'),
+                'patient'  => ['name' => $q->patient->nama_lengkap ?? 'Unknown'],
+                'activity' => 'Antrian ' . ucfirst($q->jenis_layanan),
+                'status'   => ucfirst($q->status),
+            ]);
+
+        $recentAssessments = MedicalAssessment::with('patient')
             ->latest()
             ->limit(5)
             ->get()
@@ -75,6 +92,11 @@ class AnalyticsController extends Controller
                 'activity' => 'Assessment Medis',
                 'status'   => 'Selesai',
             ]);
+
+        $recentActivities = $recentQueues->concat($recentAssessments)
+            ->sortByDesc('time')
+            ->take(10)
+            ->values();
 
         return [
             'total_patients'    => Patient::count(),
@@ -98,8 +120,8 @@ class AnalyticsController extends Controller
     {
         $myPatients  = MedicalAssessment::where('id_pengguna', $user->id)->distinct('id_pasien')->count('id_pasien');
         $assessToday = MedicalAssessment::where('id_pengguna', $user->id)->whereDate('created_at', $today)->count();
-        $waiting     = Queue::whereDate('created_at', $today)->where('status', 'waiting')->count();
-        $completed   = Queue::whereDate('created_at', $today)->where('status', 'completed')->count();
+        $waiting     = Queue::whereDate('waktu_daftar', $today)->where('status', 'menunggu')->count();
+        $completed   = Queue::whereDate('waktu_daftar', $today)->where('status', 'selesai')->count();
 
         $visitTrend = $this->buildVisitTrend($period, $now, function($start, $end) use ($user) {
             return MedicalAssessment::where('id_pengguna', $user->id)
