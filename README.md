@@ -12,7 +12,7 @@ Sistem informasi manajemen rumah sakit berbasis **Laravel 11** + **Vue.js 3**.
 
 ```bash
 # 1. Clone & install dependencies
-git clone [repository-url]
+git clone https://github.com/tb245950-wq/sitaradev_hospital0
 composer install
 cd frontend && npm install && cd ..
 
