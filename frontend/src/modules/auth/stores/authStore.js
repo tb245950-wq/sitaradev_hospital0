@@ -16,10 +16,23 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => userRole.value === 'admin')
   const isDokter = computed(() => userRole.value === 'dokter')
   const isTerapis = computed(() => userRole.value === 'terapis')
+  const isSuperAdmin = computed(() => userRole.value === 'super_admin')
   const isActive = computed(() => userStatus.value === 'active')
 
   // Menu items berdasarkan role
   const menuItems = computed(() => {
+    // Super admin punya menu sendiri, tidak pakai menuItems ini
+    if (userRole.value === 'super_admin') {
+      return [
+        { name: 'Dashboard', path: '/super-admin/dashboard', icon: '📊' },
+        { name: 'Manajemen User', path: '/super-admin/users', icon: '👤' },
+        { name: 'Manajemen Poli', path: '/super-admin/polis', icon: '🏥' },
+        { name: 'Log Aktivitas', path: '/super-admin/audit-logs', icon: '📋' },
+        { name: 'Backup', path: '/super-admin/backup', icon: '💾' },
+        { name: 'Pengaturan', path: '/super-admin/settings', icon: '⚙️' },
+      ]
+    }
+
     const allMenus = [
       { 
         name: 'Dashboard', 
@@ -181,6 +194,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAdmin,
     isDokter,
     isTerapis,
+    isSuperAdmin,
     isActive,
     menuItems,
     login,

@@ -11,6 +11,7 @@ import { reportsRoutes } from '../modules/reports/router/reportsRoutes'
 import { usersRoutes } from '../modules/users/router/usersRoutes'
 import { settingsRoutes } from '../modules/settings/router/settingsRoutes'
 import { analyticsRoutes } from '../modules/analytics/router/analyticsRoutes'
+import { superAdminRoutes } from '../modules/super-admin/router/superAdminRoutes'
 
 // Gabungkan semua route
 const routes = [
@@ -27,6 +28,9 @@ const routes = [
 
   // Auth staff (login/register)
   ...authRoutes,
+
+  // Super Admin (hanya role super_admin)
+  ...superAdminRoutes,
 
   // Staff: Dashboard
   ...dashboardRoutes,
@@ -94,8 +98,15 @@ router.beforeEach((to, from, next) => {
 
   // Halaman publik (landing, login, register) — tidak butuh auth
   if (!to.meta.requiresAuth) {
-    // Jika sudah login staff dan coba akses login/register, arahkan ke dashboard
+    // Jika sudah login staff dan coba akses login/register, arahkan sesuai role
     if ((to.path === '/login' || to.path === '/register') && staffToken) {
+      try {
+        const userRaw = localStorage.getItem('user')
+        const user = userRaw ? JSON.parse(userRaw) : null
+        if (user?.role === 'super_admin') {
+          return next('/super-admin/dashboard')
+        }
+      } catch (e) { /* ignore */ }
       return next('/dashboard')
     }
     return next()
@@ -114,8 +125,11 @@ router.beforeEach((to, from, next) => {
       const userRole = user?.role || null
 
       if (!userRole || !to.meta.roles.includes(userRole)) {
-        // Role tidak punya akses → balik ke dashboard
+        // Role tidak punya akses → arahkan ke halaman yang sesuai
         console.warn(`[Router] Role '${userRole}' tidak punya akses ke '${to.path}'`)
+        if (userRole === 'super_admin') {
+          return next('/super-admin/dashboard')
+        }
         return next('/dashboard')
       }
     } catch (e) {

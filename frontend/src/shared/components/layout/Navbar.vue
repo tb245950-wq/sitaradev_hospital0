@@ -40,6 +40,12 @@ const pageTitle = computed(() => {
     case 'dashboard': return 'Dashboard'
     case 'patients': return 'Data Pasien'
     case 'queues': return 'Antrian'
+    case 'super-admin.dashboard': return 'Dashboard Super Admin'
+    case 'super-admin.users': return 'Manajemen User'
+    case 'super-admin.polis': return 'Manajemen Poli'
+    case 'super-admin.audit-logs': return 'Log Aktivitas'
+    case 'super-admin.backup': return 'Backup Sistem'
+    case 'super-admin.settings': return 'Pengaturan Sistem'
     default: return 'SITARA'
   }
 })

@@ -158,16 +158,22 @@ const handleLogin = async () => {
   try {
     console.log('🟡 Calling authStore.login()...')
     
-    // Gunakan store action (bukan authService langsung)
-    // Store action akan update user & token secara internal
     const result = await authStore.login(form.value.email, form.value.password)
     
     console.log('🟢 Result from authStore.login():', result)
     
     if (result.success === true) {
-      console.log('✅ LOGIN BERHASIL! Redirecting to /dashboard...')
       localError.value = ''
-      router.push('/dashboard')
+      const role = result.data?.user?.role || authStore.userRole
+      
+      // Redirect berdasarkan role
+      if (role === 'super_admin') {
+        console.log('✅ LOGIN BERHASIL! Redirecting to /super-admin/dashboard...')
+        router.push('/super-admin/dashboard')
+      } else {
+        console.log('✅ LOGIN BERHASIL! Redirecting to /dashboard...')
+        router.push('/dashboard')
+      }
     } else {
       console.error('❌ LOGIN GAGAL:', result.error)
       localError.value = result.error || 'Email atau password salah'
