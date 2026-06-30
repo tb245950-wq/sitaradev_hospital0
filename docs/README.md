@@ -4,6 +4,11 @@ Selamat datang di dokumentasi lengkap **Sitaradev Hospital Management System** �
 
 ---
 
+## 🎨 [DESIGN.md](./DESIGN.md)
+Dokumen desain keseluruhan website — branding, color palette, layout, komponen UI, arsitektur, dan data flow.
+
+---
+
 ## 📁 Struktur Dokumentasi per Role
 
 ### 🔑 [Super Admin](./super-admin/README.md) — `role: super_admin`
