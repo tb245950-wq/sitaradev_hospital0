@@ -67,7 +67,12 @@ export const usePatientStore = defineStore('patients', () => {
       const response = await patientService.createPatient(data)
       return { success: true, data: response.data.data }
     } catch (err) {
-      error.value = err.response?.data?.message || 'Gagal menambah pasien'
+      const responseData = err.response?.data
+      // Laravel validation error (422) returns errors object
+      if (err.response?.status === 422 && responseData?.errors) {
+        return { success: false, error: responseData.message || 'Validasi gagal', validationErrors: responseData.errors }
+      }
+      error.value = responseData?.message || 'Gagal menambah pasien'
       return { success: false, error: error.value }
     } finally {
       loading.value = false

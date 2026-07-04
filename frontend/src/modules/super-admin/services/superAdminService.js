@@ -12,12 +12,9 @@ export const superAdminService = {
   },
 
   // Users
-  getUsers(role = null, status = null) {
+  getUsers(params = '') {
     let url = '/super-admin/users'
-    const params = []
-    if (role) params.push(`role=${role}`)
-    if (status) params.push(`status=${status}`)
-    if (params.length) url += '?' + params.join('&')
+    if (params) url += '?' + params
     return api.get(url)
   },
 
@@ -64,5 +61,23 @@ export const superAdminService = {
   // Failed Logins
   getFailedLogins(days = 7) {
     return api.get(`/super-admin/failed-logins?days=${days}`)
+  },
+
+  // Backup
+  getBackups() {
+    return api.get('/super-admin/backups')
+  },
+
+  createBackup() {
+    return api.post('/super-admin/backup')
+  },
+
+  // Settings
+  getSettings() {
+    return api.get('/super-admin/settings')
+  },
+
+  saveSettings(data) {
+    return api.post('/super-admin/settings', data)
   }
 }

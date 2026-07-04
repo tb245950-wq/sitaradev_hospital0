@@ -20,7 +20,7 @@
       </thead>
       <tbody>
         <tr v-for="poli in polis" :key="poli.id">
-          <td><strong>{{ poli.nama_poli }}</strong></td>
+          <td><strong>{{ poli.nama }}</strong></td>
           <td>{{ poli.deskripsi || '-' }}</td>
           <td><span :class="`status-${poli.status}`">{{ poli.status }}</span></td>
           <td>{{ formatDate(poli.created_at) }}</td>
@@ -39,12 +39,13 @@
       <div class="modal" @click.stop>
         <h2>{{ editingPoli ? 'Edit Poli' : 'Tambah Poli' }}</h2>
         
-        <input v-model="form.nama_poli" placeholder="Nama Poli" class="input">
+        <input v-model="form.kode" placeholder="Kode Poli (cth: umum)" class="input">
+        <input v-model="form.nama" placeholder="Nama Poli" class="input">
         <textarea v-model="form.deskripsi" placeholder="Deskripsi" class="input" rows="3"></textarea>
         <select v-model="form.status" class="input">
           <option value="">Pilih Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
+          <option value="aktif">Aktif</option>
+          <option value="nonaktif">Nonaktif</option>
         </select>
 
         <div class="modal-actions">
@@ -66,9 +67,10 @@ const error = ref(null)
 const showCreateModal = ref(false)
 const editingPoli = ref(null)
 const form = ref({
-  nama_poli: '',
+  kode: '',
+  nama: '',
   deskripsi: '',
-  status: 'active'
+  status: 'aktif'
 })
 
 onMounted(() => {
@@ -79,7 +81,7 @@ const fetchPolis = async () => {
   try {
     loading.value = true
     const res = await superAdminService.getPolis()
-    polis.value = res.data || []
+    polis.value = res.data?.data ?? res.data ?? []
   } catch (err) {
     error.value = 'Gagal memuat poli'
   } finally {
@@ -110,7 +112,7 @@ const savePoli = async () => {
 }
 
 const deletePoliConfirm = async (poli) => {
-  if (!confirm(`Hapus poli ${poli.nama_poli}?`)) return
+  if (!confirm(`Hapus poli ${poli.nama}?`)) return
   try {
     await superAdminService.deletePoli(poli.id)
     fetchPolis()

@@ -34,5 +34,15 @@ export const userService = {
   // Reset user password
   resetPassword(id, data) {
     return api.post(`/users/${id}/reset-password`, data)
+  },
+
+  // Daftar akun pasien
+  getPatientAccounts(params) {
+    return api.get('/patients-accounts', { params })
+  },
+
+  // Riwayat login/logout semua user
+  getLoginHistory(params) {
+    return api.get('/login-history', { params })
   }
 }

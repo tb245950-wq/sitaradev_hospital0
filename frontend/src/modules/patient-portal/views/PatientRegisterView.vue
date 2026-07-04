@@ -41,6 +41,22 @@
 
           <div class="form-row">
             <div class="form-group">
+              <label for="gender">Jenis Kelamin <span class="required">*</span></label>
+              <select id="gender" v-model="form.gender" required>
+                <option value="" disabled>Pilih jenis kelamin</option>
+                <option value="male">Laki-laki</option>
+                <option value="female">Perempuan</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="date_of_birth">Tanggal Lahir</label>
+              <input type="date" id="date_of_birth" v-model="form.date_of_birth" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
               <label for="password">Password <span class="required">*</span></label>
               <input type="password" id="password" v-model="form.password" placeholder="Min. 8 karakter" minlength="8" required />
             </div>
@@ -83,16 +99,30 @@ const form = ref({
   email: '',
   nik: '',
   phone: '',
+  gender: '',
+  date_of_birth: '',
   password: '',
   password_confirmation: ''
 })
 
 const handleRegister = async () => {
+  patientStore.error = null
+
+  if (!form.value.gender) {
+    patientStore.error = 'Jenis kelamin harus dipilih'
+    return
+  }
+
   if (form.value.password !== form.value.password_confirmation) {
     patientStore.error = 'Password dan konfirmasi tidak cocok'
     return
   }
-  
+
+  if (form.value.password.length < 6) {
+    patientStore.error = 'Password minimal 6 karakter'
+    return
+  }
+
   const result = await patientStore.register(form.value)
   if (result.success) {
     alert('Registrasi berhasil! Anda akan diarahkan ke dashboard.')
@@ -169,13 +199,16 @@ const handleRegister = async () => {
 .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
 .form-group label { font-weight: 600; color: #334155; font-size: 0.875rem; }
 .required { color: #ef4444; }
-.form-group input {
+.form-group input,
+.form-group select {
   padding: 0.75rem 1rem;
   border: 2px solid #e2e8f0;
   border-radius: 0.5rem;
   font-size: 1rem;
+  background: white;
 }
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
   outline: none;
   border-color: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);

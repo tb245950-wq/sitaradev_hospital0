@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  // Nama project di Cloudflare (harus cocok dengan nama di dashboard)
+  "name": "sitara",
+
+  "compatibility_date": "2026-07-04",
+
+  // Observability / logging
+  "observability": {
+    "enabled": true
+  },
+
+  // Assets = folder hasil build Vite (dist)
+  // SPA mode: semua route yang tidak ditemukan akan fallback ke index.html
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  },
+
+  // Deploy ke workers.dev subdomain secara otomatis
+  "workers_dev": true,
+
+  // Kompatibilitas Node.js untuk Cloudflare Workers
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}

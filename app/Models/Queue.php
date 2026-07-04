@@ -18,16 +18,13 @@ class Queue extends Model
     }
 
     protected $fillable = [
+        // Standard fields (Indonesian naming convention)
         'nomor_antrian',
-        'queue_number',
         'id_pasien',
-        'patient_id',
         'id_pengguna',
         'jenis_layanan',
-        'type',
         'status',
         'prioritas',
-        'priority',
         'poli',
         'doctor_id',
         'booked_by',
@@ -72,7 +69,7 @@ class Queue extends Model
 
     public function scopeByPriority($query, $priority)
     {
-        return $query->where('priority', $priority);
+        return $query->where('prioritas', $priority); // FIXED: use 'prioritas' not 'priority'
     }
 
     // HELPER

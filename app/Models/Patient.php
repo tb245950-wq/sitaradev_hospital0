@@ -21,6 +21,7 @@ class Patient extends Model
         'user_id',
         'nrm',
         'nik',
+        'nik_hash',
         'nama_lengkap',
         'nama_panggilan',
         'tanggal_lahir',
@@ -30,32 +31,54 @@ class Patient extends Model
         'nama_wali',
         'hubungan_wali',
         'riwayat_medis',
+        'ktp_photo',
+        'ktp_status',
+        'ktp_rejected_reason',
+        'ktp_verified_at',
+        'profile_photo',
     ];
 
     protected function casts(): array
     {
         return [
-            'tanggal_lahir' => 'date',
-            'created_at' => 'datetime',
-            'updated_at' => 'datetime',
-            'nik' => \App\Casts\EncryptedField::class,
-            'alamat' => \App\Casts\EncryptedField::class,
+            'tanggal_lahir'  => 'date',
+            'created_at'     => 'datetime',
+            'updated_at'     => 'datetime',
+            'ktp_verified_at'=> 'datetime',
+            'nik'            => \App\Casts\EncryptedField::class,
+            'alamat'         => \App\Casts\EncryptedField::class,
         ];
     }
 
     /**
-     * Auto-generate NRM saat creating
+     * Auto-generate NRM and nik_hash saat creating/updating
      */
     protected static function boot()
     {
         parent::boot();
         
+        // CREATING: Generate NRM dan nik_hash
         static::creating(function ($patient) {
             // Auto-generate NRM jika tidak ada
             if (empty($patient->nrm)) {
                 // Format: NRM-YYYYMMDD-XXXX
                 $patient->nrm = 'NRM-' . date('Ymd') . '-' . 
                     str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            }
+            
+            // Auto-generate nik_hash dari plaintext NIK
+            // IMPORTANT: nik_hash harus dibuat SEBELUM nik di-encrypt oleh EncryptedField cast
+            if (!empty($patient->nik) && empty($patient->nik_hash)) {
+                $patient->nik_hash = hash('sha256', $patient->nik);
+            }
+        });
+        
+        // UPDATING: Update nik_hash jika NIK berubah
+        static::updating(function ($patient) {
+            // Cek apakah NIK berubah (isDirty check)
+            if ($patient->isDirty('nik') && !empty($patient->nik)) {
+                // Hash plaintext NIK yang baru
+                $patient->nik_hash = hash('sha256', $patient->nik);
             }
         });
     }
@@ -102,6 +125,7 @@ class Patient extends Model
 
     /**
      * Get the masked NIK attribute
+     * Format: ****************6172 (sembunyikan semua kecuali 4 angka terakhir)
      */
     public function getMaskedNikAttribute(): string
     {
@@ -109,6 +133,9 @@ class Patient extends Model
         if (empty($nik)) {
             return '-';
         }
-        return substr($nik, 0, 4) . '***********';
+        $len   = strlen($nik);
+        $last4 = substr($nik, -4);
+        $stars = str_repeat('*', max($len - 4, 12));
+        return $stars . $last4;
     }
 }

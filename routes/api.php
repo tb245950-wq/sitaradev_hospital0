@@ -72,12 +72,40 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/polis', [PoliController::class, 'store']);
         Route::put('/polis/{poli}', [PoliController::class, 'update']);
         Route::delete('/polis/{poli}', [PoliController::class, 'destroy']);
+
+        // Backup
+        Route::get('/backups', [SuperAdminController::class, 'getBackups']);
+        Route::post('/backup', [SuperAdminController::class, 'createBackup']);
+        Route::get('/backups/{filename}/download', [SuperAdminController::class, 'downloadBackup']);
+        Route::get('/export/csv', [SuperAdminController::class, 'exportToCSV']);
+
+        // Settings
+        Route::get('/settings', [SuperAdminController::class, 'getSettings']);
+        Route::post('/settings', [SuperAdminController::class, 'saveSettings']);
     });
     
     // Poli — READ ONLY untuk staff (admin, dokter, terapis)
     Route::middleware('role:admin,dokter,terapis')->get('/polis', [PoliController::class, 'index']);
 
-    // HAPUS: /admin/users - User management dipindah ke /super-admin/users
+    // ============================================
+    // ADMIN KLINIK: User Management (dokter, terapis)
+    // Admin klinik bisa kelola akun dokter & terapis (bukan super_admin)
+    // ============================================
+    Route::middleware('role:admin')->prefix('users')->group(function () {
+        Route::get('/',                         [UserManagementController::class, 'index']);
+        Route::post('/',                        [UserManagementController::class, 'store']);
+        Route::get('/{user}',                   [UserManagementController::class, 'show']);
+        Route::put('/{user}',                   [UserManagementController::class, 'update']);
+        Route::delete('/{user}',                [UserManagementController::class, 'destroy']);
+        Route::patch('/{user}/status',          [UserManagementController::class, 'updateStatus']);
+        Route::post('/{user}/reset-password',   [UserManagementController::class, 'resetPassword']);
+    });
+
+    // Admin: daftar pasien + riwayat login (admin only)
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/patients-accounts',  [UserManagementController::class, 'getPatients']);
+        Route::get('/login-history',      [UserManagementController::class, 'getLoginHistory']);
+    });
     
     // Patients management (staff only)
     Route::middleware('role:admin,dokter,terapis')->prefix('patients')->group(function () {
@@ -86,6 +114,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{patient}', [PatientController::class, 'show']);
         Route::put('/{patient}', [PatientController::class, 'update']);
         Route::delete('/{patient}', [PatientController::class, 'destroy']);
+        Route::get('/{patient}/latest-assessment', [PatientController::class, 'latestAssessment']);
+        Route::get('/{patient}/progress-stats', [PatientController::class, 'progressStats']);
     });
     
     // Queues (admin, dokter, terapis — semua staff)
@@ -96,6 +126,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{queue}', [QueueController::class, 'update']);
         Route::delete('/{queue}', [QueueController::class, 'destroy']);
         Route::post('/call-next', [QueueController::class, 'callNext']);
+        // Endpoint khusus selesaikan antrian (dokter & terapis bisa akses)
+        Route::post('/{queue}/complete', [QueueController::class, 'completeQueue']);
     });
     
     // Assessments (admin, dokter)
@@ -111,7 +143,19 @@ Route::middleware('auth:sanctum')->group(function () {
     // Therapies & Monitoring (admin, dokter, terapis)
     Route::middleware('role:admin,dokter,terapis')->group(function () {
         Route::apiResource('therapies', TherapyController::class);
-        Route::apiResource('monitoring', MonitoringController::class);
+        Route::apiResource('monitorings', MonitoringController::class);
+    });
+
+    // Reports (admin, dokter bisa akses daily; semua staff bisa dashboard)
+    Route::prefix('reports')->group(function () {
+        Route::middleware('role:admin,dokter')->group(function () {
+            Route::get('/daily', [\App\Http\Controllers\Api\ReportController::class, 'daily']);
+            Route::get('/monthly', [\App\Http\Controllers\Api\ReportController::class, 'monthly']);
+            Route::get('/patient/{id_pasien}', [\App\Http\Controllers\Api\ReportController::class, 'patientReport']);
+        });
+        Route::middleware('role:admin,dokter,terapis')->group(function () {
+            Route::get('/dashboard', [\App\Http\Controllers\Api\ReportController::class, 'dashboard']);
+        });
     });
     
     // ============================================
@@ -126,6 +170,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard', [PatientAuthController::class, 'dashboard']);
         Route::get('/profile', [PatientAuthController::class, 'profile']);
         Route::put('/profile', [PatientAuthController::class, 'updateProfile']);
+        Route::get('/profile-status', [PatientAuthController::class, 'profileStatus']);
+
+        // Upload foto KTP & profil
+        Route::post('/upload/ktp',    [\App\Http\Controllers\Api\PatientUploadController::class, 'uploadKtp']);
+        Route::post('/upload/avatar', [\App\Http\Controllers\Api\PatientUploadController::class, 'uploadAvatar']);
+        Route::get('/ktp-status',     [\App\Http\Controllers\Api\PatientUploadController::class, 'ktpStatus']);
         Route::post('/booking', [PatientAuthController::class, 'booking']);
         Route::get('/doctors', [PatientAuthController::class, 'getDoctors']);
         Route::get('/polis', [PoliController::class, 'aktif']);

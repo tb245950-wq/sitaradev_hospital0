@@ -264,4 +264,103 @@ class UserManagementController extends Controller
             'message' => 'User berhasil dihapus'
         ], 200);
     }
+
+    /**
+     * Get daftar pasien terdaftar (Admin only)
+     * Menampilkan pasien beserta info user account mereka
+     */
+    public function getPatients(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+        }
+
+        $search = $request->input('search', '');
+
+        $query = \App\Models\Patient::with('user:id,email,created_at,last_login_at')
+            ->orderBy('created_at', 'desc');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_lengkap', 'ILIKE', "%{$search}%")
+                  ->orWhere('nrm', 'ILIKE', "%{$search}%");
+            });
+        }
+
+        $patients = $query->paginate(20);
+
+        $data = $patients->map(function ($p) {
+            return [
+                'id'           => $p->id_pasien,
+                'nrm'          => $p->nrm,
+                'nama'         => $p->nama_lengkap,
+                'jenis_kelamin'=> $p->jenis_kelamin,
+                'tanggal_lahir'=> $p->tanggal_lahir?->format('Y-m-d'),
+                'nama_wali'    => $p->nama_wali,
+                'created_at'   => $p->created_at,
+                // Info akun portal pasien
+                'akun' => $p->user ? [
+                    'email'          => $p->user->email,
+                    'password_info'  => 'password123', // default password untuk pasien baru
+                    'last_login_at'  => $p->user->last_login_at,
+                    'created_at'     => $p->user->created_at,
+                ] : null,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data'    => $data,
+            'meta'    => [
+                'current_page' => $patients->currentPage(),
+                'last_page'    => $patients->lastPage(),
+                'total'        => $patients->total(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get riwayat login/logout semua user (Admin only)
+     */
+    public function getLoginHistory(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+        }
+
+        $limit  = $request->input('limit', 50);
+        $search = $request->input('search', '');
+
+        $query = \App\Models\LoginHistory::with('user:id,name,email,role')
+            ->orderByDesc('login_at');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('email', 'ILIKE', "%{$search}%")
+                  ->orWhereHas('user', fn($u) => $u->where('name', 'ILIKE', "%{$search}%"));
+            });
+        }
+
+        $logs = $query->limit($limit)->get()->map(function ($log) {
+            return [
+                'id'             => $log->id,
+                'email'          => $log->email,
+                'user'           => $log->user ? [
+                    'name' => $log->user->name,
+                    'role' => $log->user->role,
+                ] : null,
+                'ip_address'     => $log->ip_address,
+                'browser'        => $log->browser,
+                'os'             => $log->os,
+                'success'        => $log->success,
+                'failure_reason' => $log->failure_reason,
+                'login_at'       => $log->login_at,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data'    => $logs,
+        ]);
+    }
 }

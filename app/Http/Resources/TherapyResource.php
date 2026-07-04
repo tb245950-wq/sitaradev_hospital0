@@ -24,9 +24,14 @@ class TherapyResource extends JsonResource
             ],
             'status' => $this->status,
             'pasien' => [
-                'id' => $this->patient->id_pasien,
-                'nama' => $this->patient->nama_lengkap,
-                'nrm' => $this->patient->nrm,
+                'id'         => $this->patient->id_pasien,
+                'nama'       => $this->patient->nama_lengkap,
+                'nrm'        => $this->patient->nrm,
+                'tanggal_lahir' => $this->patient->tanggal_lahir?->format('Y-m-d'),
+                'nama_wali'  => $this->patient->nama_wali,
+                // NIK penuh hanya dikirim saat terapi sedang berjalan (sesi aktif)
+                'nik'        => ($this->status === 'berjalan') ? $this->patient->nik : null,
+                'masked_nik' => $this->patient->masked_nik,
             ],
             'terapis' => [
                 'id' => $this->terapis->id,

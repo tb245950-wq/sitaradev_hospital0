@@ -48,9 +48,9 @@ export const useAuthStore = defineStore('auth', () => {
       },
       { 
         name: 'Antrian', 
-        path: '/queue', 
+        path: '/queues', 
         icon: '🎫', 
-        roles: ['admin', 'dokter'] 
+        roles: ['admin', 'dokter', 'terapis'] 
       },
       { 
         name: 'Assessment', 

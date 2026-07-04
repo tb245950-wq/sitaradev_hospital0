@@ -25,7 +25,9 @@ export default defineConfig({
     }
   },
   build: {
-    sourcemap: true,
+    // Sourcemap hanya aktif saat development, dimatikan di production
+    // agar kode sumber tidak terekspos ke publik
+    sourcemap: process.env.NODE_ENV !== 'production',
     rollupOptions: {
       output: {
         manualChunks(id) {

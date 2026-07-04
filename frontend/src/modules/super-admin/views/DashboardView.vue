@@ -12,7 +12,7 @@
 
     <!-- Error State -->
     <div v-else-if="error" class="error-state">
-      <p>⚠️ {{ error }}</p>
+      <p>{{ error }}</p>
       <button @click="loadDashboard" class="btn-retry">Coba Lagi</button>
     </div>
 
@@ -21,7 +21,6 @@
       <!-- Stats Grid -->
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-icon">👥</div>
           <div class="stat-info">
             <div class="stat-value">{{ stats.totalUsers ?? '-' }}</div>
             <div class="stat-label">Total Pengguna</div>
@@ -29,7 +28,6 @@
         </div>
 
         <div class="stat-card">
-          <div class="stat-icon">✅</div>
           <div class="stat-info">
             <div class="stat-value">{{ stats.activeUsers ?? '-' }}</div>
             <div class="stat-label">Pengguna Aktif</div>
@@ -37,7 +35,6 @@
         </div>
 
         <div class="stat-card">
-          <div class="stat-icon">⏳</div>
           <div class="stat-info">
             <div class="stat-value">{{ stats.inactiveUsers ?? '-' }}</div>
             <div class="stat-label">Menunggu Aktivasi</div>
@@ -45,7 +42,6 @@
         </div>
 
         <div class="stat-card">
-          <div class="stat-icon">🏥</div>
           <div class="stat-info">
             <div class="stat-value">{{ stats.totalPolis ?? '-' }}</div>
             <div class="stat-label">Total Poli</div>
@@ -58,25 +54,21 @@
         <h2>Aksi Cepat</h2>
         <div class="actions-grid">
           <router-link to="/super-admin/users" class="action-card">
-            <div class="action-icon">👤</div>
             <div class="action-label">Manajemen User</div>
             <div class="action-desc">Kelola akun staff & aktivasi</div>
           </router-link>
 
           <router-link to="/super-admin/polis" class="action-card">
-            <div class="action-icon">🏥</div>
             <div class="action-label">Manajemen Poli</div>
             <div class="action-desc">Tambah & kelola poli klinik</div>
           </router-link>
 
           <router-link to="/super-admin/audit-logs" class="action-card">
-            <div class="action-icon">📋</div>
             <div class="action-label">Log Aktivitas</div>
             <div class="action-desc">Monitor aktivitas sistem</div>
           </router-link>
 
           <router-link to="/super-admin/settings" class="action-card">
-            <div class="action-icon">⚙️</div>
             <div class="action-label">Pengaturan</div>
             <div class="action-desc">Konfigurasi sistem</div>
           </router-link>
@@ -219,10 +211,6 @@ onMounted(() => {
   border: 1px solid #e2e8f0;
 }
 
-.stat-icon {
-  font-size: 2rem;
-}
-
 .stat-value {
   font-size: 1.75rem;
   font-weight: 700;
@@ -270,11 +258,6 @@ onMounted(() => {
   border-color: #3b82f6;
   box-shadow: 0 4px 12px rgba(59,130,246,0.15);
   transform: translateY(-2px);
-}
-
-.action-icon {
-  font-size: 2rem;
-  margin-bottom: 0.75rem;
 }
 
 .action-label {

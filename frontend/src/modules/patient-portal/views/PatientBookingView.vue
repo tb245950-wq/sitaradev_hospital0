@@ -65,13 +65,28 @@
 
       <!-- TAB: BOOKING -->
       <div v-show="activeTab === 'booking'" class="booking-card">
-        <form @submit.prevent="handleBooking" class="booking-form">
+        <!-- Banner profil belum lengkap -->
+        <div v-if="!checkingProfile && !profileComplete" class="profile-guard-banner">
+          <div class="guard-icon">🔒</div>
+          <div class="guard-content">
+            <strong>Profil belum lengkap</strong>
+            <p>Anda harus melengkapi data berikut sebelum bisa booking:</p>
+            <ul>
+              <li v-for="field in profileMissing" :key="field">{{ field }}</li>
+            </ul>
+          </div>
+          <button @click="$router.push('/pasien/profil')" class="btn-go-profile">
+            Lengkapi Profil →
+          </button>
+        </div>
+
+        <form @submit.prevent="handleBooking" class="booking-form" :class="{ 'form-disabled': !profileComplete }">
           <!-- Pilih Poli -->
           <div class="form-section">
             <h3 class="section-title">Pilih Poli</h3>
             <div class="poli-grid">
               <label v-for="poli in poliOptions" :key="poli.value" class="poli-option" :class="{ selected: form.poli === poli.value }">
-                <input type="radio" :value="poli.value" v-model="form.poli" required />
+                <input type="radio" :value="poli.value" v-model="form.poli" required :disabled="!profileComplete" />
                 <div class="poli-name">{{ poli.label }}</div>
                 <div class="poli-desc">{{ poli.description }}</div>
               </label>
@@ -280,6 +295,11 @@ const doctors = ref([])
 const activeQueue = ref(null)
 const queueHistory = ref([])
 
+// ── Profile completion guard ──────────────────────────────────────────
+const profileComplete  = ref(true)
+const profileMissing   = ref([])
+const checkingProfile  = ref(true)
+
 const form = ref({
   poli: '',
   doctor_id: '',
@@ -402,6 +422,12 @@ const fetchDoctors = async () => {
 }
 
 const handleBooking = async () => {
+  // Cegah booking jika profil belum lengkap
+  if (!profileComplete.value) {
+    errorMessage.value = 'Profil belum lengkap. Harap isi: ' + profileMissing.value.join(', ')
+    return
+  }
+
   loading.value = true
   errorMessage.value = ''
   bookingSuccess.value = false
@@ -432,13 +458,32 @@ const handleBooking = async () => {
       errorMessage.value = response.message || 'Gagal booking antrian'
     }
   } catch (error) {
-    errorMessage.value = error.response?.data?.message || 'Terjadi kesalahan'
+    const respData = error.response?.data
+    // Jika backend return profil belum lengkap (422)
+    if (respData?.missing) {
+      profileComplete.value = false
+      profileMissing.value  = respData.missing
+      errorMessage.value    = respData.message || 'Profil belum lengkap'
+    } else {
+      errorMessage.value = respData?.message || 'Terjadi kesalahan'
+    }
   } finally {
     loading.value = false
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Cek kelengkapan profil dulu
+  try {
+    const result = await patientService.getProfileStatus()
+    if (result.success) {
+      profileComplete.value = result.data?.is_complete ?? true
+      profileMissing.value  = result.data?.missing     ?? []
+    }
+  } finally {
+    checkingProfile.value = false
+  }
+
   fetchDoctors()
   fetchPolis()
   loadQueue()
@@ -496,6 +541,40 @@ onMounted(() => {
 .content-header p { color: #64748b; margin: 0; }
 
 .booking-card { background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
+/* ── Profile Guard Banner ── */
+.profile-guard-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: #fef3c7;
+  border: 1.5px solid #f59e0b;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.guard-icon { font-size: 1.75rem; flex-shrink: 0; }
+.guard-content { flex: 1; }
+.guard-content strong { display: block; color: #92400e; font-size: 1rem; margin-bottom: 0.25rem; }
+.guard-content p { color: #78350f; font-size: 0.875rem; margin: 0 0 0.5rem; }
+.guard-content ul { margin: 0; padding-left: 1.25rem; }
+.guard-content ul li { color: #78350f; font-size: 0.875rem; line-height: 1.6; }
+.btn-go-profile {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-size: 0.875rem;
+}
+.btn-go-profile:hover { background: #d97706; }
+
+/* Form disabled saat profil belum lengkap */
+.form-disabled { opacity: 0.5; pointer-events: none; user-select: none; }
 .booking-form { display: flex; flex-direction: column; gap: 2rem; }
 
 .section-title {

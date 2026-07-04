@@ -74,4 +74,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Report::class, 'id_pengguna', 'id');
     }
+
+    // Relasi ke Patient (untuk user dengan role pasien)
+    public function patient()
+    {
+        return $this->hasOne(Patient::class, 'user_id', 'id');
+    }
 }

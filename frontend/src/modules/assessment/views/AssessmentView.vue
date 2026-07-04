@@ -40,6 +40,18 @@
         <h3 class="card-title">Informasi Pasien</h3>
         <div class="info-row"><span class="label">Nama</span><span>{{ assessment.pasien?.nama }}</span></div>
         <div class="info-row"><span class="label">NRM</span><span>{{ assessment.pasien?.nrm }}</span></div>
+        <div class="info-row"><span class="label">Tgl. Lahir</span><span>{{ formatDate(assessment.pasien?.tanggal_lahir) }}</span></div>
+        <div class="info-row"><span class="label">Orang Tua</span><span>{{ assessment.pasien?.nama_wali || '-' }}</span></div>
+        <!-- NIK penuh hanya tampil saat assessment aktif (draft) -->
+        <div v-if="assessment.pasien?.nik" class="info-row nik-row">
+          <span class="label">NIK</span>
+          <span class="nik-full-value">{{ assessment.pasien.nik }}</span>
+        </div>
+        <!-- NIK masked saat assessment sudah final -->
+        <div v-else class="info-row">
+          <span class="label">NIK</span>
+          <span class="nik-masked-value">{{ assessment.pasien?.masked_nik || '-' }}</span>
+        </div>
         <div class="info-row"><span class="label">Dokter</span><span>{{ assessment.dokter?.nama }}</span></div>
         <div class="info-row"><span class="label">Tanggal</span><span>{{ formatDate(assessment.tanggal) }}</span></div>
         <div class="info-row">
@@ -241,6 +253,29 @@ onMounted(async () => {
 
 .info-row { display: flex; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid #f8fafc; font-size: 0.9rem; }
 .info-row .label { width: 100px; color: #64748b; font-weight: 600; flex-shrink: 0; }
+
+/* NIK aktif (draft) — tampil penuh */
+.nik-row { background: #fefce8; border-radius: 0.375rem; padding: 0.5rem 0.5rem; margin: 0 -0.5rem; }
+.nik-full-value {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #78350f;
+  letter-spacing: 0.06em;
+  user-select: none;
+}
+/* NIK final — tampil masked */
+.nik-masked-value {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.25rem;
+  letter-spacing: 0.04em;
+  user-select: none;
+}
 
 .form-group { margin-bottom: 1rem; }
 .form-group label { display: block; font-size: 0.8125rem; font-weight: 600; color: #64748b; margin-bottom: 0.375rem; }

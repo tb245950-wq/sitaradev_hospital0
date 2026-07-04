@@ -27,6 +27,7 @@
       <div class="quick-links">
         <h3>Akses Cepat</h3>
         <div class="links-grid">
+          <router-link to="/queues" class="link-card">🎫 Antrian Pasien</router-link>
           <router-link to="/therapies" class="link-card">🧠 Program Terapi</router-link>
           <router-link to="/monitoring" class="link-card">📈 Monitoring</router-link>
           <router-link to="/patients" class="link-card">👥 Data Pasien</router-link>

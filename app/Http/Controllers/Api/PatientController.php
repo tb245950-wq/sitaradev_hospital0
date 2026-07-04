@@ -19,12 +19,14 @@ class PatientController extends Controller
         $query = Patient::query();
 
         // Logika Pencarian (Search)
+        // FIXED: Hapus search by NIK karena field terenkripsi (tidak bisa di-LIKE query)
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('nama_lengkap', 'like', "%{$search}%")
-                  ->orWhere('nrm', 'like', "%{$search}%")
-                  ->orWhere('nik', 'like', "%{$search}%");
+                  ->orWhere('nrm', 'like', "%{$search}%");
+                // Removed: ->orWhere('nik', 'like', "%{$search}%")
+                // NIK menggunakan EncryptedField cast, tidak bisa dicari dengan LIKE
             });
         }
 
@@ -83,7 +85,21 @@ class PatientController extends Controller
 
         $validated = $request->validate([
             'nrm' => ['sometimes', 'string', 'max:50', Rule::unique('patients')->ignore($patient->id_pasien, 'id_pasien')],
-            'nik' => ['sometimes', 'string', 'max:20', Rule::unique('patients')->ignore($patient->id_pasien, 'id_pasien')],
+            'nik' => [
+                'sometimes',
+                'string',
+                'digits_between:16,20',
+                function ($attribute, $value, $fail) use ($patient) {
+                    // Check nik_hash uniqueness, excluding current patient
+                    $nikHash = hash('sha256', $value);
+                    $exists = Patient::where('nik_hash', $nikHash)
+                        ->where('id_pasien', '!=', $patient->id_pasien)
+                        ->exists();
+                    if ($exists) {
+                        $fail('NIK sudah terdaftar dalam sistem.');
+                    }
+                }
+            ],
             'nama_lengkap' => 'sometimes|string|max:255',
             'nama_panggilan' => 'nullable|string|max:255',
             'tanggal_lahir' => 'sometimes|date',
@@ -122,6 +138,66 @@ class PatientController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Data pasien berhasil dihapus.'
+        ], 200);
+    }
+
+    /**
+     * GET /api/patients/{id}/latest-assessment
+     * Mendapatkan assessment terbaru milik pasien
+     */
+    public function latestAssessment(Patient $patient)
+    {
+        $assessment = $patient->assessments()
+            ->orderBy('tanggal_assessment', 'desc')
+            ->first();
+
+        if (!$assessment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Belum ada assessment untuk pasien ini.'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => new \App\Http\Resources\AssessmentResource($assessment)
+        ], 200);
+    }
+
+    /**
+     * GET /api/patients/{id}/progress-stats
+     * Statistik perkembangan monitoring pasien
+     */
+    public function progressStats(Patient $patient)
+    {
+        $monitorings = \App\Models\TherapyMonitoring::where('id_pasien', $patient->id_pasien)
+            ->with('therapy:id_terapi,nama_terapi')
+            ->orderBy('tanggal_sesi', 'asc')
+            ->get();
+
+        if ($monitorings->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Belum ada data monitoring untuk pasien ini.'
+            ], 404);
+        }
+
+        $stats = [
+            'total_sesi'    => $monitorings->count(),
+            'rata_rata_skor' => round($monitorings->avg('progress_score'), 2),
+            'skor_tertinggi' => $monitorings->max('progress_score'),
+            'skor_terendah'  => $monitorings->min('progress_score'),
+            'perkembangan'  => $monitorings->map(fn($m) => [
+                'tanggal'     => $m->tanggal_sesi?->format('Y-m-d'),
+                'skor'        => $m->progress_score,
+                'kehadiran'   => $m->kehadiran,
+                'jenis_terapi'=> $m->therapy->nama_terapi ?? null,
+            ])->values(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $stats
         ], 200);
     }
 }

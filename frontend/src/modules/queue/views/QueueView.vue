@@ -53,72 +53,115 @@
       </div>
     </div>
 
-    <!-- Call Next Button -->
-    <div v-if="canManageQueue" class="call-next-section">
+    <!-- Call Next Button — hanya admin -->
+    <div v-if="canCallPatient" class="call-next-section">
       <button @click="callNextPatient" class="btn-call-next">Panggil Pasien Berikutnya</button>
     </div>
 
-    <!-- Queue Status Grid -->
+    <!-- Queue Table -->
     <div v-if="queueStore.stats.waiting?.length || queueStore.stats.calling?.length || queueStore.stats.completed?.length" class="status-section">
-      <h2 class="section-title">Status Antrian</h2>
-      
-      <!-- Waiting List -->
+      <h2 class="section-title">Status Antrian Hari Ini</h2>
+
+      <!-- ── MENUNGGU ── -->
       <div v-if="queueStore.stats.waiting?.length" class="status-group">
         <h3 class="status-group-title">
           <span class="status-badge blue">Menunggu ({{ queueStore.stats.waiting_count }})</span>
         </h3>
-        <div class="patient-grid">
-          <div v-for="q in queueStore.stats.waiting" :key="q.id" class="patient-card">
-            <div class="patient-number">{{ q.nomor }}</div>
-            <div class="patient-name">{{ q.pasien?.nama }}</div>
-            <div class="patient-meta">NRM: {{ q.pasien?.nrm }}</div>
-            <div class="patient-priority" v-if="q.prioritas > 5">
-              <span class="priority-label">Prioritas Tinggi</span>
-            </div>
-          </div>
+        <div class="table-wrapper">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Nama Pasien</th>
+                <th>NRM</th>
+                <th>Prioritas</th>
+                <th v-if="canCallPatient || canCompleteQueue">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="q in queueStore.stats.waiting" :key="q.id">
+                <td><span class="queue-number">{{ q.nomor }}</span></td>
+                <td>{{ q.pasien?.nama || '-' }}</td>
+                <td class="text-muted">{{ q.pasien?.nrm || '-' }}</td>
+                <td>
+                  <span :class="['priority-badge', q.prioritas > 5 ? 'emergency' : q.prioritas > 2 ? 'urgent' : 'normal']">
+                    {{ q.prioritas > 5 ? 'EMERGENCY' : q.prioritas > 2 ? 'URGENT' : 'NORMAL' }}
+                  </span>
+                </td>
+                <td v-if="canCallPatient || canCompleteQueue" class="action-cell">
+                  <!-- Admin: bisa Panggil -->
+                  <button v-if="canCallPatient" @click="callPatient(q.id)" class="btn-action call">
+                    📢 Panggil
+                  </button>
+                  <!-- Dokter & Terapis: bisa langsung Selesai dari menunggu -->
+                  <button v-if="!canCallPatient && canCompleteQueue" @click="completeQueue(q.id)" class="btn-action complete">
+                    ✅ Selesai
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <!-- Calling List -->
+      <!-- ── DIPANGGIL ── -->
       <div v-if="queueStore.stats.calling?.length" class="status-group">
         <h3 class="status-group-title">
           <span class="status-badge yellow">Dipanggil ({{ queueStore.stats.calling_count }})</span>
         </h3>
-        <div class="patient-grid">
-          <div v-for="q in queueStore.stats.calling" :key="q.id" class="patient-card calling">
-            <div class="patient-number">{{ q.nomor }}</div>
-            <div class="patient-name">{{ q.pasien?.nama }}</div>
-            <div class="patient-meta">NRM: {{ q.pasien?.nrm }}</div>
-          </div>
+        <div class="table-wrapper">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Nama Pasien</th>
+                <th>NRM</th>
+                <th>Waktu Panggil</th>
+                <th v-if="canCompleteQueue">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="q in queueStore.stats.calling" :key="q.id" class="row-calling">
+                <td><span class="queue-number calling">{{ q.nomor }}</span></td>
+                <td>{{ q.pasien?.nama || '-' }}</td>
+                <td class="text-muted">{{ q.pasien?.nrm || '-' }}</td>
+                <td class="text-muted">{{ formatTime(q.waktu_panggil) }}</td>
+                <td v-if="canCompleteQueue" class="action-cell">
+                  <!-- Tombol Selesai: admin, dokter, terapis -->
+                  <button @click="completeQueue(q.id)" class="btn-action complete">
+                    ✅ Selesai
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <!-- Completed List -->
+      <!-- ── SELESAI ── -->
       <div v-if="queueStore.stats.completed?.length" class="status-group">
         <h3 class="status-group-title">
           <span class="status-badge green">Selesai ({{ queueStore.stats.completed_count }})</span>
         </h3>
-        <div class="patient-grid">
-          <div v-for="q in queueStore.stats.completed" :key="q.id" class="patient-card completed">
-            <div class="patient-number">{{ q.nomor }}</div>
-            <div class="patient-name">{{ q.pasien?.nama }}</div>
-            <div class="patient-meta">NRM: {{ q.pasien?.nrm }}</div>
-            <div class="patient-time">Selesai: {{ formatTime(q.waktu_selesai) }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- High Priority List -->
-      <div v-if="queueStore.stats.high_priority?.length" class="status-group priority-group">
-        <h3 class="status-group-title">
-          <span class="status-badge red">Prioritas Tinggi ({{ queueStore.stats.high_priority_count }})</span>
-        </h3>
-        <div class="patient-grid">
-          <div v-for="q in queueStore.stats.high_priority" :key="q.id" class="patient-card priority">
-            <div class="patient-number">{{ q.nomor }}</div>
-            <div class="patient-name">{{ q.pasien?.nama }}</div>
-            <div class="patient-meta">NRM: {{ q.pasien?.nrm }}</div>
-          </div>
+        <div class="table-wrapper">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Nama Pasien</th>
+                <th>NRM</th>
+                <th>Waktu Selesai</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="q in queueStore.stats.completed" :key="q.id" class="row-done">
+                <td><span class="queue-number done">{{ q.nomor }}</span></td>
+                <td>{{ q.pasien?.nama || '-' }}</td>
+                <td class="text-muted">{{ q.pasien?.nrm || '-' }}</td>
+                <td class="text-muted">{{ formatTime(q.waktu_selesai) }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -264,7 +307,11 @@ const jenisLabel = {
 }
 
 // ── Computed ────────────────────────────────────────────────
-const canManageQueue = computed(() =>
+// Hanya admin yang bisa menambah antrian & memanggil pasien
+const canManageQueue  = computed(() => authStore.isAdmin)
+const canCallPatient  = computed(() => authStore.isAdmin)
+// Admin, dokter, dan terapis bisa menyelesaikan antrian
+const canCompleteQueue = computed(() =>
   authStore.isAdmin || authStore.isDokter || authStore.isTerapis
 )
 
@@ -392,8 +439,7 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
 .btn-back { padding: 0.5rem 1rem; background: transparent; border: 1px solid #e2e8f0; border-radius: 0.5rem; cursor: pointer; font-size: 0.875rem; color: #64748b; }
 .page-title { flex: 1; font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
 .btn-primary { padding: 0.625rem 1.25rem; background: #1e40af; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; }
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
-.stat-card { background: white; padding: 1.25rem; border-radius: 0.75rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #f1f5f9; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }.stat-card { background: white; padding: 1.25rem; border-radius: 0.75rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #f1f5f9; }
 .stat-card.warning { border-top: 4px solid #ef4444; }
 .stat-value { font-size: 2rem; font-weight: 700; color: #1e293b; margin-bottom: 0.25rem; }
 .stat-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600; }
@@ -534,7 +580,67 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
 .patient-time { font-size: 0.6875rem; color: #94a3b8; margin-top: auto; }
 .patient-priority { margin-top: auto; }
 .priority-label { display: inline-block; font-size: 0.625rem; font-weight: 700; color: #991b1b; background: #fecaca; padding: 0.125rem 0.375rem; border-radius: 9999px; }
+
+/* NIK penuh — hanya muncul di card dipanggil */
+.patient-nik-full {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+  padding-top: 0.375rem;
+  border-top: 1px dashed rgba(0,0,0,0.1);
+}
+.nik-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+.nik-value {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #78350f;
+  letter-spacing: 0.06em;
+  user-select: none;
+}
 .empty-state { text-align: center; padding: 3rem 2rem; background: white; border-radius: 0.75rem; border: 1px solid #f1f5f9; }
 .empty-state h3 { color: #1e293b; margin-bottom: 0.5rem; font-size: 1rem; }
 .empty-state p { color: #64748b; font-size: 0.875rem; margin-bottom: 1rem; }
+
+/* ── Tabel Antrian ─────────────────────────────── */
+.table-wrapper { overflow-x: auto; }
+.queue-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.queue-table thead tr { background: #f8fafc; }
+.queue-table th { padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: #475569; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+.queue-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; color: #1e293b; vertical-align: middle; }
+.queue-table tbody tr:hover { background: #f8fafc; }
+.row-calling td { background: #fffbeb; }
+.row-calling:hover td { background: #fef3c7 !important; }
+.row-done td { opacity: 0.7; }
+.text-muted { color: #64748b !important; font-size: 0.8125rem; }
+
+/* Nomor antrian */
+.queue-number { display: inline-block; font-weight: 700; font-size: 0.875rem; padding: 0.2rem 0.6rem; border-radius: 0.375rem; background: #eff6ff; color: #1e40af; }
+.queue-number.calling { background: #fffbeb; color: #92400e; }
+.queue-number.done { background: #f0fdf4; color: #166534; }
+
+/* Priority badge */
+.priority-badge { display: inline-block; font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 9999px; letter-spacing: 0.04em; }
+.priority-badge.normal { background: #f1f5f9; color: #475569; }
+.priority-badge.urgent { background: #fef3c7; color: #92400e; }
+.priority-badge.emergency { background: #fecaca; color: #991b1b; }
+
+/* Tombol aksi per-row */
+.action-cell { white-space: nowrap; }
+.btn-action { padding: 0.35rem 0.875rem; font-size: 0.8rem; font-weight: 600; border: none; border-radius: 0.375rem; cursor: pointer; transition: background 0.15s; }
+.btn-action.call { background: #dbeafe; color: #1e40af; }
+.btn-action.call:hover { background: #bfdbfe; }
+.btn-action.complete { background: #dcfce7; color: #166534; }
+.btn-action.complete:hover { background: #bbf7d0; }
 </style>

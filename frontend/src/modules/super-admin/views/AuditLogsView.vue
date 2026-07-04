@@ -60,8 +60,8 @@ const fetchLogs = async () => {
   try {
     loading.value = true
     const res = await superAdminService.getAuditLogs(10, currentPage.value)
-    logs.value = res.data || []
-    pagination.value = res.pagination || { total: 0, current_page: 1, per_page: 10 }
+    logs.value = res.data?.data ?? []
+    pagination.value = res.data?.pagination ?? { total: 0, current_page: 1, per_page: 10 }
   } catch (err) {
     error.value = 'Gagal memuat audit logs'
   } finally {

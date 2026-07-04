@@ -74,14 +74,16 @@ class QueueController extends Controller
             ], 409);
         }
 
-        // Generate nomor antrian
+        // Generate nomor antrian dengan prefix berdasarkan jenis_layanan
         $nomorAntrian = $this->generateNomorAntrian($validated['jenis_layanan']);
+        $prefix = $this->getNomorPrefix($validated['jenis_layanan']);
+        $nomorFormatted = $prefix . str_pad($nomorAntrian, 3, '0', STR_PAD_LEFT);
 
         $queue = Queue::create([
             'id_pasien' => $validated['id_pasien'],
             'id_pengguna' => Auth::id(),
             'nomor_antrian' => $nomorAntrian,
-            'queue_number' => 'Q' . str_pad($nomorAntrian, 3, '0', STR_PAD_LEFT),
+            'queue_number' => $nomorFormatted,
             'jenis_layanan' => $validated['jenis_layanan'],
             'status' => 'menunggu',
             'prioritas' => $validated['prioritas'] ?? 0,
@@ -279,17 +281,69 @@ public function destroy(Queue $queue)
 
     /**
      * Generate Nomor Antrian Otomatis
-     * Format: Q001, Q002, dst
+     * Format: A001, A002 untuk assessment; T001, T002 untuk terapi; dst
      */
     private function generateNomorAntrian(string $jenisLayanan): int
     {
         $today = today();
 
         $lastQueue = Queue::whereDate('waktu_daftar', $today)
+            ->where('jenis_layanan', $jenisLayanan)
             ->orderBy('nomor_antrian', 'desc')
             ->first();
 
         return $lastQueue ? $lastQueue->nomor_antrian + 1 : 1;
+    }
+
+    /**
+     * Get prefix untuk nomor antrian berdasarkan jenis layanan
+     */
+    private function getNomorPrefix(string $jenisLayanan): string
+    {
+        return match($jenisLayanan) {
+            'assessment' => 'A',
+            'terapi' => 'T',
+            'checkup' => 'C',
+            'konsultasi' => 'K',
+            default => 'Q',
+        };
+    }
+
+    /**
+     * POST /queues/{id}/complete
+     * Selesaikan antrian — bisa dilakukan oleh admin, dokter, dan terapis
+     */
+    public function completeQueue(Queue $queue)
+    {
+        // Validasi: hanya antrian yang sedang menunggu atau dipanggil yang bisa diselesaikan
+        if (!in_array($queue->status, ['menunggu', 'dipanggil'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Antrian sudah selesai atau tidak dapat diselesaikan.'
+            ], 422);
+        }
+
+        $queue->status = 'selesai';
+        $queue->waktu_selesai = now();
+        $queue->save();
+
+        // Log aktivitas
+        \App\Models\ActivityLog::create([
+            'id_pasien'     => $queue->id_pasien,
+            'id_pengguna'   => Auth::id(),
+            'activity_type' => 'Selesai Antrian',
+            'department'    => $queue->jenis_layanan === 'terapi' ? 'Terapi' : 'Umum',
+            'status'        => 'Selesai',
+            'description'   => 'Selesai: Q' . str_pad($queue->nomor_antrian, 3, '0', STR_PAD_LEFT)
+        ]);
+
+        $queue->load(['patient:id_pasien,nama_lengkap,nrm', 'user:id,name,role']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Antrian berhasil diselesaikan.',
+            'data'    => new \App\Http\Resources\QueueResource($queue)
+        ], 200);
     }
 
     /**

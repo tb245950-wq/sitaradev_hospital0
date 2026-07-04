@@ -1,9 +1,9 @@
 // services/patientService.js
-// PERBAIKAN: Hapus prefix /api/ karena baseURL axios sudah mengandung /api
 import apiClient from '../../../core/services/api'
 
 export const patientService = {
-  // Login
+  // ── Auth ──────────────────────────────────────────────────────────────
+
   async login(email, password) {
     try {
       const response = await apiClient.post('/pasien/login', { email, password })
@@ -21,17 +21,29 @@ export const patientService = {
     }
   },
 
-  // Register
   async register(patientData) {
     try {
       const response = await apiClient.post('/pasien/register', patientData)
-      return { success: true, data: response.data }
+      const data = response.data
+      if (data.data?.token) {
+        localStorage.setItem('patient_token', data.data.token)
+        localStorage.setItem('patient_user', JSON.stringify(data.data.user))
+        if (data.data.patient) {
+          localStorage.setItem('patient', JSON.stringify(data.data.patient))
+        }
+      }
+      return { success: true, data: data.data || data }
     } catch (error) {
-      return { success: false, error: error.response?.data?.message || 'Registrasi gagal' }
+      const responseData = error.response?.data
+      let errorMsg = responseData?.message || 'Registrasi gagal'
+      if (responseData?.errors) {
+        const fieldErrors = Object.values(responseData.errors).flat()
+        errorMsg = fieldErrors.join(', ')
+      }
+      return { success: false, error: errorMsg }
     }
   },
 
-  // Logout
   async logout() {
     try {
       await apiClient.post('/pasien/logout')
@@ -44,47 +56,38 @@ export const patientService = {
     }
   },
 
-  // Dashboard Stats
-  async getDashboardStats() {
+  // ── Profile ───────────────────────────────────────────────────────────
+
+  /**
+   * Ambil data profil lengkap dari server
+   */
+  async getProfile() {
     try {
-      const response = await apiClient.get('/pasien/dashboard/stats')
+      const response = await apiClient.get('/pasien/profile')
+      return { success: true, data: response.data?.data || response.data }
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Gagal mengambil profil' }
+    }
+  },
+
+  /**
+   * Cek apakah profil sudah lengkap (NIK, wali, dll)
+   * Return: { is_complete, missing: [], message }
+   */
+  async getProfileStatus() {
+    try {
+      const response = await apiClient.get('/pasien/profile-status')
       return { success: true, data: response.data }
     } catch (error) {
-      return { success: false, error: error.response?.data?.message || 'Gagal mengambil data dashboard' }
+      return { success: false, error: error.response?.data?.message || 'Gagal mengecek profil' }
     }
   },
 
-  // Antrian Saya
-  async getMyQueue() {
-    try {
-      const response = await apiClient.get('/pasien/antrian-saya')
-      return { success: true, data: response.data?.data || response.data }
-    } catch (error) {
-      return { success: false, error: error.response?.data?.message || 'Gagal mengambil antrian' }
-    }
-  },
-
-  // Jadwal Terapi
-  async getTherapySchedule() {
-    try {
-      const response = await apiClient.get('/pasien/jadwal-terapi')
-      return { success: true, data: response.data?.data || response.data }
-    } catch (error) {
-      return { success: false, error: error.response?.data?.message || 'Gagal mengambil jadwal' }
-    }
-  },
-
-  // Riwayat Medis
-  async getMedicalHistory() {
-    try {
-      const response = await apiClient.get('/pasien/riwayat-medis')
-      return { success: true, data: response.data?.data || response.data }
-    } catch (error) {
-      return { success: false, error: error.response?.data?.message || 'Gagal mengambil riwayat' }
-    }
-  },
-
-  // Update Profil
+  /**
+   * Update profil pasien
+   * Mendukung: name, nik, date_of_birth, gender, address,
+   *            parent_name, parent_phone, parent_relation
+   */
   async updateProfile(profileData) {
     try {
       const response = await apiClient.put('/pasien/profile', profileData)
@@ -94,14 +97,136 @@ export const patientService = {
       }
       return { success: true, data: updated }
     } catch (error) {
-      return { success: false, error: error.response?.data?.message || 'Gagal memperbarui profil' }
+      const responseData = error.response?.data
+      let errorMsg = responseData?.message || 'Gagal memperbarui profil'
+      if (responseData?.errors) {
+        const fieldErrors = Object.values(responseData.errors).flat()
+        errorMsg = fieldErrors.join(', ')
+      }
+      return { success: false, error: errorMsg }
     }
   },
 
-  // Get Dashboard (legacy)
+  // ── Dashboard ─────────────────────────────────────────────────────────
+
+  async getDashboardStats() {
+    try {
+      const response = await apiClient.get('/pasien/dashboard')
+      return { success: true, data: response.data?.data || response.data }
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Gagal mengambil data dashboard' }
+    }
+  },
+
   async getDashboard() {
     return this.getDashboardStats()
   },
+
+  // ── Antrian & Booking ─────────────────────────────────────────────────
+
+  async getMyQueue() {
+    try {
+      const response = await apiClient.get('/pasien/antrian-saya')
+      return { success: true, data: response.data?.data || response.data }
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Gagal mengambil antrian' }
+    }
+  },
+
+  async bookQueue(data) {
+    try {
+      const response = await apiClient.post('/pasien/booking', data)
+      return response.data
+    } catch (error) {
+      // Lempar error supaya BookingView bisa tangkap detail (termasuk missing fields)
+      throw error
+    }
+  },
+
+  // ── Jadwal & Riwayat ──────────────────────────────────────────────────
+
+  async getTherapySchedule() {
+    try {
+      const response = await apiClient.get('/pasien/jadwal-terapi')
+      return { success: true, data: response.data?.data || response.data }
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Gagal mengambil jadwal' }
+    }
+  },
+
+  async getMedicalHistory() {
+    try {
+      const response = await apiClient.get('/pasien/riwayat-medis')
+      return { success: true, data: response.data?.data || response.data }
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Gagal mengambil riwayat' }
+    }
+  },
+
+  // ── Referensi ─────────────────────────────────────────────────────────
+
+  async getDoctors() {
+    try {
+      const response = await apiClient.get('/pasien/doctors')
+      return response.data
+    } catch (error) {
+      return { success: false, data: [] }
+    }
+  },
+
+  async getPolis() {
+    try {
+      const response = await apiClient.get('/pasien/polis')
+      return response.data
+    } catch (error) {
+      return { success: false, data: [] }
+    }
+  },
+
+  // ── Upload ────────────────────────────────────────────────────────────
+
+  async uploadKtp(file) {
+    try {
+      const form = new FormData()
+      form.append('ktp_photo', file)
+      const response = await apiClient.post('/pasien/upload/ktp', form, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      return { success: true, data: response.data }
+    } catch (error) {
+      const msg = error.response?.data?.message
+        || Object.values(error.response?.data?.errors || {}).flat().join(', ')
+        || 'Gagal upload foto KTP'
+      return { success: false, error: msg }
+    }
+  },
+
+  async uploadAvatar(file) {
+    try {
+      const form = new FormData()
+      form.append('avatar', file)
+      const response = await apiClient.post('/pasien/upload/avatar', form, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      return { success: true, data: response.data }
+    } catch (error) {
+      const msg = error.response?.data?.message
+        || Object.values(error.response?.data?.errors || {}).flat().join(', ')
+        || 'Gagal upload foto profil'
+      return { success: false, error: msg }
+    }
+  },
+
+  async getKtpStatus() {
+    try {
+      const response = await apiClient.get('/pasien/ktp-status')
+      return { success: true, data: response.data?.data || response.data }
+    } catch (error) {
+      return { success: false, error: 'Gagal mengecek status KTP' }
+    }
+  },
+
+  // ── Storage helpers ───────────────────────────────────────────────────
 
   getStoredUser() {
     try {
@@ -133,23 +258,5 @@ export const patientService = {
       localStorage.removeItem('patient_token')
       return null
     }
-  },
-
-  // Daftar dokter & terapis aktif
-  async getDoctors() {
-    const response = await apiClient.get('/pasien/doctors')
-    return response.data
-  },
-
-  // Daftar poli aktif
-  async getPolis() {
-    const response = await apiClient.get('/pasien/polis')
-    return response.data
-  },
-
-  // Booking antrian
-  async bookQueue(data) {
-    const response = await apiClient.post('/pasien/booking', data)
-    return response.data
   },
 }

@@ -27,14 +27,18 @@ class SuperAdminController extends Controller
         $now = Carbon::now('Asia/Jakarta');
         $today = $now->copy()->startOfDay();
 
+        $staffQuery = User::where('role', '!=', 'pasien');
+
         return response()->json([
             'success' => true,
             'data' => [
-                'total_users' => User::where('role', '!=', 'pasien')->count(),
-                'active_users' => User::where('role', '!=', 'pasien')->where('status', 'active')->count(),
+                'total_users'         => (clone $staffQuery)->count(),
+                'active_users'        => (clone $staffQuery)->where('status', 'active')->count(),
+                'inactive_users'      => (clone $staffQuery)->where('status', 'inactive')->count(),
+                'total_polis'         => Poli::count(),
                 'failed_logins_today' => LoginHistory::where('success', false)->whereDate('login_at', $today)->count(),
-                'storage_used' => $this->getStorageUsage(),
-                'today_formatted' => $now->locale('id')->isoFormat('dddd, D MMMM YYYY'),
+                'storage_used'        => $this->getStorageUsage(),
+                'today_formatted'     => $now->locale('id')->isoFormat('dddd, D MMMM YYYY'),
             ],
         ]);
     }
@@ -127,7 +131,7 @@ class SuperAdminController extends Controller
     }
 
     /**
-     * User Management - Get all users
+     * User Management - Get all users (termasuk pasien)
      */
     public function getUsers(Request $request)
     {
@@ -139,7 +143,7 @@ class SuperAdminController extends Controller
         $role = $request->query('role');
         $status = $request->query('status');
 
-        $query = User::where('role', '!=', 'pasien');
+        $query = User::query();
 
         if ($role) {
             $query->where('role', $role);
@@ -148,14 +152,23 @@ class SuperAdminController extends Controller
             $query->where('status', $status);
         }
 
-        $users = $query->select('id', 'name', 'email', 'role', 'nip', 'status', 'last_login_at', 'created_at')
+        $perPage = (int) $request->query('per_page', 25);
+        $page    = (int) $request->query('page', 1);
+
+        $paginated = $query->select('id', 'name', 'email', 'role', 'nip', 'status', 'last_login_at', 'created_at')
             ->orderBy('role')
             ->orderBy('name')
-            ->get();
+            ->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
-            'success' => true,
-            'data' => $users,
+            'success'      => true,
+            'data'         => $paginated->items(),
+            'total'        => $paginated->total(),
+            'per_page'     => $paginated->perPage(),
+            'current_page' => $paginated->currentPage(),
+            'last_page'    => $paginated->lastPage(),
+            'from'         => $paginated->firstItem(),
+            'to'           => $paginated->lastItem(),
         ]);
     }
 
@@ -348,14 +361,427 @@ class SuperAdminController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $polis = Poli::select('id', 'nama_poli', 'deskripsi', 'status', 'created_at')
-            ->orderBy('nama_poli')
+        $polis = Poli::select('id', 'nama', 'deskripsi', 'status', 'created_at')
+            ->orderBy('nama')
             ->get();
 
         return response()->json([
             'success' => true,
             'data' => $polis,
         ]);
+    }
+
+    // =========================================================
+    // BACKUP
+    // =========================================================
+
+    /**
+     * GET /super-admin/backups — list backup files
+     */
+    public function getBackups(Request $request)
+    {
+        $user = $request->user();
+        if ($user->role !== 'super_admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $backupDir = storage_path('app/backups');
+        if (!is_dir($backupDir)) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        $files = collect(glob($backupDir . '/*.sql'))
+            ->map(fn($path) => [
+                'name'       => basename($path),
+                'size'       => filesize($path),
+                'created_at' => date('Y-m-d H:i:s', filemtime($path)),
+            ])
+            ->sortByDesc('created_at')
+            ->values();
+
+        return response()->json(['success' => true, 'data' => $files]);
+    }
+
+    /**
+     * POST /super-admin/backup — create new backup
+     */
+    public function createBackup(Request $request)
+    {
+        $user = $request->user();
+        if ($user->role !== 'super_admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $backupDir = storage_path('app/backups');
+        if (!is_dir($backupDir)) {
+            mkdir($backupDir, 0755, true);
+        }
+
+        $filename  = 'backup_' . now()->format('Y-m-d_His') . '.sql';
+        $filepath  = $backupDir . '/' . $filename;
+
+        try {
+            // Ambil konfigurasi DB
+            $dbConfig = config('database.connections.' . config('database.default'));
+
+            if ($dbConfig['driver'] === 'pgsql') {
+                $host     = $dbConfig['host'];
+                $port     = $dbConfig['port'] ?? 5432;
+                $dbname   = $dbConfig['database'];
+                $username = $dbConfig['username'];
+                $password = $dbConfig['password'];
+
+                // Set PGPASSWORD agar pg_dump tidak minta password interaktif
+                $env     = "PGPASSWORD=" . escapeshellarg($password);
+                $command = "$env pg_dump -h " . escapeshellarg($host)
+                    . " -p " . intval($port)
+                    . " -U " . escapeshellarg($username)
+                    . " " . escapeshellarg($dbname)
+                    . " > " . escapeshellarg($filepath)
+                    . " 2>&1";
+
+                exec($command, $output, $returnCode);
+
+            } elseif ($dbConfig['driver'] === 'mysql') {
+                $host     = $dbConfig['host'];
+                $port     = $dbConfig['port'] ?? 3306;
+                $dbname   = $dbConfig['database'];
+                $username = $dbConfig['username'];
+                $password = $dbConfig['password'];
+
+                $command = "mysqldump -h " . escapeshellarg($host)
+                    . " -P " . intval($port)
+                    . " -u " . escapeshellarg($username)
+                    . " -p" . escapeshellarg($password)
+                    . " " . escapeshellarg($dbname)
+                    . " > " . escapeshellarg($filepath)
+                    . " 2>&1";
+
+                exec($command, $output, $returnCode);
+
+            } elseif ($dbConfig['driver'] === 'sqlite') {
+                $source = $dbConfig['database'];
+                copy($source, $filepath . '.db');
+                $filepath = $filepath . '.db';
+                $filename = $filename . '.db';
+                $returnCode = 0;
+            } else {
+                return response()->json(['success' => false, 'message' => 'Driver database tidak didukung untuk backup otomatis.'], 422);
+            }
+
+            if (isset($returnCode) && $returnCode !== 0) {
+                return response()->json(['success' => false, 'message' => 'Backup gagal. Pastikan pg_dump/mysqldump tersedia di server.'], 500);
+            }
+
+            // Catat ke audit log
+            SystemAuditLog::create([
+                'user_id'     => $user->id,
+                'module'      => 'backup',
+                'action'      => 'create',
+                'description' => "Backup database dibuat: {$filename}",
+                'ip_address'  => $request->ip(),
+                'status'      => 'success',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Backup berhasil dibuat',
+                'data'    => [
+                    'name'       => $filename,
+                    'size'       => file_exists($filepath) ? filesize($filepath) : 0,
+                    'created_at' => now()->format('Y-m-d H:i:s'),
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Backup failed: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Backup gagal: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // =========================================================
+    // SETTINGS
+    // =========================================================
+
+    /** File path tempat settings disimpan */
+    private function settingsPath(): string
+    {
+        return storage_path('app/system_settings.json');
+    }
+
+    /**
+     * GET /super-admin/settings — ambil pengaturan sistem
+     */
+    public function getSettings(Request $request)
+    {
+        $user = $request->user();
+        if ($user->role !== 'super_admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $defaults = [
+            'clinic_name'      => config('app.name', 'SITARA'),
+            'clinic_email'     => '',
+            'clinic_phone'     => '',
+            'clinic_address'   => '',
+            'smtp_host'        => config('mail.mailers.smtp.host', ''),
+            'smtp_port'        => config('mail.mailers.smtp.port', 587),
+            'smtp_email'       => config('mail.from.address', ''),
+            'session_timeout'  => 30,
+            'require_2fa'      => false,
+        ];
+
+        $path = $this->settingsPath();
+        if (file_exists($path)) {
+            $saved    = json_decode(file_get_contents($path), true) ?? [];
+            $settings = array_merge($defaults, $saved);
+        } else {
+            $settings = $defaults;
+        }
+
+        return response()->json(['success' => true, 'data' => $settings]);
+    }
+
+    /**
+     * POST /super-admin/settings — simpan pengaturan sistem
+     */
+    public function saveSettings(Request $request)
+    {
+        $user = $request->user();
+        if ($user->role !== 'super_admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'clinic_name'     => 'sometimes|string|max:255',
+            'clinic_email'    => 'sometimes|nullable|email',
+            'clinic_phone'    => 'sometimes|nullable|string|max:50',
+            'clinic_address'  => 'sometimes|nullable|string|max:500',
+            'smtp_host'       => 'sometimes|nullable|string|max:255',
+            'smtp_port'       => 'sometimes|nullable|integer|min:1|max:65535',
+            'smtp_email'      => 'sometimes|nullable|email',
+            'session_timeout' => 'sometimes|nullable|integer|min:5|max:1440',
+            'require_2fa'     => 'sometimes|boolean',
+        ]);
+
+        $path = $this->settingsPath();
+
+        // Merge dengan settings yang sudah ada
+        $existing = file_exists($path)
+            ? (json_decode(file_get_contents($path), true) ?? [])
+            : [];
+
+        $newSettings = array_merge($existing, $validated);
+
+        file_put_contents($path, json_encode($newSettings, JSON_PRETTY_PRINT));
+
+        SystemAuditLog::create([
+            'user_id'     => $user->id,
+            'module'      => 'settings',
+            'action'      => 'update',
+            'description' => 'Pengaturan sistem diperbarui',
+            'ip_address'  => $request->ip(),
+            'new_values'  => $validated,
+            'status'      => 'success',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pengaturan berhasil disimpan',
+            'data'    => $newSettings,
+        ]);
+    }
+
+    /**
+     * GET /super-admin/backups/{filename}/download — download backup file
+     */
+    public function downloadBackup(Request $request, $filename)
+    {
+        $user = $request->user();
+        if ($user->role !== 'super_admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $backupDir = storage_path('app/backups');
+        $filepath = $backupDir . '/' . basename($filename); // Prevent path traversal
+
+        // Validasi file ada dan berformat .sql
+        if (!file_exists($filepath) || !str_ends_with($filepath, '.sql')) {
+            return response()->json(['error' => 'File not found'], 404);
+        }
+
+        // Log audit
+        SystemAuditLog::create([
+            'user_id'     => $user->id,
+            'module'      => 'backup',
+            'action'      => 'download',
+            'description' => "Downloaded backup: {$filename}",
+            'ip_address'  => $request->ip(),
+            'status'      => 'success',
+        ]);
+
+        // Download file
+        return response()->download($filepath, $filename, [
+            'Content-Type' => 'application/sql',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
+    /**
+     * GET /super-admin/export/csv — export semua data ke CSV
+     */
+    public function exportToCSV(Request $request)
+    {
+        $user = $request->user();
+        if ($user->role !== 'super_admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        try {
+            $exportDir = storage_path('app/exports');
+            if (!is_dir($exportDir)) {
+                mkdir($exportDir, 0755, true);
+            }
+
+            $timestamp = now()->format('Y-m-d_His');
+            $zipFile = $exportDir . '/export_' . $timestamp . '.zip';
+
+            // Buat ZIP file
+            $zip = new \ZipArchive();
+            if ($zip->open($zipFile, \ZipArchive::CREATE) !== true) {
+                return response()->json(['error' => 'Failed to create ZIP file'], 500);
+            }
+
+            // 1. EXPORT USERS (Non-pasien)
+            $users = User::where('role', '!=', 'pasien')
+                ->get(['id', 'name', 'email', 'role', 'nip', 'status', 'created_at']);
+            $usersCSV = $this->generateCSV('Users (Staff)', [
+                ['ID', 'Nama', 'Email', 'Role', 'NIP', 'Status', 'Dibuat'],
+            ], $users->map(fn($u) => [
+                $u->id, $u->name, $u->email, $u->role, $u->nip ?? '-', $u->status, $u->created_at->format('Y-m-d H:i:s')
+            ])->toArray());
+            $zip->addFromString('01_users_staff.csv', $usersCSV);
+
+            // 2. EXPORT PATIENTS
+            $patients = \App\Models\Patient::with('user')
+                ->get(['id_pasien', 'nrm', 'nik', 'nama_lengkap', 'jenis_kelamin', 'tanggal_lahir', 'alamat', 'user_id']);
+            $patientsCSV = $this->generateCSV('Patients', [
+                ['ID Pasien', 'NRM', 'NIK', 'Nama Lengkap', 'JK', 'Tanggal Lahir', 'Alamat', 'User ID'],
+            ], $patients->map(fn($p) => [
+                $p->id_pasien, $p->nrm, $p->nik, $p->nama_lengkap, $p->jenis_kelamin, $p->tanggal_lahir, $p->alamat, $p->user_id
+            ])->toArray());
+            $zip->addFromString('02_patients.csv', $patientsCSV);
+
+            // 3. EXPORT QUEUES
+            $queues = \App\Models\Queue::with('patient', 'user')
+                ->orderByDesc('waktu_daftar')
+                ->limit(500)
+                ->get(['id_antrian', 'id_pasien', 'nomor_antrian', 'jenis_layanan', 'status', 'poli', 'waktu_daftar', 'waktu_selesai']);
+            $queuesCSV = $this->generateCSV('Antrian', [
+                ['ID Antrian', 'ID Pasien', 'Nomor Antrian', 'Layanan', 'Status', 'Poli', 'Daftar', 'Selesai'],
+            ], $queues->map(fn($q) => [
+                $q->id_antrian, $q->id_pasien, $q->nomor_antrian, $q->jenis_layanan, $q->status, $q->poli,
+                $q->waktu_daftar->format('Y-m-d H:i:s'), $q->waktu_selesai?->format('Y-m-d H:i:s') ?? '-'
+            ])->toArray());
+            $zip->addFromString('03_queues.csv', $queuesCSV);
+
+            // 4. EXPORT ASSESSMENTS
+            $assessments = \App\Models\MedicalAssessment::with('patient', 'user')
+                ->orderByDesc('tanggal_assessment')
+                ->limit(500)
+                ->get(['id_assessment', 'id_pasien', 'keluhan_utama', 'diagnosis', 'rencana_terapi', 'status', 'tanggal_assessment']);
+            $assessmentsCSV = $this->generateCSV('Medical Assessments', [
+                ['ID Assessment', 'ID Pasien', 'Keluhan Utama', 'Diagnosis', 'Rencana Terapi', 'Status', 'Tanggal'],
+            ], $assessments->map(fn($a) => [
+                $a->id_assessment, $a->id_pasien, $a->keluhan_utama, $a->diagnosis, $a->rencana_terapi, $a->status, $a->tanggal_assessment
+            ])->toArray());
+            $zip->addFromString('04_assessments.csv', $assessmentsCSV);
+
+            // 5. EXPORT THERAPIES
+            $therapies = \App\Models\Therapy::with('patient', 'terapis')
+                ->orderByDesc('tanggal_mulai')
+                ->limit(500)
+                ->get(['id_terapi', 'id_pasien', 'nama_terapi', 'deskripsi', 'status', 'tanggal_mulai', 'tanggal_selesai']);
+            $therapiesCSV = $this->generateCSV('Therapies', [
+                ['ID Terapi', 'ID Pasien', 'Nama Terapi', 'Deskripsi', 'Status', 'Mulai', 'Selesai'],
+            ], $therapies->map(fn($t) => [
+                $t->id_terapi, $t->id_pasien, $t->nama_terapi, $t->deskripsi, $t->status,
+                $t->tanggal_mulai, $t->tanggal_selesai ?? '-'
+            ])->toArray());
+            $zip->addFromString('05_therapies.csv', $therapiesCSV);
+
+            // 6. EXPORT MONITORING SESSIONS
+            $monitorings = \App\Models\TherapyMonitoring::with('therapy', 'patient')
+                ->orderByDesc('tanggal_sesi')
+                ->limit(1000)
+                ->get(['id_monitoring', 'id_terapi', 'id_pasien', 'kehadiran', 'kondisi_pasien', 'progress_score', 'tanggal_sesi']);
+            $monitoringsCSV = $this->generateCSV('Therapy Monitorings', [
+                ['ID Monitoring', 'ID Terapi', 'ID Pasien', 'Kehadiran', 'Kondisi Pasien', 'Progress Score', 'Tanggal Sesi'],
+            ], $monitorings->map(fn($m) => [
+                $m->id_monitoring, $m->id_terapi, $m->id_pasien, $m->kehadiran, $m->kondisi_pasien, $m->progress_score, $m->tanggal_sesi
+            ])->toArray());
+            $zip->addFromString('06_monitorings.csv', $monitoringsCSV);
+
+            // 7. EXPORT AUDIT LOGS
+            $auditLogs = SystemAuditLog::orderByDesc('created_at')
+                ->limit(500)
+                ->get(['id', 'user_id', 'module', 'action', 'description', 'status', 'created_at']);
+            $auditCSV = $this->generateCSV('Audit Logs', [
+                ['ID', 'User ID', 'Module', 'Action', 'Description', 'Status', 'Created'],
+            ], $auditLogs->map(fn($al) => [
+                $al->id, $al->user_id, $al->module, $al->action, $al->description, $al->status, $al->created_at->format('Y-m-d H:i:s')
+            ])->toArray());
+            $zip->addFromString('07_audit_logs.csv', $auditCSV);
+
+            $zip->close();
+
+            // Log audit
+            SystemAuditLog::create([
+                'user_id'     => $user->id,
+                'module'      => 'backup',
+                'action'      => 'export',
+                'description' => 'Exported all data to CSV (ZIP)',
+                'ip_address'  => $request->ip(),
+                'status'      => 'success',
+            ]);
+
+            // Download ZIP
+            return response()->download($zipFile, 'export_' . $timestamp . '.zip', [
+                'Content-Type' => 'application/zip',
+                'Content-Disposition' => 'attachment; filename="export_' . $timestamp . '.zip"',
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Export failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Export gagal: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Helper: Generate CSV from data
+     */
+    private function generateCSV(string $title, array $headers, array $data): string
+    {
+        $output = fopen('php://memory', 'w');
+        
+        // BOM untuk Excel UTF-8
+        fwrite($output, "\xEF\xBB\xBF");
+        
+        // Tulis header
+        foreach ($headers as $row) {
+            fputcsv($output, $row);
+        }
+        
+        // Tulis data
+        foreach ($data as $row) {
+            fputcsv($output, $row);
+        }
+        
+        rewind($output);
+        $csv = stream_get_contents($output);
+        fclose($output);
+        
+        return $csv;
     }
 
     /**

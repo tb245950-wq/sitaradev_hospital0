@@ -97,7 +97,10 @@
                 <div class="info-grid">
                   <div class="info-item">
                     <label>NIK</label>
-                    <p>{{ patient.nik }}</p>
+                    <MaskedNIK
+                      :full-nik="patient.nik"
+                      :masked-nik="patient.masked_nik"
+                    />
                   </div>
                   <div class="info-item">
                     <label>Nama Panggilan</label>
@@ -105,11 +108,37 @@
                   </div>
                   <div class="info-item">
                     <label>Tanggal Lahir</label>
-                    <p>{{ formatDate(patient.info_lahir.tanggal) }}</p>
+                    <p>{{ formatDate(patient.info_lahir?.tanggal) }} <span class="usia-badge">({{ patient.info_lahir?.usia }} tahun)</span></p>
+                  </div>
+                  <div class="info-item">
+                    <label>Jenis Kelamin</label>
+                    <p>{{ patient.jenis_kelamin }}</p>
                   </div>
                   <div class="info-item">
                     <label>Terdaftar Sejak</label>
                     <p>{{ formatDate(patient.created_at) }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="content-section">
+                <h3 class="section-title">Data Orang Tua / Wali</h3>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <label>Nama Orang Tua / Wali</label>
+                    <p>{{ patient.wali?.nama || '-' }}</p>
+                  </div>
+                  <div class="info-item">
+                    <label>Hubungan</label>
+                    <p>{{ patient.wali?.hubungan || '-' }}</p>
+                  </div>
+                  <div class="info-item">
+                    <label>No. Telepon</label>
+                    <p>{{ patient.wali?.kontak || '-' }}</p>
+                  </div>
+                  <div class="info-item">
+                    <label>Alamat</label>
+                    <p>{{ patient.alamat || '-' }}</p>
                   </div>
                 </div>
               </div>
@@ -143,6 +172,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../auth/stores/authStore'
 import { usePatientStore } from '../stores/patientStore'
 import { useNavigation } from '../../../shared/composables/useNavigation'
+import MaskedNIK from '../../../shared/components/MaskedNIK.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -411,6 +441,12 @@ const formatDate = (dateString) => {
   border: 1px solid #e2e8f0;
   color: #475569;
   line-height: 1.6;
+}
+
+.usia-badge {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 400;
 }
 
 .btn-primary {

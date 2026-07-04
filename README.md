@@ -39,6 +39,7 @@ Semua dokumentasi tersedia di folder **[docs/](./docs/README.md)**:
 | [docs/super-admin/](./docs/super-admin/README.md) | Panduan lengkap role Super Admin |
 | [docs/deployment/CHECKLIST.md](./docs/deployment/CHECKLIST.md) | Checklist deployment production |
 | [docs/development/START_HERE.md](./docs/development/START_HERE.md) | Panduan untuk developer baru |
+| [docs/CRITICAL_BUGS_FIX_REPORT.md](./docs/CRITICAL_BUGS_FIX_REPORT.md) | ✅ **NEW** - Report perbaikan 4 critical bugs |
 
 ---
 

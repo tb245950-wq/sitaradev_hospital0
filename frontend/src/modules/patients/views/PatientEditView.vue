@@ -36,8 +36,15 @@
                 v-model="form.nik" 
                 type="text" 
                 required 
+                maxlength="16"
                 class="form-input"
+                @input="form.nik = form.nik.replace(/\D/g, '')"
               />
+              <div class="field-hint">
+                <span class="hint-icon">🔒</span>
+                NIK terenkripsi. Tampil sebagai:
+                <span class="nik-preview">{{ nikPreview }}</span>
+              </div>
             </div>
             <div class="form-group span-2">
               <label>Nama Lengkap</label>
@@ -152,7 +159,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../../auth/stores/authStore'
 import { usePatientStore } from '../stores/patientStore'
@@ -176,6 +183,16 @@ const form = ref({
   nama_wali: '',
   hubungan_wali: '',
   riwayat_medis: ''
+})
+
+// Preview NIK masking secara realtime
+const nikPreview = computed(() => {
+  const nik = form.value.nik
+  if (!nik) return '—'
+  const len   = nik.length
+  const last4 = nik.slice(-4)
+  const stars = '*'.repeat(Math.max(len - 4, 0))
+  return len <= 4 ? nik : stars + last4
 })
 
 onMounted(async () => {
@@ -323,6 +340,26 @@ label {
 
 textarea.form-input {
   resize: vertical;
+}
+
+.field-hint {
+  font-size: 0.78rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.3rem;
+}
+
+.nik-preview {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.25rem;
+  border: 1px solid #e2e8f0;
+  letter-spacing: 0.04em;
 }
 
 .form-actions {

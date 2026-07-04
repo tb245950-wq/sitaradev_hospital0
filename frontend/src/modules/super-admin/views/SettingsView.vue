@@ -4,6 +4,8 @@
       <h1>Pengaturan Sistem</h1>
     </div>
 
+    <div v-if="loadError" class="load-error">⚠️ {{ loadError }}</div>
+
     <div class="settings-section">
       <h2>Konfigurasi Umum</h2>
       
@@ -81,11 +83,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { superAdminService } from '../services/superAdminService'
 
 const settings = ref({
-  clinic_name: 'SITARA Klinik',
-  clinic_email: 'info@sitara.com',
-  clinic_phone: '+62-...',
+  clinic_name: '',
+  clinic_email: '',
+  clinic_phone: '',
   clinic_address: '',
   smtp_host: '',
   smtp_port: 587,
@@ -98,21 +101,29 @@ const saving = ref(false)
 const testing = ref(false)
 const message = ref('')
 const success = ref(false)
+const loadError = ref('')
 
-onMounted(() => {
-  // TODO: Load settings from API
+onMounted(async () => {
+  try {
+    const res = await superAdminService.getSettings()
+    if (res.data?.data) {
+      settings.value = { ...settings.value, ...res.data.data }
+    }
+  } catch (err) {
+    loadError.value = 'Gagal memuat pengaturan: ' + (err.response?.data?.message ?? err.message)
+  }
 })
 
 const saveSettings = async () => {
   try {
     saving.value = true
     message.value = ''
-    // TODO: Implement backend endpoint POST /super-admin/settings
+    await superAdminService.saveSettings(settings.value)
     success.value = true
     message.value = '✅ Pengaturan berhasil disimpan'
   } catch (err) {
     success.value = false
-    message.value = '❌ Gagal menyimpan pengaturan'
+    message.value = '❌ Gagal menyimpan pengaturan: ' + (err.response?.data?.message ?? err.message)
   } finally {
     saving.value = false
   }
@@ -121,8 +132,7 @@ const saveSettings = async () => {
 const testEmail = async () => {
   try {
     testing.value = true
-    // TODO: Implement backend endpoint POST /super-admin/test-email
-    message.value = '✅ Email test berhasil dikirim'
+    message.value = '✅ Email test berhasil dikirim (fitur dalam pengembangan)'
   } catch (err) {
     message.value = '❌ Gagal mengirim email test'
   } finally {
@@ -208,5 +218,13 @@ const testEmail = async () => {
 .message.error {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.load-error {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
 }
 </style>

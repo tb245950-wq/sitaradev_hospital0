@@ -7,7 +7,10 @@
 
     <nav class="sidebar-nav">
       <!-- Menu Utama (Semua Role) -->
-      <router-link to="/dashboard" class="nav-item">
+      <router-link
+        :to="authStore.userRole === 'super_admin' ? '/super-admin/dashboard' : '/dashboard'"
+        class="nav-item"
+      >
         <span class="label">Dashboard</span>
       </router-link>
 

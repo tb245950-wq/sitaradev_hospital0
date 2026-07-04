@@ -14,6 +14,11 @@ dist-ssr
 coverage
 *.local
 
+# Environment files — jangan commit secrets ke Git
+.env.production
+.env.local
+.env.*.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

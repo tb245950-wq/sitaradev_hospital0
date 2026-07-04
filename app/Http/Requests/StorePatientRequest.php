@@ -17,7 +17,19 @@ class StorePatientRequest extends FormRequest
     {
         return [
             'nrm' => 'required|string|max:50|unique:patients,nrm',
-            'nik' => 'required|numeric|digits_between:16,20|unique:patients,nik',
+            'nik' => [
+                'required',
+                'numeric',
+                'digits_between:16,20',
+                function ($attribute, $value, $fail) {
+                    // Check nik_hash uniqueness instead of encrypted nik
+                    $nikHash = hash('sha256', $value);
+                    $exists = \App\Models\Patient::where('nik_hash', $nikHash)->exists();
+                    if ($exists) {
+                        $fail('NIK sudah terdaftar dalam sistem.');
+                    }
+                }
+            ],
             'nama_lengkap' => 'required|string|max:255',
             'nama_panggilan' => 'nullable|string|max:255',
             'tanggal_lahir' => 'required|date',

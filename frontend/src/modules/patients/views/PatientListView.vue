@@ -99,8 +99,8 @@
                 />
               </td>
               <td>{{ patient.jenis_kelamin }}</td>
-              <td>{{ formatDate(patient.tanggal_lahir) }}</td>
-              <td>{{ patient.nama_wali || '-' }}</td>
+              <td>{{ formatDate(patient.info_lahir?.tanggal) }}</td>
+              <td>{{ patient.wali?.nama || '-' }}</td>
               <td class="text-right">
                 <div class="action-buttons justify-end" style="display: flex; gap: 0.5rem;">
                   <router-link :to="`/patients/${patient.id}`" class="btn-icon-sm" title="Detail" style="color: #64748b;">

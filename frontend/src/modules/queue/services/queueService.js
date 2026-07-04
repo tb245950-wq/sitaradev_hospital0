@@ -33,7 +33,7 @@ export const queueService = {
   },
   
   async completeQueue(id) {
-    const response = await api.put(`/queues/${id}`, { status: 'selesai' })
+    const response = await api.post(`/queues/${id}/complete`)
     return response.data
   },
   

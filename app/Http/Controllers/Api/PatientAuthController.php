@@ -117,7 +117,19 @@ class PatientAuthController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|min:6|confirmed',
-                'nik' => 'required|string|unique:patients,nik',
+                'nik' => [
+                    'required',
+                    'string',
+                    'digits_between:16,20',
+                    function ($attribute, $value, $fail) {
+                        // Custom validation: Check nik_hash uniqueness
+                        $nikHash = hash('sha256', $value);
+                        $exists = Patient::where('nik_hash', $nikHash)->exists();
+                        if ($exists) {
+                            $fail('NIK sudah terdaftar dalam sistem.');
+                        }
+                    }
+                ],
                 'phone' => 'required|string',
                 'date_of_birth' => 'nullable|date',
                 'gender' => 'nullable|in:male,female',
@@ -143,23 +155,18 @@ class PatientAuthController extends Controller
                 'status' => 'active'
             ]);
 
-            // 2. Map gender ke bahasa Indonesia
+            // 2. Map gender ke L/P (sesuai database enum)
             $genderMap = [
-                'male' => 'Laki-laki',
-                'female' => 'Perempuan',
-                'laki-laki' => 'Laki-laki',
-                'perempuan' => 'Perempuan',
-                'Laki-laki' => 'Laki-laki',
-                'Perempuan' => 'Perempuan',
+                'male' => 'L',
+                'female' => 'P',
+                'laki-laki' => 'L',
+                'l' => 'L',
+                'perempuan' => 'P',
+                'p' => 'P',
+                'Laki-laki' => 'L',
+                'Perempuan' => 'P',
             ];
-            $genderValue = $genderMap[$request->gender] ?? null;
-
-            if (!$genderValue) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Jenis kelamin tidak valid. Gunakan: male, female, laki-laki, atau perempuan'
-                    ], 422);
-                }
+            $genderValue = isset($request->gender) ? ($genderMap[strtolower($request->gender)] ?? $genderMap[$request->gender] ?? null) : null;
 
             // 3. Auto-generate NRM (Nomor Rekam Medis)
             $nrm = 'NRM-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
@@ -353,6 +360,52 @@ class PatientAuthController extends Controller
     }
 
     /**
+     * Cek kelengkapan profil pasien
+     * GET /api/pasien/profile-status
+     */
+    public function profileStatus(Request $request): JsonResponse
+    {
+        try {
+            $user    = $request->user();
+            $patient = Patient::where('user_id', $user->id)->first();
+
+            if (!$patient) {
+                return response()->json([
+                    'success'    => true,
+                    'is_complete' => false,
+                    'missing'    => ['Data pasien tidak ditemukan'],
+                    'message'    => 'Profil belum lengkap',
+                ]);
+            }
+
+            $missing = [];
+
+            if (empty($patient->nik))             $missing[] = 'NIK';
+            if (empty($patient->tanggal_lahir))   $missing[] = 'Tanggal Lahir';
+            if (empty($patient->jenis_kelamin))   $missing[] = 'Jenis Kelamin';
+            if (empty($patient->alamat))          $missing[] = 'Alamat';
+            if (empty($patient->nama_wali))       $missing[] = 'Nama Wali / Orang Tua';
+            if (empty($patient->no_telepon_wali)) $missing[] = 'No. Telepon Wali';
+            if (empty($patient->hubungan_wali))   $missing[] = 'Hubungan Wali';
+
+            $isComplete = empty($missing);
+
+            return response()->json([
+                'success'     => true,
+                'is_complete' => $isComplete,
+                'missing'     => $missing,
+                'message'     => $isComplete
+                    ? 'Profil sudah lengkap'
+                    : 'Harap lengkapi profil terlebih dahulu sebelum melakukan booking.',
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Profile status error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Gagal mengecek profil'], 500);
+        }
+    }
+
+    /**
      * Booking antrian dari pasien
      * POST /api/pasien/booking
      */
@@ -364,6 +417,25 @@ class PatientAuthController extends Controller
 
             if (!$patient) {
                 return response()->json(['success' => false, 'message' => 'Data pasien tidak ditemukan'], 404);
+            }
+
+            // ── Cek kelengkapan profil ──────────────────────────────────────
+            $missing = [];
+            if (empty($patient->nik))             $missing[] = 'NIK';
+            if (empty($patient->tanggal_lahir))   $missing[] = 'Tanggal Lahir';
+            if (empty($patient->jenis_kelamin))   $missing[] = 'Jenis Kelamin';
+            if (empty($patient->alamat))          $missing[] = 'Alamat';
+            if (empty($patient->nama_wali))       $missing[] = 'Nama Wali / Orang Tua';
+            if (empty($patient->no_telepon_wali)) $missing[] = 'No. Telepon Wali';
+            if (empty($patient->hubungan_wali))   $missing[] = 'Hubungan Wali';
+
+            if (!empty($missing)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Profil belum lengkap. Harap isi: ' . implode(', ', $missing),
+                    'redirect' => '/pasien/profil',
+                    'missing'  => $missing,
+                ], 422);
             }
 
             $validator = Validator::make($request->all(), [
@@ -471,7 +543,7 @@ class PatientAuthController extends Controller
     public function updateProfile(Request $request): JsonResponse
     {
         try {
-            $user = $request->user();
+            $user    = $request->user();
             $patient = Patient::where('user_id', $user->id)->first();
 
             if (!$patient) {
@@ -481,54 +553,82 @@ class PatientAuthController extends Controller
                 ], 404);
             }
 
-            // Validasi
             $validator = Validator::make($request->all(), [
-                'name' => 'sometimes|string|max:255',
-                'phone' => 'sometimes|string',
-                'address' => 'sometimes|string',
-                'date_of_birth' => 'sometimes|date',
-                'parent_name' => 'sometimes|string',
-                'parent_phone' => 'sometimes|string'
+                'name'            => 'sometimes|string|max:255',
+                'nik'             => [
+                    'sometimes', 'string', 'digits_between:16,20',
+                    function ($attribute, $value, $fail) use ($patient) {
+                        $nikHash = hash('sha256', $value);
+                        $exists  = Patient::where('nik_hash', $nikHash)
+                            ->where('id_pasien', '!=', $patient->id_pasien)
+                            ->exists();
+                        if ($exists) {
+                            $fail('NIK sudah terdaftar dalam sistem.');
+                        }
+                    }
+                ],
+                'date_of_birth'   => 'sometimes|date',
+                'gender'          => 'sometimes|in:L,P,male,female,Laki-laki,Perempuan',
+                'address'         => 'sometimes|string',
+                'parent_name'     => 'sometimes|string|max:255',
+                'parent_phone'    => 'sometimes|string|max:20',
+                'parent_relation' => 'sometimes|string|max:50',
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Validasi gagal',
-                    'errors' => $validator->errors()
+                    'errors'  => $validator->errors()
                 ], 422);
             }
 
-            // Update user
+            // Update nama di tabel users juga
             if ($request->has('name')) {
                 $user->update(['name' => $request->name]);
-                $patient->update(['nama_lengkap' => $request->name]);
+                $patient->nama_lengkap = $request->name;
             }
 
-            // Update patient
-            $updateData = [];
-            if ($request->has('address')) $updateData['alamat'] = $request->address;
-            if ($request->has('date_of_birth')) $updateData['tanggal_lahir'] = $request->date_of_birth;
-            if ($request->has('parent_name')) $updateData['nama_wali'] = $request->parent_name;
-            if ($request->has('parent_phone')) $updateData['no_telepon_wali'] = $request->parent_phone;
-            
-            if (!empty($updateData)) {
-                $patient->update($updateData);
+            // Map gender ke L/P
+            if ($request->has('gender')) {
+                $genderMap = ['male' => 'L', 'female' => 'P', 'laki-laki' => 'L', 'perempuan' => 'P', 'l' => 'L', 'p' => 'P'];
+                $patient->jenis_kelamin = $genderMap[strtolower($request->gender)] ?? $request->gender;
             }
+
+            if ($request->has('nik'))             $patient->nik             = $request->nik;
+            if ($request->has('date_of_birth'))   $patient->tanggal_lahir   = $request->date_of_birth;
+            if ($request->has('address'))         $patient->alamat          = $request->address;
+            if ($request->has('parent_name'))     $patient->nama_wali       = $request->parent_name;
+            if ($request->has('parent_phone'))    $patient->no_telepon_wali = $request->parent_phone;
+            if ($request->has('parent_relation')) $patient->hubungan_wali   = $request->parent_relation;
+
+            $patient->save();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Profile berhasil diupdate',
-                'data' => [
-                    'user' => $user->fresh(),
-                    'patient' => $patient->fresh()
+                'message' => 'Profil berhasil diperbarui',
+                'data'    => [
+                    'user'    => ['id' => $user->id, 'name' => $user->name, 'email' => $user->email],
+                    'patient' => [
+                        'id_pasien'        => $patient->id_pasien,
+                        'nrm'              => $patient->nrm,
+                        'nama_lengkap'     => $patient->nama_lengkap,
+                        'nik'              => $patient->nik,
+                        'tanggal_lahir'    => $patient->tanggal_lahir?->format('Y-m-d'),
+                        'jenis_kelamin'    => $patient->jenis_kelamin,
+                        'alamat'           => $patient->alamat,
+                        'nama_wali'        => $patient->nama_wali,
+                        'no_telepon_wali'  => $patient->no_telepon_wali,
+                        'hubungan_wali'    => $patient->hubungan_wali,
+                    ]
                 ]
             ]);
+
         } catch (\Exception $e) {
             Log::error('Patient update profile error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal update profile'
+                'message' => 'Gagal update profil: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -598,15 +698,15 @@ class PatientAuthController extends Controller
             }
 
             $assessments = \App\Models\MedicalAssessment::where('id_pasien', $patient->id_pasien)
-                ->with('pengguna:id,name')
+                ->with('user:id,name')
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(fn($a) => [
                     'id'          => $a->id_assessment,
                     'diagnosis'   => $a->diagnosis,
-                    'icd10_code'  => $a->icd10_code,
-                    'catatan_medis' => $a->catatan_medis,
-                    'dokter'      => $a->pengguna ? ['name' => $a->pengguna->name] : null,
+                    'icd10_code'  => $a->icd10_code ?? null,
+                    'catatan_medis' => $a->catatan_medis ?? $a->catatan_tambahan,
+                    'dokter'      => $a->user ? ['name' => $a->user->name] : null,
                     'created_at'  => $a->created_at,
                 ]);
 
