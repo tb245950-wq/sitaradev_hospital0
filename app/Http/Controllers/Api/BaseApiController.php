@@ -34,4 +34,12 @@ class BaseApiController extends Controller
     {
         return $this->errorResponse('Validation failed', 422, $errors);
     }
+
+    protected function forbiddenResponse($message = 'Forbidden'): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => $message
+        ], 403);
+    }
 }
