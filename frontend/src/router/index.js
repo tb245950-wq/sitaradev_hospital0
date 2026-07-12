@@ -23,6 +23,14 @@ const routes = [
     meta: { requiresAuth: false }
   },
 
+  // DEBUG: API Configuration
+  {
+    path: '/debug',
+    name: 'debug',
+    component: () => import('../pages/DebugPage.vue'),
+    meta: { requiresAuth: false }
+  },
+
   // Portal Pasien (prefix /pasien)
   ...patientPortalRoutes,
 
