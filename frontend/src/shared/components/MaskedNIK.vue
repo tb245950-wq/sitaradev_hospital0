@@ -1,11 +1,24 @@
 <template>
-  <span class="masked-nik">{{ maskedNik || '-' }}</span>
+  <span class="masked-nik">{{ displayNik }}</span>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   fullNik:   { type: String, default: '' },
   maskedNik: { type: String, default: '-' }
+})
+
+// Tampilkan format: ****1234 (hanya 4 bintang + 4 angka terakhir)
+const displayNik = computed(() => {
+  const nik = props.maskedNik || props.fullNik
+  if (!nik || nik === '-') return '-'
+  // Ambil 4 digit terakhir dari string (abaikan bintang)
+  const digits = nik.replace(/\*/g, '')
+  const last4 = digits.slice(-4)
+  if (!last4) return '****'
+  return '****' + last4
 })
 </script>
 
