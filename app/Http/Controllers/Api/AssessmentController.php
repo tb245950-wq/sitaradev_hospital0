@@ -171,14 +171,33 @@ class AssessmentController extends Controller
 
     /**
      * Hapus Assessment
-     * Hanya admin yang bisa menghapus
+     * Admin: bisa hapus semua
+     * Dokter: hanya bisa hapus assessment miliknya sendiri yang masih draft
      */
     public function destroy(MedicalAssessment $assessment)
     {
-        if (Auth::user()->role !== 'admin') {
+        $user = Auth::user();
+
+        if ($user->role === 'admin') {
+            // Admin bisa hapus apa saja
+        } elseif ($user->role === 'dokter') {
+            // Dokter hanya bisa hapus assessment miliknya sendiri yang masih draft
+            if ($assessment->id_pengguna !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk menghapus assessment ini.'
+                ], 403);
+            }
+            if ($assessment->status !== 'draft') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Hanya assessment berstatus draft yang dapat dihapus.'
+                ], 403);
+            }
+        } else {
             return response()->json([
                 'success' => false,
-                'message' => 'Hanya admin yang dapat menghapus assessment medis.'
+                'message' => 'Akses ditolak.'
             ], 403);
         }
 

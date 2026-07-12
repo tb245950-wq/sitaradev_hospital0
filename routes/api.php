@@ -57,6 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // Audit & Security Logs
         Route::get('/audit-logs', [SuperAdminController::class, 'getAuditLogs']);
+        Route::get('/activity-logs', [SuperAdminController::class, 'getActivityLogs']);
         Route::get('/login-history', [SuperAdminController::class, 'getLoginHistory']);
         Route::get('/failed-logins', [SuperAdminController::class, 'getFailedLogins']);
         
@@ -144,6 +145,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:admin,dokter,terapis')->group(function () {
         Route::apiResource('therapies', TherapyController::class);
         Route::apiResource('monitorings', MonitoringController::class);
+        
+        // Generate Monitoring Report PDF
+        Route::get('/monitorings/{id_pasien}/report-pdf', [MonitoringController::class, 'generateMonitoringReportPdf']);
+        Route::get('/monitorings/{id_pasien}/{id_terapi}/report-pdf', [MonitoringController::class, 'generateMonitoringReportPdf']);
     });
 
     // Reports (admin, dokter bisa akses daily; semua staff bisa dashboard)

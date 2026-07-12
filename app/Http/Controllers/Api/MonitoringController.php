@@ -159,9 +159,72 @@ class MonitoringController extends Controller
     }
 
     /**
-     * POST /api/monitorings/generate-assessment/{id_terapi}
-     * Auto-generate assessment from therapy monitoring
+     * Delete Monitoring
+     * Hanya dokter yang membuat atau admin yang bisa delete
      */
+    public function destroy(TherapyMonitoring $monitoring)
+    {
+        $user = Auth::user();
+
+        if ($user->role === 'admin') {
+            // Admin bisa hapus apa saja
+        } elseif ($user->role === 'dokter' || $user->role === 'terapis') {
+            // Dokter/Terapis hanya bisa hapus monitoring miliknya sendiri
+            if ($monitoring->id_terapis !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk menghapus monitoring ini.'
+                ], 403);
+            }
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak.'
+            ], 403);
+        }
+
+        $monitoring->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Monitoring berhasil dihapus.'
+        ], 200);
+    }
+
+    /**
+     * Generate Laporan PDF Pemantauan Tumbuh Kembang Anak
+     * Format profesional dengan struktur:
+     * I. Informasi Umum
+     * II. Hasil Pengukuran Pertumbuhan
+     * III. Evaluasi Perkembangan (Milestone Checklist)
+     * IV. Kesimpulan dan Rekomendasi
+     */
+    public function generateMonitoringReportPdf($id_pasien, $id_terapi = null)
+    {
+        $user = Auth::user();
+        
+        if (!in_array($user->role, ['admin', 'dokter', 'terapis'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya staff yang dapat generate laporan'
+            ], 403);
+        }
+
+        try {
+            $service = new \App\Services\MonitoringReportPdfService();
+            $pdf = $service->generateMonitoringReport($id_pasien, $id_terapi);
+            
+            $patient = \App\Models\Patient::findOrFail($id_pasien);
+            $filename = 'Laporan_Monitoring_' . str_replace(' ', '_', $patient->nama_lengkap) . '_' . now()->format('Y-m-d-His') . '.pdf';
+            
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal generate laporan: ' . $e->getMessage()
+            ], 400);
+        }
+    }
     public function generateAssessment(Request $request, $id_terapi)
     {
         $user = Auth::user();

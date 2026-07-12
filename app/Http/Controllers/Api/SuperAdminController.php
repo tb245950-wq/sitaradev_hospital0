@@ -44,6 +44,56 @@ class SuperAdminController extends Controller
     }
 
     /**
+     * GET /super-admin/activity-logs
+     * Semua ActivityLog (antrian, assessment, terapi, pasien) untuk Super Admin
+     */
+    public function getActivityLogs(Request $request)
+    {
+        $user = $request->user();
+        if ($user->role !== 'super_admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $limit  = (int) $request->query('limit', 15);
+        $page   = (int) $request->query('page', 1);
+        $search = $request->query('search');
+        $status = $request->query('status');
+        $type   = $request->query('type');   // activity_type filter
+        $date   = $request->query('date');   // filter tanggal YYYY-MM-DD
+
+        $query = \App\Models\ActivityLog::with([
+                'patient:id_pasien,nama_lengkap,nrm',
+                'user:id,name,email,role',
+            ])
+            ->orderByDesc('created_at');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                  ->orWhere('activity_type', 'like', "%{$search}%")
+                  ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%"))
+                  ->orWhereHas('patient', fn($p) => $p->where('nama_lengkap', 'like', "%{$search}%"));
+            });
+        }
+        if ($status) $query->where('status', $status);
+        if ($type)   $query->where('activity_type', $type);
+        if ($date)   $query->whereDate('created_at', $date);
+
+        $logs = $query->paginate($limit, ['*'], 'page', $page);
+
+        return response()->json([
+            'success'    => true,
+            'data'       => $logs->items(),
+            'pagination' => [
+                'current_page' => $logs->currentPage(),
+                'last_page'    => $logs->lastPage(),
+                'total'        => $logs->total(),
+                'per_page'     => $logs->perPage(),
+            ],
+        ]);
+    }
+
+    /**
      * Get recent system audit logs
      */
     public function getAuditLogs(Request $request)
@@ -53,20 +103,58 @@ class SuperAdminController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $limit = $request->query('limit', 10);
-        $page = $request->query('page', 1);
+        $limit  = (int) $request->query('limit', 15);
+        $page   = (int) $request->query('page', 1);
+        $module = $request->query('module');
+        $action = $request->query('action');
+        $status = $request->query('status');
+        $search = $request->query('search');
+        $anomalyOnly = $request->boolean('anomaly_only', false);
 
-        $logs = SystemAuditLog::with('user:id,name,email')
-            ->orderByDesc('created_at')
-            ->paginate($limit, ['*'], 'page', $page);
+        // Aksi yang dianggap anomali
+        $anomalyActions = ['delete', 'reset_password', 'export', 'download'];
+
+        $query = SystemAuditLog::with('user:id,name,email,role')
+            ->orderByDesc('created_at');
+
+        if ($module) $query->where('module', $module);
+        if ($action) $query->where('action', $action);
+        if ($status) $query->where('status', $status);
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                  ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%"));
+            });
+        }
+        if ($anomalyOnly) {
+            $query->where(function ($q) use ($anomalyActions) {
+                $q->whereIn('action', $anomalyActions)
+                  ->orWhere('status', 'failed');
+            });
+        }
+
+        $logs = $query->paginate($limit, ['*'], 'page', $page);
+
+        $items = collect($logs->items())->map(function ($log) use ($anomalyActions) {
+            $isAnomaly = in_array($log->action, $anomalyActions) || $log->status === 'failed';
+            return array_merge($log->toArray(), ['is_anomaly' => $isAnomaly]);
+        });
+
+        // Hitung ringkasan anomali
+        $anomalyCount = SystemAuditLog::where(function ($q) use ($anomalyActions) {
+            $q->whereIn('action', $anomalyActions)->orWhere('status', 'failed');
+        })->whereDate('created_at', today())->count();
 
         return response()->json([
-            'success' => true,
-            'data' => $logs->items(),
-            'pagination' => [
+            'success'      => true,
+            'data'         => $items,
+            'anomaly_today'=> $anomalyCount,
+            'pagination'   => [
                 'current_page' => $logs->currentPage(),
-                'total' => $logs->total(),
-                'per_page' => $logs->perPage(),
+                'last_page'    => $logs->lastPage(),
+                'total'        => $logs->total(),
+                'per_page'     => $logs->perPage(),
             ],
         ]);
     }

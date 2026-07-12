@@ -4,35 +4,41 @@ import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [vue()],
+
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
+
+  // Konfigurasi development server (TIDAK berpengaruh di production)
   server: {
     port: 5173,
     host: '0.0.0.0',
     strictPort: false,
     cors: true,
-    // ⚡ Menambahkan baris ini agar terowongan SSH (localhost.run) tidak diblokir oleh Vite
-    allowedHosts: true, 
-    Allow: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://172.18.0.1:5173', 'http://172.16.20.218:5173', 'http://172.16.20.218:8000'],
+    // Izinkan semua host (termasuk SSH tunnel, localhost.run, dll)
+    allowedHosts: true,
+    // Proxy hanya aktif saat `npm run dev` — tidak ada di production build
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000', // Ganti dengan URL backend Anda
-        changeOrigin: true, 
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
       }
     }
   },
+
   build: {
-    // Sourcemap hanya aktif saat development, dimatikan di production
-    // agar kode sumber tidak terekspos ke publik
-    sourcemap: process.env.NODE_ENV !== 'production',
+    // Sourcemap dimatikan di production agar kode sumber tidak terekspos
+    sourcemap: false,
+    // Target browser modern
+    target: 'es2015',
     rollupOptions: {
       output: {
+        // Pisahkan vendor chunk agar browser bisa cache lebih efisien
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            return 'vendor';
+            return 'vendor'
           }
         }
       }

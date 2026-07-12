@@ -702,12 +702,19 @@ class PatientAuthController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(fn($a) => [
-                    'id'          => $a->id_assessment,
-                    'diagnosis'   => $a->diagnosis,
-                    'icd10_code'  => $a->icd10_code ?? null,
-                    'catatan_medis' => $a->catatan_medis ?? $a->catatan_tambahan,
-                    'dokter'      => $a->user ? ['name' => $a->user->name] : null,
-                    'created_at'  => $a->created_at,
+                    'id'                => $a->id_assessment,
+                    'tanggal_assessment'=> $a->tanggal_assessment,
+                    'diagnosis'         => $a->diagnosis,
+                    'icd10_code'        => $a->icd10_code ?? null,
+                    'keluhan_utama'     => $a->keluhan_utama,
+                    'riwayat_penyakit'  => $a->riwayat_penyakit,
+                    'hasil_pemeriksaan' => $a->hasil_pemeriksaan,
+                    'rencana_terapi'    => $a->rencana_terapi,
+                    'obat_diresepkan'   => $a->obat_diresepkan,
+                    'catatan_medis'     => $a->catatan_medis ?? $a->catatan_tambahan,
+                    'status'            => $a->status,
+                    'dokter'            => $a->user ? ['name' => $a->user->name] : null,
+                    'created_at'        => $a->created_at,
                 ]);
 
             $therapies = \App\Models\Therapy::where('id_pasien', $patient->id_pasien)

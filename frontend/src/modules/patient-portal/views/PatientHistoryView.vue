@@ -43,15 +43,61 @@
           </div>
           <div v-else class="card-list">
             <div v-for="item in assessments" :key="item.id" class="record-card">
-              <div class="record-header">
+              <div class="record-header" @click="toggleAssessment(item.id)" style="cursor:pointer;">
                 <span class="badge blue">Assessment</span>
-                <span class="record-date">{{ formatDate(item.created_at) }}</span>
+                <span class="record-date">{{ formatDate(item.tanggal_assessment || item.created_at) }}</span>
+                <span class="expand-icon">{{ expandedAssessments.has(item.id) ? '▲' : '▼' }}</span>
               </div>
+              <!-- Ringkasan selalu tampil -->
               <div class="record-body">
                 <div class="record-row"><span>Diagnosis</span><strong>{{ item.diagnosis || '-' }}</strong></div>
                 <div class="record-row"><span>ICD-10</span><strong>{{ item.icd10_code || '-' }}</strong></div>
                 <div class="record-row"><span>Dokter</span><strong>{{ item.dokter?.name || '-' }}</strong></div>
-                <div v-if="item.catatan_medis" class="record-row"><span>Catatan</span><strong>{{ item.catatan_medis }}</strong></div>
+              </div>
+              <!-- Detail expandable -->
+              <div v-if="expandedAssessments.has(item.id)" class="record-detail">
+                <div v-if="item.keluhan_utama" class="detail-section">
+                  <div class="detail-label">Keluhan Utama</div>
+                  <div class="detail-value">{{ item.keluhan_utama }}</div>
+                </div>
+                <div v-if="item.riwayat_penyakit" class="detail-section">
+                  <div class="detail-label">Riwayat Penyakit</div>
+                  <div class="detail-value">{{ item.riwayat_penyakit }}</div>
+                </div>
+                <div v-if="item.hasil_pemeriksaan && Object.keys(item.hasil_pemeriksaan).length" class="detail-section">
+                  <div class="detail-label">Hasil Pemeriksaan</div>
+                  <div class="pemeriksaan-grid">
+                    <div v-if="item.hasil_pemeriksaan.tensi" class="pemeriksaan-item">
+                      <span>Tensi</span><strong>{{ item.hasil_pemeriksaan.tensi }} mmHg</strong>
+                    </div>
+                    <div v-if="item.hasil_pemeriksaan.nadi" class="pemeriksaan-item">
+                      <span>Nadi</span><strong>{{ item.hasil_pemeriksaan.nadi }} bpm</strong>
+                    </div>
+                    <div v-if="item.hasil_pemeriksaan.suhu" class="pemeriksaan-item">
+                      <span>Suhu</span><strong>{{ item.hasil_pemeriksaan.suhu }} °C</strong>
+                    </div>
+                    <div v-if="item.hasil_pemeriksaan.berat_badan" class="pemeriksaan-item">
+                      <span>Berat Badan</span><strong>{{ item.hasil_pemeriksaan.berat_badan }} kg</strong>
+                    </div>
+                    <div v-if="item.hasil_pemeriksaan.tinggi_badan" class="pemeriksaan-item">
+                      <span>Tinggi Badan</span><strong>{{ item.hasil_pemeriksaan.tinggi_badan }} cm</strong>
+                    </div>
+                  </div>
+                </div>
+                <div v-if="item.rencana_terapi" class="detail-section">
+                  <div class="detail-label">Rencana Terapi</div>
+                  <div class="detail-value">{{ item.rencana_terapi }}</div>
+                </div>
+                <div v-if="item.obat_diresepkan && item.obat_diresepkan.length" class="detail-section">
+                  <div class="detail-label">Obat Diresepkan</div>
+                  <ul class="obat-list">
+                    <li v-for="(obat, i) in item.obat_diresepkan" :key="i">{{ obat }}</li>
+                  </ul>
+                </div>
+                <div v-if="item.catatan_medis" class="detail-section">
+                  <div class="detail-label">Catatan Medis</div>
+                  <div class="detail-value">{{ item.catatan_medis }}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -103,6 +149,17 @@ const loading = ref(false)
 const error = ref(null)
 const assessments = ref([])
 const therapies = ref([])
+const expandedAssessments = ref(new Set())
+
+const toggleAssessment = (id) => {
+  const set = new Set(expandedAssessments.value)
+  if (set.has(id)) {
+    set.delete(id)
+  } else {
+    set.add(id)
+  }
+  expandedAssessments.value = set
+}
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'
 
@@ -186,6 +243,20 @@ onMounted(loadHistory)
 .progress-fill { height: 100%; background: #10b981; border-radius: 9999px; }
 
 .empty-state { text-align: center; padding: 1.5rem; color: #94a3b8; font-size: 0.875rem; }
+
+.expand-icon { margin-left: 0.5rem; font-size: 0.65rem; color: #94a3b8; }
+
+.record-detail { border-top: 1px solid #e2e8f0; padding: 1rem; background: #f8fafc; display: flex; flex-direction: column; gap: 0.75rem; }
+.detail-section { display: flex; flex-direction: column; gap: 0.25rem; }
+.detail-label { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+.detail-value { font-size: 0.875rem; color: #1e293b; line-height: 1.5; }
+
+.pemeriksaan-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.5rem; margin-top: 0.25rem; }
+.pemeriksaan-item { background: white; border: 1px solid #e2e8f0; border-radius: 0.375rem; padding: 0.5rem 0.75rem; display: flex; flex-direction: column; gap: 0.1rem; }
+.pemeriksaan-item span { font-size: 0.7rem; color: #94a3b8; }
+.pemeriksaan-item strong { font-size: 0.875rem; color: #1e293b; }
+
+.obat-list { margin: 0.25rem 0 0 1.25rem; padding: 0; font-size: 0.875rem; color: #1e293b; line-height: 1.8; }
 
 @media (max-width: 768px) {
   .patient-sidebar { transform: translateX(-100%); }

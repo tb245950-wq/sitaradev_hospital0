@@ -4,20 +4,27 @@ import axios from 'axios'
 // DETECT BASE URL OTOMATIS
 // ============================================
 const getBaseURL = () => {
+  // ✅ Production: gunakan env var yang di-inject Vite saat build
+  // Set VITE_API_BASE_URL di dashboard Vercel/Railway
+  if (import.meta.env.VITE_API_BASE_URL) {
+    console.log('🌐 Using production API URL:', import.meta.env.VITE_API_BASE_URL)
+    return import.meta.env.VITE_API_BASE_URL
+  }
+
+  // Development fallback: cek IP WiFi lokal
   const hostname = window.location.hostname
   const port = window.location.port
-  
+
   console.log('🔍 Detecting base URL...')
   console.log('   Hostname:', hostname)
   console.log('   Port:', port)
-  
-  // Jika diakses via IP WiFi (172.16.20.218)
+
   if (hostname === '172.16.20.218') {
     const url = 'http://172.16.20.218:8000/api'
     console.log('   Using WiFi IP:', url)
     return url
   }
-  
+
   // Default localhost untuk development
   const url = 'http://127.0.0.1:8000/api'
   console.log('   Using localhost:', url)

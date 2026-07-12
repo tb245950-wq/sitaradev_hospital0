@@ -118,19 +118,22 @@ const goBack = () => router.push('/assessments')
 
 const fetchTodayPatients = async () => {
   try {
-    const response = await queueService.getQueues({ 
-      status: 'menunggu,dipanggil,selesai',
-      jenis_layanan: 'assessment'
+    // Ambil semua antrian hari ini (tanpa filter jenis_layanan)
+    // agar semua pasien yang datang ke klinik bisa di-assessment
+    const today = new Date().toISOString().split('T')[0]
+    const response = await queueService.getQueues({
+      tanggal: today
     })
-    
-    // Extract unique patients
+
+    // Ekstrak pasien unik dari antrian hari ini
     const patientsMap = new Map()
-    response.data.forEach(q => {
-      if (q.pasien) {
+    const items = response.data ?? response
+    items.forEach(q => {
+      if (q.pasien && q.pasien.id) {
         patientsMap.set(q.pasien.id, q.pasien)
       }
     })
-    
+
     todayPatients.value = Array.from(patientsMap.values())
   } catch (error) {
     console.error('Error fetching today patients:', error)
@@ -140,7 +143,24 @@ const fetchTodayPatients = async () => {
 const handleSubmit = async () => {
   loading.value = true
   try {
-    const result = await assessmentStore.createAssessment(form.value)
+    // Bersihkan field numerik yang kosong agar tidak gagal validasi 'numeric'
+    const payload = {
+      ...form.value,
+      hasil_pemeriksaan: {
+        ...form.value.hasil_pemeriksaan,
+        berat_badan: form.value.hasil_pemeriksaan.berat_badan !== ''
+          ? Number(form.value.hasil_pemeriksaan.berat_badan)
+          : undefined,
+        tinggi_badan: form.value.hasil_pemeriksaan.tinggi_badan !== ''
+          ? Number(form.value.hasil_pemeriksaan.tinggi_badan)
+          : undefined,
+      }
+    }
+    // Hapus key undefined agar tidak dikirim ke backend
+    if (payload.hasil_pemeriksaan.berat_badan === undefined) delete payload.hasil_pemeriksaan.berat_badan
+    if (payload.hasil_pemeriksaan.tinggi_badan === undefined) delete payload.hasil_pemeriksaan.tinggi_badan
+
+    const result = await assessmentStore.createAssessment(payload)
     if (result.success) {
       alert('Assessment berhasil dibuat')
       router.push('/assessments')

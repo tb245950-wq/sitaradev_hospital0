@@ -32,8 +32,7 @@
           <select v-model="statusFilter" @change="applyFilters" class="form-select">
             <option value="">Semua Status</option>
             <option value="draft">Draft</option>
-            <option value="submitted">Submitted</option>
-            <option value="approved">Approved</option>
+            <option value="final">Final</option>
           </select>
         </div>
         <div class="filter-group filter-actions">
@@ -105,7 +104,7 @@
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
                   </button>
-                  <button v-if="authStore.isDokter && assessment.status === 'draft'" @click="submitAssessment(assessment.id)" class="btn-icon-sm" title="Submit" style="color: #10b981;">
+                  <button v-if="authStore.isDokter && (assessment.status || 'draft') === 'draft'" @click="submitAssessment(assessment.id)" class="btn-icon-sm" title="Finalisasi Assessment" style="color: #10b981;">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
@@ -205,12 +204,14 @@ const confirmDelete = async (id) => {
 
 const canEdit = (assessment) => {
   if (authStore.isAdmin) return true
-  if (authStore.isDokter) return (assessment.status || 'draft') === 'draft' || assessment.dokter?.id === authStore.user?.id
+  // Dokter hanya bisa edit assessment miliknya sendiri yang masih draft
+  if (authStore.isDokter) return (assessment.status || 'draft') === 'draft' && assessment.dokter?.id === authStore.user?.id
   return false
 }
 
 const canDelete = (assessment) => {
   if (authStore.isAdmin) return true
+  // Dokter hanya bisa hapus assessment miliknya sendiri yang masih draft
   if (authStore.isDokter) return (assessment.status || 'draft') === 'draft' && assessment.dokter?.id === authStore.user?.id
   return false
 }

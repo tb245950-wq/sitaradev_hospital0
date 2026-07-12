@@ -93,6 +93,7 @@ const handleLogout = async () => {
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-width: 0;
 }
 
 .toggle-btn {
@@ -101,25 +102,26 @@ const handleLogout = async () => {
   font-size: 1.5rem;
   cursor: pointer;
   color: #64748b;
-  display: none; /* Hidden on desktop */
-}
-
-@media (max-width: 768px) {
-  .toggle-btn {
-    display: block;
-  }
+  display: none;
+  flex-shrink: 0;
+  padding: 0.25rem;
+  line-height: 1;
 }
 
 .page-title {
   font-size: 1.25rem;
   font-weight: 700;
   color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .navbar-right {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
+  flex-shrink: 0;
 }
 
 .user-profile {
@@ -156,6 +158,7 @@ const handleLogout = async () => {
   align-items: center;
   justify-content: center;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .logout-btn {
@@ -168,9 +171,47 @@ const handleLogout = async () => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .logout-btn:hover {
   background: #fee2e2;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+  .toggle-btn {
+    display: block;
+  }
+
+  .navbar {
+    padding: 0 1rem;
+  }
+
+  .page-title {
+    font-size: 1rem;
+  }
+
+  /* Sembunyikan nama & role di mobile, tampilkan hanya avatar */
+  .user-info {
+    display: none;
+  }
+
+  .logout-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .navbar-right {
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 400px) {
+  /* Di layar sangat kecil, sembunyikan teks logout, tampilkan ikon */
+  .logout-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+  }
 }
 </style>

@@ -11,32 +11,37 @@ class MonitoringResource extends JsonResource
     {
         return [
             'id' => $this->id_monitoring,
-            'terapi' => [
+            // Terapi
+            'therapy' => [
                 'id' => $this->therapy->id_terapi,
-                'nama' => $this->therapy->nama_terapi,
+                'nama_terapi' => $this->therapy->nama_terapi,
+                'status' => $this->therapy->status,
             ],
+            // Pasien — flat structure untuk memudahkan akses di frontend
             'pasien' => [
                 'id' => $this->patient->id_pasien,
                 'nama' => $this->patient->nama_lengkap,
                 'nrm' => $this->patient->nrm,
             ],
-            'sesi' => [
-                'tanggal' => $this->tanggal_sesi->format('Y-m-d'),
-                'jam' => $this->waktu_mulai . ' - ' . $this->waktu_selesai,
-            ],
-            'status' => [
-                'kehadiran' => $this->kehadiran,
-                'skor_progress' => $this->progress_score,
-            ],
-            'catatan' => [
-                'perkembangan' => $this->catatan_perkembangan,
-                'kondisi' => $this->kondisi_pasien,
-                'rekomendasi' => $this->rekomendasi,
-            ],
-            'petugas' => [
+            // Terapis — flat structure
+            'terapis' => [
                 'id' => $this->terapis->id,
                 'nama' => $this->terapis->name,
             ],
+            // Sesi detail
+            'tanggal_sesi' => $this->tanggal_sesi?->format('Y-m-d'),
+            'waktu_mulai' => $this->waktu_mulai,
+            'waktu_selesai' => $this->waktu_selesai,
+            // Status kehadiran dan progress
+            'kehadiran' => $this->kehadiran,
+            'progress_score' => $this->progress_score,
+            // Catatan detail
+            'catatan_perkembangan' => $this->catatan_perkembangan,
+            'kondisi_pasien' => $this->kondisi_pasien,
+            'rekomendasi' => $this->rekomendasi,
+            // Metadata
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

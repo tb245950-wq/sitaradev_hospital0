@@ -204,7 +204,24 @@ const handleUpdate = async () => {
   }
   saving.value = true
   saveError.value = ''
-  const result = await store.updateAssessment(route.params.id, form.value)
+
+  // Bersihkan field numerik yang kosong agar tidak gagal validasi 'numeric'
+  const payload = {
+    ...form.value,
+    hasil_pemeriksaan: { ...form.value.hasil_pemeriksaan }
+  }
+  if (payload.hasil_pemeriksaan.berat_badan !== '' && payload.hasil_pemeriksaan.berat_badan != null) {
+    payload.hasil_pemeriksaan.berat_badan = Number(payload.hasil_pemeriksaan.berat_badan)
+  } else {
+    delete payload.hasil_pemeriksaan.berat_badan
+  }
+  if (payload.hasil_pemeriksaan.tinggi_badan !== '' && payload.hasil_pemeriksaan.tinggi_badan != null) {
+    payload.hasil_pemeriksaan.tinggi_badan = Number(payload.hasil_pemeriksaan.tinggi_badan)
+  } else {
+    delete payload.hasil_pemeriksaan.tinggi_badan
+  }
+
+  const result = await store.updateAssessment(route.params.id, payload)
   saving.value = false
   if (result.success) {
     assessment.value = result.data

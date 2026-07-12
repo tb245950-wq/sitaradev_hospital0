@@ -6,9 +6,25 @@ export const superAdminService = {
     return api.get('/super-admin/dashboard')
   },
 
-  // Audit Logs
-  getAuditLogs(limit = 10, page = 1) {
-    return api.get(`/super-admin/audit-logs?limit=${limit}&page=${page}`)
+  // Audit Logs (SystemAuditLog - CRUD super admin)
+  getAuditLogs(limit = 15, page = 1, filters = {}) {
+    const params = new URLSearchParams({ limit, page })
+    if (filters.module)      params.append('module', filters.module)
+    if (filters.action)      params.append('action', filters.action)
+    if (filters.status)      params.append('status', filters.status)
+    if (filters.search)      params.append('search', filters.search)
+    if (filters.anomaly_only) params.append('anomaly_only', '1')
+    return api.get(`/super-admin/audit-logs?${params.toString()}`)
+  },
+
+  // Activity Logs (ActivityLog - semua aksi klinik)
+  getActivityLogs(limit = 15, page = 1, filters = {}) {
+    const params = new URLSearchParams({ limit, page })
+    if (filters.search) params.append('search', filters.search)
+    if (filters.status) params.append('status', filters.status)
+    if (filters.type)   params.append('type', filters.type)
+    if (filters.date)   params.append('date', filters.date)
+    return api.get(`/super-admin/activity-logs?${params.toString()}`)
   },
 
   // Users

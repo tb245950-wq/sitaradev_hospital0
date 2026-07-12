@@ -50,5 +50,17 @@ export const useMonitoringStore = defineStore('monitoring', () => {
     }
   }
 
-  return { monitorings, loading, error, pagination, fetchMonitorings, generateAssessment }
+  async function deleteMonitoring(id) {
+    try {
+      await monitoringService.deleteMonitoring(id)
+      await fetchMonitorings()
+      useAnalyticsStore().fetchAnalytics()
+      return { success: true }
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Gagal hapus monitoring'
+      return { success: false, error: error.value }
+    }
+  }
+
+  return { monitorings, loading, error, pagination, fetchMonitorings, generateAssessment, deleteMonitoring }
 })
