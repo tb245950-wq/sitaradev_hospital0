@@ -15,8 +15,8 @@ return [
         // Production Vercel
         'https://sitaradev-hospital0.vercel.app',
         'https://sitaradev-hospitalo.vercel.app',
-        // Cloudflare Tunnel
-        'https://fun-prep-launry-accurately.trycloudflare.com',
+        // Cloudflare Tunnel (latest)
+        'https://evident-parts-action-instructional.trycloudflare.com',
     ],
 
     'allowed_origins_patterns' => [
