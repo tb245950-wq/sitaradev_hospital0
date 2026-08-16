@@ -1,8 +1,8 @@
 *.log
 .DS_Store
 .env
-.env.backup
-.env.production
+.env.*
+!.env.example
 .phpactor.json
 .phpunit.result.cache
 /.codex
@@ -26,3 +26,32 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 .aider*
+
+# Database files — jangan commit data lokal
+database/database.sqlite
+database/*.sqlite
+database/*.sqlite-shm
+database/*.sqlite-wal
+
+# Storage — file upload user, exports, backups
+storage/app/public/*
+storage/app/exports/*
+storage/app/backups/*
+storage/app/private/*
+!storage/app/public/.gitkeep
+!storage/app/exports/.gitkeep
+!storage/app/backups/.gitkeep
+!storage/app/private/.gitkeep
+
+# Laravel cache hasil generate
+bootstrap/cache/*.php
+
+# SSL/TLS certificates & private keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Docker override lokal
+docker-compose.override.yml

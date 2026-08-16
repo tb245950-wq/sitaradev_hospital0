@@ -1,36 +1,49 @@
+# =============================================================
+# Dockerfile.backend — Backend Laravel (VPS / Docker Compose)
+# Menggunakan php-fpm, dijalankan di belakang Nginx
+# Node.js TIDAK ada di sini — frontend punya container sendiri
+# =============================================================
 FROM php:8.3-fpm
 
+# Install ekstensi PHP yang dibutuhkan
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     zip \
     unzip \
-    libmariadb-dev \
+    libicu-dev \
     libonig-dev \
     libzip-dev \
+    libpq-dev \
     && docker-php-ext-install \
-    pdo_mysql \
-    mbstring \
-    zip \
-    opcache \
+        pdo_pgsql \
+        pgsql \
+        intl \
+        mbstring \
+        zip \
+        opcache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+WORKDIR /var/www/html
 
-WORKDIR /var/www
-
+# Copy composer files dulu untuk cache layer
 COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction
-
+# Copy semua file project
 COPY . .
 
-RUN npm ci && npm run build && chmod -R 775 storage bootstrap/cache
+# Set permissions
+RUN chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
-EXPOSE 8000
+# Jalankan post-install scripts
+RUN composer run-script post-autoload-dump
+
+# php-fpm listen di port 9000
+EXPOSE 9000
 
 CMD ["php-fpm"]

@@ -15,9 +15,9 @@ coverage
 *.local
 
 # Environment files — jangan commit secrets ke Git
-.env.production
-.env.local
-.env.*.local
+.env
+.env.*
+!.env.example
 
 # Editor directories and files
 .vscode/*
@@ -42,3 +42,6 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Cloudflare Workers
+.wrangler/

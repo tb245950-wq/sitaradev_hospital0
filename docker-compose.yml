@@ -1,0 +1,82 @@
+# =============================================================
+# docker-compose.yml — Sitara Hospital (VPS / Lokal)
+# Services: nginx (gateway) + backend (Laravel) + frontend (Vue) + db (MySQL)
+# =============================================================
+
+services:
+
+  # --- Database PostgreSQL ---
+  db:
+    image: postgres:16-alpine
+    container_name: sitara_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-hospital}
+      POSTGRES_USER: ${DB_USERNAME:-hospital}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-hospital}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - sitara_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-hospital} -d ${DB_DATABASE:-hospital}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- Backend Laravel (php-fpm + Apache) ---
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: sitara_backend
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    volumes:
+      - storage_data:/var/www/html/storage
+      - bootstrap_cache:/var/www/html/bootstrap/cache
+    networks:
+      - sitara_network
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "php artisan migrate --force --no-interaction &&
+             php artisan config:cache &&
+             php artisan route:cache &&
+             php-fpm"
+
+  # --- Frontend Vue.js (Nginx static) ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sitara_frontend
+    restart: unless-stopped
+    networks:
+      - sitara_network
+
+  # --- Nginx Gateway (entry point) ---
+  nginx:
+    image: nginx:alpine
+    container_name: sitara_nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-80}:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - sitara_network
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  db_data:
+  storage_data:
+  bootstrap_cache:
+
+networks:
+  sitara_network:
+    driver: bridge

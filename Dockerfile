@@ -1,7 +1,10 @@
-# Dockerfile untuk deployment Laravel di Render.com
-FROM php:8.3-cli
+# =============================================================
+# Dockerfile — Backend Laravel (Render.com)
+# Menggunakan php:8.3-apache agar bisa serve HTTP langsung
+# =============================================================
+FROM php:8.3-apache
 
-# Install dependencies sistem
+# Install ekstensi PHP yang dibutuhkan
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -10,38 +13,49 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     libonig-dev \
     libzip-dev \
+    libpq-dev \
     && docker-php-ext-install \
-    pdo_mysql \
-    intl \
-    zip \
-    opcache \
+        pdo_pgsql \
+        pgsql \
+        intl \
+        mbstring \
+        zip \
+        opcache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Aktifkan mod_rewrite untuk Laravel routing
+RUN a2enmod rewrite
+
 # Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Set working directory
-WORKDIR /var/www
+# Set document root ke public/
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
+    /etc/apache2/sites-available/*.conf \
+    /etc/apache2/apache2.conf \
+    /etc/apache2/conf-available/*.conf
 
-# Copy semua file proyek ke container
+WORKDIR /var/www/html
+
+# Copy composer files dulu untuk cache layer
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# Copy semua file project
 COPY . .
 
-# Install dependencies PHP (tanpa dev)
-RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-# Buat file SQLite database
-RUN touch /var/www/database/database.sqlite
-
 # Set permissions
-RUN chmod -R 775 storage bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache
+RUN chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
-# Cache konfigurasi Laravel
-RUN php artisan config:cache && \
-    php artisan route:cache
+# Jalankan post-install scripts
+RUN composer run-script post-autoload-dump
 
-# Expose port (Render akan override dengan env PORT)
-EXPOSE 8000
+EXPOSE 80
 
-# Command untuk menjalankan server
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+# Jalankan migrate lalu start Apache
+CMD php artisan migrate --force --no-interaction \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && apache2-foreground
