@@ -32,6 +32,7 @@ database/database.sqlite
 database/*.sqlite
 database/*.sqlite-shm
 database/*.sqlite-wal
+database/sitaradev_hospital.sql
 
 # Storage — file upload user, exports, backups
 storage/app/public/*
