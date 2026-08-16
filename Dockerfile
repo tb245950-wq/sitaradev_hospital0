@@ -1,10 +1,8 @@
 # =============================================================
 # Dockerfile — Backend Laravel (Render.com)
-# Menggunakan php:8.3-apache agar bisa serve HTTP langsung
 # =============================================================
 FROM php:8.3-apache
 
-# Install ekstensi PHP yang dibutuhkan
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -29,7 +27,7 @@ RUN a2enmod rewrite
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Set document root ke public/
+# Set document root ke backend/public/
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
     /etc/apache2/sites-available/*.conf \
@@ -39,11 +37,11 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
 WORKDIR /var/www/html
 
 # Copy composer files dulu untuk cache layer
-COPY composer.json composer.lock ./
+COPY backend/composer.json backend/composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# Copy semua file project
-COPY . .
+# Copy semua file Laravel
+COPY backend/ .
 
 # Set permissions
 RUN chown -R www-data:www-data storage bootstrap/cache \
@@ -54,7 +52,6 @@ RUN composer run-script post-autoload-dump
 
 EXPOSE 80
 
-# Jalankan migrate lalu start Apache
 CMD php artisan migrate --force --no-interaction \
     && php artisan config:cache \
     && php artisan route:cache \
