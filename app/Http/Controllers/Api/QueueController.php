@@ -53,6 +53,7 @@ class QueueController extends Controller
         return \App\Http\Resources\QueueResource::collection($queues)->additional(['success' => true]);
     }
 
+
     /**
      * FR-06: Daftarkan Pasien ke Antrian
      */
