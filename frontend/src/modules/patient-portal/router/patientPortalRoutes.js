@@ -15,6 +15,12 @@ export const patientPortalRoutes = [
     meta: { requiresAuth: false }
   },
   {
+    path: '/pasien/forgot-password',
+    name: 'PatientForgotPassword',
+    component: () => import('../views/PatientForgotPasswordView.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
     path: '/pasien/dashboard',
     name: 'PatientDashboard',
     component: () => import('../views/PatientDashboardView.vue'),

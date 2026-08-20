@@ -13,6 +13,19 @@ use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Api\PoliController;
 use App\Http\Controllers\Api\PatientPortalController;
 use App\Http\Controllers\Api\SuperAdminController;
+use App\Http\Controllers\Api\PasswordResetController;
+
+/*
+|--------------------------------------------------------------------------
+| HEALTH CHECK (Render.com / load balancer ping)
+|--------------------------------------------------------------------------
+*/
+Route::get('/health', function () {
+    return response()->json([
+        'status'    => 'ok',
+        'timestamp' => now()->toIso8601String(),
+    ]);
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -24,9 +37,13 @@ use App\Http\Controllers\Api\SuperAdminController;
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
+// Staff forgot password (tidak perlu login)
+Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword']);
+
 // Patient login & register - PATH HARUS /pasien/ bukan /patients/
 Route::post('/pasien/login', [PatientAuthController::class, 'login']);
 Route::post('/pasien/register', [PatientAuthController::class, 'register']);
+Route::post('/pasien/forgot-password', [PatientAuthController::class, 'forgotPassword']);
 
 /*
 |--------------------------------------------------------------------------

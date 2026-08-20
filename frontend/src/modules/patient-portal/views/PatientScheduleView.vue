@@ -119,6 +119,15 @@
       </div>
     </main>
   </div>
+
+  <!-- Modal Konfirmasi Logout -->
+  <LogoutConfirmModal
+    :show="showLogoutModal"
+    :loading="logoutLoading"
+    :user-name="patientStore.user?.name"
+    @confirm="doLogout"
+    @cancel="showLogoutModal = false"
+  />
 </template>
 
 <script setup>
@@ -126,9 +135,15 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePatientStore } from '../stores/patientStore'
 import { patientService } from '../services/patientService'
+import LogoutConfirmModal from '../../../shared/components/LogoutConfirmModal.vue'
+import { useNotificationStore } from '../../../shared/stores/notificationStore'
 
 const router = useRouter()
 const patientStore = usePatientStore()
+const notify = useNotificationStore()
+
+const showLogoutModal = ref(false)
+const logoutLoading   = ref(false)
 
 const loading = ref(false)
 const error = ref(null)
@@ -163,10 +178,19 @@ const loadSchedule = async () => {
   }
 }
 
-const handleLogout = async () => {
-  if (confirm('Yakin ingin keluar?')) {
+const handleLogout = () => { showLogoutModal.value = true }
+
+const doLogout = async () => {
+  logoutLoading.value = true
+  try {
     await patientStore.logout()
+    notify.success('Anda berhasil keluar. Sampai jumpa!', 'Logout Berhasil')
+    setTimeout(() => { router.push('/pasien/login') }, 800)
+  } catch (e) {
     router.push('/pasien/login')
+  } finally {
+    logoutLoading.value = false
+    showLogoutModal.value = false
   }
 }
 

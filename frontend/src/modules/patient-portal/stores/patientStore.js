@@ -55,6 +55,12 @@ export const usePatientStore = defineStore('patient', () => {
         console.error('❌ Patient store: Login failed:', result.error)
         error.value = result.error || 'Login gagal'
         
+        // Bersihkan token lama agar navigation guard tidak redirect
+        token.value = null
+        localStorage.removeItem('patient_token')
+        localStorage.removeItem('patient_user')
+        localStorage.removeItem('patient')
+        
         return {
           success: false,
           error: result.error
@@ -63,6 +69,12 @@ export const usePatientStore = defineStore('patient', () => {
     } catch (err) {
       console.error('💥 Patient store: Unexpected error:', err)
       error.value = 'Terjadi kesalahan sistem'
+      
+      // Bersihkan token lama
+      token.value = null
+      localStorage.removeItem('patient_token')
+      localStorage.removeItem('patient_user')
+      localStorage.removeItem('patient')
       
       return {
         success: false,
@@ -177,7 +189,7 @@ export const usePatientStore = defineStore('patient', () => {
   function loadFromStorage() {
     try {
       const storedToken = localStorage.getItem('patient_token')
-      const storedUser = localStorage.getItem('user')
+      const storedUser = localStorage.getItem('patient_user')
       const storedPatient = localStorage.getItem('patient')
       
       if (storedToken) {
@@ -187,6 +199,10 @@ export const usePatientStore = defineStore('patient', () => {
       }
     } catch (err) {
       console.error('Error loading from storage:', err)
+      // Clear corrupt data
+      localStorage.removeItem('patient_token')
+      localStorage.removeItem('patient_user')
+      localStorage.removeItem('patient')
     }
   }
 

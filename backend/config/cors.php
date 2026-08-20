@@ -17,6 +17,9 @@ return [
         'https://sitaradev-hospitalo.vercel.app',
         // Cloudflare Tunnel (latest)
         'https://evident-parts-action-instructional.trycloudflare.com',
+        // Production Render.com
+        'https://sitara-frontend.onrender.com',
+        'https://sitara-backend.onrender.com',
     ],
 
     'allowed_origins_patterns' => [
@@ -24,6 +27,10 @@ return [
         '#^https://.*\.vercel\.app$#',
         // Izinkan semua subdomain trycloudflare.com (tunnel)
         '#^https://.*\.trycloudflare\.com$#',
+        // Izinkan semua subdomain onrender.com (Render deployments & previews)
+        '#^https://.*\.onrender\.com$#',
+        // Izinkan custom domain production jika sudah dikonfigurasi di Render
+        // '#^https://.*\.sitaradev\.com$#',
     ],
 
     'allowed_headers' => [

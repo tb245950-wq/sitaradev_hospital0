@@ -1,6 +1,6 @@
 # =============================================================
 # docker-compose.yml — Sitara Hospital (VPS / Lokal)
-# Services: nginx (gateway) + backend (Laravel) + frontend (Vue) + db (MySQL)
+# Services: nginx + backend (Laravel) + frontend (Vue) + db (PostgreSQL)
 # =============================================================
 
 services:
@@ -24,11 +24,11 @@ services:
       timeout: 5s
       retries: 5
 
-  # --- Backend Laravel (php-fpm + Apache) ---
+  # --- Backend Laravel (php-fpm) ---
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
+      context: ./backend
+      dockerfile: ../Dockerfile.backend
     container_name: sitara_backend
     restart: unless-stopped
     env_file:

@@ -1,11 +1,9 @@
 # =============================================================
 # Dockerfile.backend — Backend Laravel (VPS / Docker Compose)
-# Menggunakan php-fpm, dijalankan di belakang Nginx
-# Node.js TIDAK ada di sini — frontend punya container sendiri
+# php-fpm, dijalankan di belakang Nginx
 # =============================================================
 FROM php:8.3-fpm
 
-# Install ekstensi PHP yang dibutuhkan
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -33,7 +31,7 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# Copy semua file project
+# Copy semua file Laravel
 COPY . .
 
 # Set permissions
@@ -43,7 +41,6 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
 # Jalankan post-install scripts
 RUN composer run-script post-autoload-dump
 
-# php-fpm listen di port 9000
 EXPOSE 9000
 
 CMD ["php-fpm"]

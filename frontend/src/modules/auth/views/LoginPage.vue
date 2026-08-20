@@ -56,7 +56,7 @@
               <input type="checkbox" v-model="form.remember" />
               <span>Ingat saya</span>
             </label>
-            <a href="#" class="forgot-link">Lupa password?</a>
+            <router-link to="/forgot-password" class="forgot-link">Lupa password?</router-link>
           </div>
 
           <!-- Submit Button -->

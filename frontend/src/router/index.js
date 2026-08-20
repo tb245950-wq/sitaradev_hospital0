@@ -94,7 +94,9 @@ router.beforeEach((to, from, next) => {
       return next('/pasien/login')
     }
 
-    if ((to.path === '/pasien/login' || to.path === '/pasien/register') && patientToken) {
+    // Halaman publik pasien (login, register, forgot-password) — jika sudah ada token redirect ke dashboard
+    const patientPublicPages = ['/pasien/login', '/pasien/register', '/pasien/forgot-password']
+    if (patientPublicPages.includes(to.path) && patientToken) {
       return next('/pasien/dashboard')
     }
 

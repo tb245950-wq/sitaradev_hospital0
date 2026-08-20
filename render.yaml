@@ -1,0 +1,128 @@
+# =============================================================
+# render.yaml — Sitara Hospital Management System
+# Infrastructure as Code untuk Render.com
+#
+# Deploy: https://dashboard.render.com → New → Blueprint
+#         atau: https://render.com/deploy (link otomatis)
+#
+# Services:
+#   1. sitara-backend  → Web Service (Docker, Laravel + Apache)
+#   2. sitara-frontend → Static Site (Vue.js build)
+#   3. sitara-db       → PostgreSQL (Render managed)
+# =============================================================
+
+databases:
+  - name: sitara-db
+    databaseName: hospital
+    user: hospital
+    plan: free           # Ganti ke "starter" atau "standard" untuk production
+    region: singapore    # Pilih region terdekat
+
+services:
+
+  # ================================================================
+  # 1. BACKEND — Laravel 11 (Docker + Apache)
+  # ================================================================
+  - type: web
+    name: sitara-backend
+    runtime: docker
+    region: singapore
+    plan: free           # Ganti ke "starter" atau lebih untuk production
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+
+    # Health check endpoint (pastikan route /api/health ada)
+    healthCheckPath: /api/health
+
+    # Auto-deploy saat push ke branch ini
+    branch: main
+
+    envVars:
+      # ── App ────────────────────────────────────────────────────
+      - key: APP_NAME
+        value: "Sitara Hospital"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true   # Render generate otomatis base64 key
+
+      # APP_URL diisi otomatis setelah service deploy
+      # Set manual di dashboard: https://sitara-backend.onrender.com
+      - key: APP_URL
+        value: https://sitara-backend.onrender.com
+
+      # ── Database PostgreSQL ────────────────────────────────────
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        fromDatabase:
+          name: sitara-db
+          property: connectionString   # Render inject full URL otomatis
+      - key: DB_SSLMODE
+        value: require   # Wajib require di Render Postgres
+
+      # ── Session & Cache ────────────────────────────────────────
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_LIFETIME
+        value: "120"
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+
+      # ── Logging ────────────────────────────────────────────────
+      - key: LOG_CHANNEL
+        value: stderr    # Log ke stdout/stderr agar muncul di Render dashboard
+      - key: LOG_LEVEL
+        value: error
+
+      # ── Filesystem ─────────────────────────────────────────────
+      - key: FILESYSTEM_DISK
+        value: local
+
+      # ── Frontend URL (untuk CORS) ──────────────────────────────
+      # Ganti dengan URL frontend setelah deploy
+      - key: FRONTEND_URL
+        value: https://sitara-frontend.onrender.com
+
+  # ================================================================
+  # 2. FRONTEND — Vue.js 3 (Static Site)
+  # ================================================================
+  - type: web
+    name: sitara-frontend
+    runtime: static
+    region: singapore
+    plan: free
+
+    # Build dari folder frontend/
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+
+    # SPA fallback — semua route ke index.html
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+    # Headers keamanan
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+
+    envVars:
+      - key: VITE_APP_NAME
+        value: "SITARA"
+      # Ganti dengan URL backend setelah deploy
+      - key: VITE_API_BASE_URL
+        value: https://sitara-backend.onrender.com/api
