@@ -10,6 +10,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class PatientAuthController extends Controller
 {
@@ -226,6 +230,91 @@ class PatientAuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Lupa password pasien — kirim link reset ke email Gmail
+     * POST /api/pasien/forgot-password
+     */
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+            ], [
+                'email.required' => 'Email harus diisi.',
+                'email.email'    => 'Format email tidak valid.',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors'  => $validator->errors()
+                ], 422);
+            }
+
+            $email = $request->input('email');
+
+            // Selalu return sukses agar tidak expose apakah email terdaftar
+            $user = User::where('email', $email)->where('role', 'pasien')->first();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Jika email Anda terdaftar, link reset password telah dikirim.'
+                ]);
+            }
+
+            // Generate token reset
+            $token = Str::random(64);
+
+            // Simpan ke password_reset_tokens
+            DB::table('password_reset_tokens')->updateOrInsert(
+                ['email' => $email],
+                [
+                    'email'      => $email,
+                    'token'      => hash('sha256', $token),
+                    'created_at' => now(),
+                ]
+            );
+
+            // Kirim email (gunakan Mail::raw agar tidak butuh Mailable class)
+            $frontendUrl = config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:5173'));
+            $resetLink   = $frontendUrl . '/pasien/reset-password?token=' . $token . '&email=' . urlencode($email);
+            $expireHours = 24;
+
+            Mail::raw(
+                "Halo {$user->name},\n\n" .
+                "Anda menerima email ini karena ada permintaan reset password untuk akun SITARA Anda.\n\n" .
+                "Klik link berikut untuk mereset password Anda:\n{$resetLink}\n\n" .
+                "Link ini akan kadaluarsa dalam {$expireHours} jam.\n\n" .
+                "Jika Anda tidak meminta reset password, abaikan email ini.\n\n" .
+                "Salam,\nTim SITARA",
+                function ($message) use ($email, $user) {
+                    $message->to($email, $user->name)
+                            ->subject('Reset Password Akun SITARA Anda');
+                }
+            );
+
+            Log::info('Patient forgot password email sent', [
+                'email' => $email,
+                'name'  => $user->name,
+                'ip'    => $request->ip(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Link reset password telah dikirim ke email Anda. Silakan cek inbox atau folder spam.'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Patient forgot password error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim email. Silakan coba lagi atau hubungi administrator.'
             ], 500);
         }
     }

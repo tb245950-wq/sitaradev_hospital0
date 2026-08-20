@@ -56,7 +56,22 @@ api.interceptors.response.use(
   response => response,
   error => {
     if (error.response?.status === 401) {
-      const isPatientRoute = error.config?.url?.includes('/pasien/')
+      const requestUrl = error.config?.url || ''
+      
+      // Jangan intercept 401 dari endpoint auth — biarkan naik ke component
+      // supaya bisa ditampilkan sebagai alert, bukan hard redirect
+      const isAuthEndpoint = 
+        requestUrl.endsWith('/pasien/login') ||
+        requestUrl.endsWith('/pasien/register') ||
+        requestUrl.endsWith('/pasien/forgot-password') ||
+        requestUrl.endsWith('/login') ||
+        requestUrl.endsWith('/register')
+      
+      if (isAuthEndpoint) {
+        return Promise.reject(error)
+      }
+
+      const isPatientRoute = requestUrl.includes('/pasien/')
       if (isPatientRoute) {
         localStorage.removeItem('patient_token')
         localStorage.removeItem('patient_user')

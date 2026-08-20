@@ -17,23 +17,45 @@
           {{ authStore.user?.name?.charAt(0) }}
         </div>
       </div>
-      <button @click="handleLogout" class="logout-btn" title="Keluar">
-        Logout
+      <button @click="showLogoutModal = true" class="logout-btn" title="Keluar">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span class="logout-text">Logout</span>
       </button>
     </div>
   </nav>
+
+  <!-- Modal Konfirmasi Logout -->
+  <LogoutConfirmModal
+    :show="showLogoutModal"
+    :loading="logoutLoading"
+    :user-name="authStore.user?.name"
+    :user-role="roleLabel"
+    @confirm="doLogout"
+    @cancel="showLogoutModal = false"
+  />
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../../modules/auth/stores/authStore'
+import { useNotificationStore } from '../../stores/notificationStore'
+import LogoutConfirmModal from '../LogoutConfirmModal.vue'
 
 defineEmits(['toggle-sidebar'])
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const notify = useNotificationStore()
+
+const showLogoutModal = ref(false)
+const logoutLoading   = ref(false)
 
 const pageTitle = computed(() => {
   switch (route.name) {
@@ -61,16 +83,18 @@ const roleLabel = computed(() => {
   return labels[role] || role
 })
 
-const handleLogout = async () => {
-  if (confirm('Apakah Anda yakin ingin keluar?')) {
-    try {
-      await authStore.logout();
-      // Menggunakan window.location.href untuk memastikan seluruh state terhapus (hard reload)
-      window.location.href = '/login';
-    } catch (error) {
-      console.error('Logout error:', error);
-      window.location.href = '/login';
-    }
+const doLogout = async () => {
+  logoutLoading.value = true
+  try {
+    await authStore.logout()
+    notify.success('Anda berhasil keluar. Sampai jumpa!', 'Logout Berhasil')
+    setTimeout(() => { window.location.href = '/login' }, 800)
+  } catch (error) {
+    console.error('Logout error:', error)
+    window.location.href = '/login'
+  } finally {
+    logoutLoading.value = false
+    showLogoutModal.value = false
   }
 }
 </script>
@@ -162,6 +186,9 @@ const handleLogout = async () => {
 }
 
 .logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.5rem 1rem;
   background: #f1f5f9;
   color: #ef4444;
@@ -173,6 +200,7 @@ const handleLogout = async () => {
   transition: all 0.2s;
   white-space: nowrap;
 }
+.logout-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
 
 .logout-btn:hover {
   background: #fee2e2;

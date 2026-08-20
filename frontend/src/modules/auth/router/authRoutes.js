@@ -10,5 +10,11 @@ export const authRoutes = [
     name: 'register',
     component: () => import('../views/RegisterPage.vue'),
     meta: { requiresAuth: false, guest: true }
+  },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('../views/ForgotPasswordPage.vue'),
+    meta: { requiresAuth: false, guest: true }
   }
 ]

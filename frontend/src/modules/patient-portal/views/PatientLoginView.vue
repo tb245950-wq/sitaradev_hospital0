@@ -25,8 +25,10 @@
               id="email"
               v-model="form.email"
               placeholder="nama@email.com"
+              :class="{ 'input-error': inputError.email }"
               required
             />
+            <span v-if="inputError.email" class="field-error">{{ inputError.email }}</span>
           </div>
 
           <div class="form-group">
@@ -36,8 +38,14 @@
               id="password"
               v-model="form.password"
               placeholder="••••••••"
+              :class="{ 'input-error': inputError.password }"
               required
             />
+            <span v-if="inputError.password" class="field-error">{{ inputError.password }}</span>
+          </div>
+
+          <div class="form-options">
+            <router-link to="/pasien/forgot-password" class="forgot-link">Lupa password?</router-link>
           </div>
 
           <button type="submit" class="btn-login" :disabled="patientStore.loading">
@@ -45,8 +53,15 @@
             <span v-else>Masuk</span>
           </button>
 
-          <div v-if="patientStore.error" class="error-message">
-            {{ patientStore.error }}
+          <!-- Error Alert -->
+          <div v-if="localError" class="error-message">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="error-icon">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ localError }}</span>
           </div>
 
           <p class="register-link">
@@ -72,10 +87,35 @@ const form = ref({
   password: ''
 })
 
+const localError = ref('')
+const inputError = ref({ email: '', password: '' })
+
 const handleLogin = async () => {
-  const result = await patientStore.login(form.value.email, form.value.password)
-  if (result.success) {
-    router.push('/pasien/dashboard')
+  // Reset semua error
+  localError.value = ''
+  inputError.value = { email: '', password: '' }
+  patientStore.clearError()
+
+  // Validasi client-side
+  if (!form.value.email) {
+    inputError.value.email = 'Email harus diisi'
+    return
+  }
+  if (!form.value.password) {
+    inputError.value.password = 'Password harus diisi'
+    return
+  }
+
+  try {
+    const result = await patientStore.login(form.value.email, form.value.password)
+
+    if (result && result.success) {
+      router.push('/pasien/dashboard')
+    } else {
+      localError.value = result?.error || patientStore.error || 'Email atau password salah'
+    }
+  } catch (err) {
+    localError.value = 'Terjadi kesalahan sistem. Silakan coba lagi.'
   }
 }
 </script>
@@ -191,18 +231,40 @@ const handleLogin = async () => {
 .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .error-message {
-  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
   background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 0.5rem;
   color: #dc2626;
-  text-align: center;
   font-size: 0.875rem;
+}
+
+.error-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.input-error {
+  border-color: #ef4444 !important;
+}
+
+.field-error {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 0.1rem;
 }
 
 .register-link { text-align: center; color: #64748b; font-size: 0.875rem; }
 .register-link a { color: #10b981; text-decoration: none; font-weight: 600; }
 .register-link a:hover { text-decoration: underline; }
+
+.form-options { display: flex; justify-content: flex-end; }
+.forgot-link { color: #059669; text-decoration: none; font-size: 0.875rem; font-weight: 500; }
+.forgot-link:hover { text-decoration: underline; }
 
 @media (max-width: 768px) {
   .login-container { flex-direction: column; }
